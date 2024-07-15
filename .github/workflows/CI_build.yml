@@ -1,6 +1,9 @@
 name: CI_build
 
-on: [push, pull_request]
+#on: [push, pull_request]
+on:
+  push:
+    branches: [ dev ]
 env:
   PYTHON_ALLOW_CACHE: true
   PYTHON_DIR_CACHE: D:\.cache\python
@@ -18,8 +21,8 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
-      with:
-        fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+      #with:
+        #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
 
     - name: Commit filtering
       id: filter
