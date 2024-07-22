@@ -28,7 +28,6 @@
 #include <commctrl.h>
 #include "Window.h"
 #include "dpiManagerV2.h"
-#include "DoubleBuffer.h"
 
 //Notification message
 #define TCN_TABDROPPED (TCN_FIRST - 10)
@@ -43,10 +42,10 @@
 const int marge = 8;
 const int nbCtrlMax = 10;
 
-const TCHAR TABBAR_ACTIVEFOCUSEDINDCATOR[64] = TEXT("Active tab focused indicator");
-const TCHAR TABBAR_ACTIVEUNFOCUSEDINDCATOR[64] = TEXT("Active tab unfocused indicator");
-const TCHAR TABBAR_ACTIVETEXT[64] = TEXT("Active tab text");
-const TCHAR TABBAR_INACTIVETEXT[64] = TEXT("Inactive tabs");
+const wchar_t TABBAR_ACTIVEFOCUSEDINDCATOR[64] = L"Active tab focused indicator";
+const wchar_t TABBAR_ACTIVEUNFOCUSEDINDCATOR[64] = L"Active tab unfocused indicator";
+const wchar_t TABBAR_ACTIVETEXT[64] = L"Active tab text";
+const wchar_t TABBAR_INACTIVETEXT[64] = L"Inactive tabs";
 
 constexpr int g_TabIconSize = 16;
 constexpr int g_TabHeight = 22;
@@ -72,9 +71,9 @@ public:
 	void destroy() override;
 	virtual void init(HINSTANCE hInst, HWND hwnd, bool isVertical = false, bool isMultiLine = false);
 	void reSizeTo(RECT& rc2Ajust) override;
-	int insertAtEnd(const TCHAR *subTabName);
+	int insertAtEnd(const wchar_t *subTabName);
 	void activateAt(int index) const;
-	void getCurrentTitle(TCHAR *title, int titleLen);
+	void getCurrentTitle(wchar_t *title, int titleLen);
 
 	int32_t getCurrentTabIndex() const {
 		return static_cast<int32_t>(SendMessage(_hSelf, TCM_GETCURSEL, 0, 0));
@@ -244,7 +243,6 @@ protected:
 	int _previousTabSwapped = -1;
 	POINT _draggingPoint{}; // coordinate of Screen
 	WNDPROC _tabBarDefaultProc = nullptr;
-	DoubleBuffer _dblBuf;
 
 	RECT _currentHoverTabRect{};
 	int _currentHoverTabItem = -1; // -1 : no mouse on any tab
