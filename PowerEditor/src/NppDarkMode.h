@@ -158,8 +158,6 @@ namespace NppDarkMode
 	HPEN getHotEdgePen();
 	HPEN getDisabledEdgePen();
 
-	COLORREF getIndividualTabColour(int colourIndex, bool themeDependant, bool saturated);
-
 	void setBackgroundColor(COLORREF c);
 	void setSofterBackgroundColor(COLORREF c);
 	void setHotBackgroundColor(COLORREF c);
@@ -228,6 +226,7 @@ namespace NppDarkMode
 
 	void disableVisualStyle(HWND hwnd, bool doDisable);
 	void calculateTreeViewStyle();
+	TreeViewStyle getTreeViewStyle();
 	void setTreeViewStyle(HWND hwnd);
 	bool isThemeDark();
 	void setBorder(HWND hwnd, bool border = true);
