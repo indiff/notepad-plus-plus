@@ -26,14 +26,14 @@ jobs:
 
     - name: Commit filtering
       id: filter
-      run: |
+      run: | # build_configuration "Release", "Debug"   build_platform  "x64", "Win32", "ARM64"
         $allowMaster = $true
         $folders_onejob = "PowerEditor/(Test|(installer/(filesForTesting|functionList)))/"
         $folders_nowork = "\.github/ISSUE_TEMPLATE"
         $files_nowork = "md|txt|log|ini"
         $files_needwork = "CMakeLists\.txt"
-
-        $matrix_all = 'matrix={"build_configuration": ["Release", "Debug"], "build_platform": ["x64", "Win32", "ARM64"]}'
+        
+        $matrix_all = 'matrix={"build_configuration": ["Release"], "build_platform": ["x64", "ARM64"]}'
         $matrix_onejob = 'matrix={"build_configuration": ["Debug"], "build_platform": ["Win32"]}'
         Write-Output $matrix_all >> $env:GITHUB_OUTPUT
 
@@ -176,8 +176,12 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
           name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}
-          path: PowerEditor\bin64\Notepad++.exe
-
+ #         path: PowerEditor\bin64\Notepad++.exe
+          retention-days: 5 # 保留期 
+          compression-level: 9 # 压缩级别
+          path: |
+            PowerEditor\bin64
+            !PowerEditor\bin64\**\*.pdb
     - name: Archive artifacts for Win32 / Release
       if: matrix.build_platform == 'Win32' && matrix.build_configuration == 'Release'
       uses: actions/upload-artifact@v4
@@ -339,8 +343,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_configuration: [Release, Debug]
-        build_platform: [x86_64, i686]
+        build_configuration: [Release] # [Release, Debug]
+        build_platform: [x86_64] # [x86_64, i686]
 
     steps:
     - name: Checkout repo
