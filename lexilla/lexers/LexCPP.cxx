@@ -1073,7 +1073,7 @@ void SCI_METHOD LexerCPP::Lex(Sci_PositionU startPos, Sci_Position length, int i
 						styleBeforeDCKeyword = SCE_C_COMMENTDOC;
 						sc.SetState(SCE_C_COMMENTDOCKEYWORD|activitySet);
 					}
-				} else if ((sc.ch == '<' && sc.chNext != '/')
+				} else if ((sc.ch == '<' && !(IsASpace(sc.chNext) || sc.chNext == '/'))
 							|| (sc.ch == '/' && sc.chPrev == '<')) { // XML comment style
 					styleBeforeDCKeyword = SCE_C_COMMENTDOC;
 					sc.ForwardSetState(SCE_C_COMMENTDOCKEYWORD | activitySet);
@@ -1841,5 +1841,5 @@ bool LexerCPP::EvaluateExpression(const std::string &expr, const SymbolTable &pr
 	return !isFalse;
 }
 
-LexerModule lmCPP(SCLEX_CPP, LexerCPP::LexerFactoryCPP, "cpp", cppWordLists);
-LexerModule lmCPPNoCase(SCLEX_CPPNOCASE, LexerCPP::LexerFactoryCPPInsensitive, "cppnocase", cppWordLists);
+extern const LexerModule lmCPP(SCLEX_CPP, LexerCPP::LexerFactoryCPP, "cpp", cppWordLists);
+extern const LexerModule lmCPPNoCase(SCLEX_CPPNOCASE, LexerCPP::LexerFactoryCPPInsensitive, "cppnocase", cppWordLists);

@@ -61,6 +61,7 @@ intptr_t CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPar
             //_pageLink.create(::GetDlgItem(_hSelf, IDC_HOME_ADDR), L"https://notepad-plus-plus.org/news/v86-20thyearanniversary";
 			_pageLink.init(_hInst, _hSelf);
             _pageLink.create(::GetDlgItem(_hSelf, IDC_AUTHOR_NAME), L"https://github.com/indiff/notepad-plus-plus/wiki");
+            _pageLink.create(::GetDlgItem(_hSelf, IDC_AUTHOR_NAME), L"https://github.com/indiff/notepad-plus-plus/wiki");
             
 			//_pageLink.init(_hInst, _hSelf);
             //_pageLink.create(::GetDlgItem(_hSelf, IDC_HOME_ADDR), L"https://notepad-plus-plus.org/");
