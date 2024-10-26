@@ -182,6 +182,8 @@ jobs:
           path: |
             PowerEditor\bin64
             !PowerEditor\bin64\**\*.pdb
+            !PowerEditor\bin64\**\*.lib
+            !PowerEditor\bin64\**\*.exp
     - name: Archive artifacts for Win32 / Release
       if: matrix.build_platform == 'Win32' && matrix.build_configuration == 'Release'
       uses: actions/upload-artifact@v4
