@@ -44,7 +44,7 @@ jobs:
         $commit_title = ($commit_message -split "[\r\n]+")[0]
         Write-Output "title=$commit_title" >> $env:GITHUB_OUTPUT
         git checkout FETCH_HEAD
-        $files_modified = @(git diff --name-only HEAD~1)
+        $files_modified = @(git diff --name-only "HEAD~1")
         $files_needwork_all = @($files_modified | Where-Object {$_ -notmatch "\.(xml|$files_nowork)$|$folders_nowork|$folders_onejob" -or $_ -match "($files_needwork)$"})
 
         if ($allowMaster -or !$isMaster) {
@@ -172,11 +172,10 @@ jobs:
       working-directory: PowerEditor\visual.net\
       run: msbuild notepadPlus.sln /m /p:configuration="${{ matrix.build_configuration }}" /p:platform="${{ matrix.build_platform }}" /p:PlatformToolset="v143"
 
-    - name: Copy Xmls for x64 / Release
+    - name: Copy Xmls for x64 / Release  # An item with the specified name D:\a\notepad-plus-plus\notepad-plus-plus\PowerEditor\bin64 already exists.  rem mkdir PowerEditor\bin64
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
       working-directory: .\
       run: |
-           mkdir PowerEditor\bin64
            Copy-Item "PowerEditor\installer\themes" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\functionList" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\nativeLang" -Destination "PowerEditor\bin64" -Recurse
