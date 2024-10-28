@@ -181,7 +181,7 @@ jobs:
            Copy-Item "PowerEditor\installer\nativeLang" -Destination "PowerEditor\bin64" -Recurse
            move PowerEditor\bin64\nativeLang PowerEditor\bin64\localization
            Copy-Item "PowerEditor\bin\userDefineLangs" -Destination "PowerEditor\bin64" -Recurse
-           Copy-Item "PowerEditor\bin\APIs" -Destination "PowerEditor\bin64" -Recurse
+           Copy-Item "PowerEditor\installer\APIs" -Destination "PowerEditor\bin64" -Recurse
            move PowerEditor\bin64\APIs PowerEditor\bin64\autoCompletion
 
            
