@@ -43,6 +43,7 @@ jobs:
         $commit_message = $isPush ? (git show -s --format=%B) : (git log -1 --no-merges --pretty=%B)
         $commit_title = ($commit_message -split "[\r\n]+")[0]
         Write-Output "title=$commit_title" >> $env:GITHUB_OUTPUT
+        git checkout FETCH_HEAD
         $files_modified = @(git diff --name-only HEAD~1)
         $files_needwork_all = @($files_modified | Where-Object {$_ -notmatch "\.(xml|$files_nowork)$|$folders_nowork|$folders_onejob" -or $_ -match "($files_needwork)$"})
 
@@ -171,6 +172,20 @@ jobs:
       working-directory: PowerEditor\visual.net\
       run: msbuild notepadPlus.sln /m /p:configuration="${{ matrix.build_configuration }}" /p:platform="${{ matrix.build_platform }}" /p:PlatformToolset="v143"
 
+    - name: Copy Xmls for x64 / Release
+      if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
+      working-directory: .\
+      run: |
+           mkdir PowerEditor\bin64
+           Copy-Item "PowerEditor\installer\themes" -Destination "PowerEditor\bin64" -Recurse
+           Copy-Item "PowerEditor\installer\functionList" -Destination "PowerEditor\bin64" -Recurse
+           Copy-Item "PowerEditor\installer\nativeLang" -Destination "PowerEditor\bin64" -Recurse
+           move PowerEditor\bin64\nativeLang PowerEditor\bin64\localization
+           Copy-Item "PowerEditor\bin\userDefineLangs" -Destination "PowerEditor\bin64" -Recurse
+           Copy-Item "PowerEditor\bin\APIs" -Destination "PowerEditor\bin64" -Recurse
+           move PowerEditor\bin64\APIs PowerEditor\bin64\autoCompletion
+
+           
     - name: Archive artifacts for x64 / Release
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
       uses: actions/upload-artifact@v4
