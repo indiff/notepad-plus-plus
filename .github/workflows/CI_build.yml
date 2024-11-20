@@ -175,8 +175,11 @@ jobs:
     - name: Copy Xmls for x64 / Release  # An item with the specified name D:\a\notepad-plus-plus\notepad-plus-plus\PowerEditor\bin64 already exists.  rem mkdir PowerEditor\bin64
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
       working-directory: .\
-      run: |
-           echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV 
+      run: | # >> $env:GITHUB_OUTPUT >> $GITHUB_ENV 
+           $mem = Get-WmiObject Win32_OperatingSystem
+           echo "Mem:$([math]::round((($mem.TotalVisibleMemorySize - $mem.FreePhysicalMemory) / $mem.TotalVisibleMemorySize) * 100, 2))%"
+           echo "CPU:$(Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty LoadPercentage)%"
+           echo "timestamp=$(Get-Date -Format "yyyyMMddHHmmss")" >> $GITHUB_ENV
            Copy-Item "PowerEditor\installer\themes" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\functionList" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\nativeLang" -Destination "PowerEditor\bin64" -Recurse
