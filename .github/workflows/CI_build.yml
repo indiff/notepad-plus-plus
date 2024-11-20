@@ -183,7 +183,7 @@ jobs:
            Set-TimeZone -Id "China Standard Time"
            $version=$((Select-String -Pattern 'Notepad\+\+ (v.*)\"' -Path "PowerEditor\src\resource.h").Matches.Groups[1].Value)
            $mem = Get-WmiObject Win32_OperatingSystem
-           echo "Version:$(version)"
+           echo "Version:$($version)"
            echo "Time:$(Get-Date)"
            echo "Mem:$([math]::round((($mem.TotalVisibleMemorySize - $mem.FreePhysicalMemory) / $mem.TotalVisibleMemorySize) * 100, 2))%"
            echo "CPU:$(Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty LoadPercentage)%"
@@ -195,7 +195,7 @@ jobs:
            Copy-Item "PowerEditor\installer\APIs" -Destination "PowerEditor\bin64" -Recurse
            move PowerEditor\bin64\APIs PowerEditor\bin64\autoCompletion
            echo "BUILD_VERSION_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")"
-           Write-Output "BUILD_VERSION_TIMESTAMP=$(version).$(Get-Date -Format "yyyyMMddHHmmss")" >> $env:GITHUB_ENV
+           Write-Output "BUILD_VERSION_TIMESTAMP=$($version).$(Get-Date -Format "yyyyMMddHHmmss")" >> $env:GITHUB_ENV
            Get-TimeZone -ListAvailable
 
            
