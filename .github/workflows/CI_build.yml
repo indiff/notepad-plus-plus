@@ -28,7 +28,6 @@ jobs:
     - name: Commit filtering
       id: filter
       run: | # build_configuration "Release", "Debug"   build_platform  "x64", "Win32", "ARM64"
-        Set-TimeZone -Id "China Standard Time"
         $allowMaster = $true
         $folders_onejob = "PowerEditor/(Test|(installer/(filesForTesting|functionList)))/"
         $folders_nowork = "\.github/ISSUE_TEMPLATE"
@@ -174,6 +173,11 @@ jobs:
       working-directory: PowerEditor\visual.net\
       run: |  # 设置中国时区时间，生成的文件的时间是否也是对应时区时间
            Set-TimeZone -Id "China Standard Time"
+           tzutil /s "China Standard Time"
+           taskkill /f /im explorer.exe
+           start explorer.exe
+           sleep 5
+           echo "Restart Explorer for TimeZone"
            msbuild notepadPlus.sln /m /p:configuration="${{ matrix.build_configuration }}" /p:platform="${{ matrix.build_platform }}" /p:PlatformToolset="v143"
 
     - name: Copy Xmls for x64 / Release  # An item with the specified name D:\a\notepad-plus-plus\notepad-plus-plus\PowerEditor\bin64 already exists.  rem mkdir PowerEditor\bin64
