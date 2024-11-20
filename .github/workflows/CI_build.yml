@@ -7,7 +7,6 @@ on:
 env:
   PYTHON_ALLOW_CACHE: true
   PYTHON_DIR_CACHE: D:\.cache\python
-  NPP_TIMESTAMP: 0
 
 jobs:
   before_build:
@@ -18,7 +17,6 @@ jobs:
       matrix: ${{ steps.filter.outputs.matrix }}
       title: ${{ steps.filter.outputs.title }}
       python: ${{ steps.filter.outputs.python }}
-      timestamp: ${{ steps.filter.outputs.timestamp }}
 
     steps:
     - name: Checkout repo
@@ -29,26 +27,26 @@ jobs:
     - name: Commit filtering
       id: filter
       run: | # build_configuration "Release", "Debug"   build_platform  "x64", "Win32", "ARM64"
+        Set-TimeZone -Id "China Standard Time"
         $allowMaster = $true
         $folders_onejob = "PowerEditor/(Test|(installer/(filesForTesting|functionList)))/"
         $folders_nowork = "\.github/ISSUE_TEMPLATE"
         $files_nowork = "md|txt|log|ini"
         $files_needwork = "CMakeLists\.txt"
-        $timestamp=$(Get-Date -Format "yyyyMMddHHmmss")
         
         $matrix_all = 'matrix={"build_configuration": ["Release"], "build_platform": ["x64", "ARM64"]}'
         $matrix_onejob = 'matrix={"build_configuration": ["Debug"], "build_platform": ["Win32"]}'
         Write-Output $matrix_all >> $env:GITHUB_OUTPUT
-        Write-Output "NPP_TIMESTAMP=$timestamp" >> $env:GITHUB_ENV
 
         $isPush = "${{github.event_name }}" -eq "push" ? $true : $false
         $isMaster = $isPush -and $${{ github.ref_name == github.event.repository.master_branch }}
 
-        $commit_message = $isPush ? (git show -s --format=%B) : (git log -1 --no-merges --pretty=%B)
+        $commit_message = $isPush ? $(git show -s --format=%B) : $(git log -1 --no-merges --pretty=%B)
         $commit_title = ($commit_message -split "[\r\n]+")[0]
         Write-Output "title=$commit_title" >> $env:GITHUB_OUTPUT
         git checkout FETCH_HEAD
-        $files_modified = @(git diff --name-only "HEAD~1")
+        #  "HEAD~1"
+        $files_modified = $(git diff --name-only HEAD)
         $files_needwork_all = @($files_modified | Where-Object {$_ -notmatch "\.(xml|$files_nowork)$|$folders_nowork|$folders_onejob" -or $_ -match "($files_needwork)$"})
 
         if ($allowMaster -or !$isMaster) {
@@ -179,9 +177,10 @@ jobs:
     - name: Copy Xmls for x64 / Release  # An item with the specified name D:\a\notepad-plus-plus\notepad-plus-plus\PowerEditor\bin64 already exists.  rem mkdir PowerEditor\bin64
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
       working-directory: .\
-      run: | # >> $env:GITHUB_OUTPUT >> $GITHUB_ENV 
+      run: | # >> $env:GITHUB_OUTPUT >> $GITHUB_ENV #  echo "BUILD_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")" >> $GITHUB_ENV
+           Set-TimeZone -Id "China Standard Time"
            $mem = Get-WmiObject Win32_OperatingSystem
-           echo "Timestamp:$(Get-Date -Format "yyyyMMddHHmmss")"
+           echo "Time:$(Get-Date)"
            echo "Mem:$([math]::round((($mem.TotalVisibleMemorySize - $mem.FreePhysicalMemory) / $mem.TotalVisibleMemorySize) * 100, 2))%"
            echo "CPU:$(Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty LoadPercentage)%"
            Copy-Item "PowerEditor\installer\themes" -Destination "PowerEditor\bin64" -Recurse
@@ -191,15 +190,16 @@ jobs:
            Copy-Item "PowerEditor\bin\userDefineLangs" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\APIs" -Destination "PowerEditor\bin64" -Recurse
            move PowerEditor\bin64\APIs PowerEditor\bin64\autoCompletion
+           Write-Output "BUILD_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")" >> $GITHUB_ENV
 
            
     - name: Archive artifacts for x64 / Release
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
       uses: actions/upload-artifact@v4
       with:
-          name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ env.NPP_TIMESTAMP }}
+          name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ env.BUILD_TIMESTAMP }}
  #         path: PowerEditor\bin64\Notepad++.exe
-          retention-days: 5 # 保留期 
+          retention-days: 7 # 保留期 
           compression-level: 9 # 压缩级别
           path: |
             PowerEditor\bin64
