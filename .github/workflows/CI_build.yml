@@ -7,7 +7,7 @@ on:
 env:
   PYTHON_ALLOW_CACHE: true
   PYTHON_DIR_CACHE: D:\.cache\python
-  BUILD_TIMESTAMP: 0
+  BUILD_VERSION_TIMESTAMP: 0
 
 jobs:
   before_build:
@@ -172,14 +172,18 @@ jobs:
 
     - name: MSBuild of n++ exe
       working-directory: PowerEditor\visual.net\
-      run: msbuild notepadPlus.sln /m /p:configuration="${{ matrix.build_configuration }}" /p:platform="${{ matrix.build_platform }}" /p:PlatformToolset="v143"
+      run: |  # 设置中国时区时间，生成的文件的时间是否也是对应时区时间
+           Set-TimeZone -Id "China Standard Time"
+           msbuild notepadPlus.sln /m /p:configuration="${{ matrix.build_configuration }}" /p:platform="${{ matrix.build_platform }}" /p:PlatformToolset="v143"
 
     - name: Copy Xmls for x64 / Release  # An item with the specified name D:\a\notepad-plus-plus\notepad-plus-plus\PowerEditor\bin64 already exists.  rem mkdir PowerEditor\bin64
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
       working-directory: .\
-      run: | # >> $env:GITHUB_OUTPUT >> $GITHUB_ENV #  echo "BUILD_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")" >> $GITHUB_ENV
+      run: | # >> $env:GITHUB_OUTPUT >> $GITHUB_ENV #  echo "BUILD_VERSION_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")" >> $GITHUB_ENV # (Select-String -Pattern 'Notepad\+\+ (v.*)\"' -Path "D:\svn\notepad-plus-plus\PowerEditor\src\resource.h").Matches.Groups[1].Value
            Set-TimeZone -Id "China Standard Time"
+           $version=$((Select-String -Pattern 'Notepad\+\+ (v.*)\"' -Path "D:\svn\notepad-plus-plus\PowerEditor\src\resource.h").Matches.Groups[1].Value)
            $mem = Get-WmiObject Win32_OperatingSystem
+           echo "Version:$(version)"
            echo "Time:$(Get-Date)"
            echo "Mem:$([math]::round((($mem.TotalVisibleMemorySize - $mem.FreePhysicalMemory) / $mem.TotalVisibleMemorySize) * 100, 2))%"
            echo "CPU:$(Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty LoadPercentage)%"
@@ -190,8 +194,8 @@ jobs:
            Copy-Item "PowerEditor\bin\userDefineLangs" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\APIs" -Destination "PowerEditor\bin64" -Recurse
            move PowerEditor\bin64\APIs PowerEditor\bin64\autoCompletion
-           echo "BUILD_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")"
-           Write-Output "BUILD_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")" >> $env:GITHUB_ENV
+           echo "BUILD_VERSION_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")"
+           Write-Output "BUILD_VERSION_TIMESTAMP=$(version).$(Get-Date -Format "yyyyMMddHHmmss")" >> $env:GITHUB_ENV
            Get-TimeZone -ListAvailable
 
            
@@ -199,7 +203,7 @@ jobs:
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
       uses: actions/upload-artifact@v4
       with:
-          name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ env.BUILD_TIMESTAMP }}
+          name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ env.BUILD_VERSION_TIMESTAMP }}
  #         path: PowerEditor\bin64\Notepad++.exe
           retention-days: 7 # 保留期 
           compression-level: 9 # 压缩级别
