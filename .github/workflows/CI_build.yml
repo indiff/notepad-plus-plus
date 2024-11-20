@@ -7,6 +7,7 @@ on:
 env:
   PYTHON_ALLOW_CACHE: true
   PYTHON_DIR_CACHE: D:\.cache\python
+  BUILD_TIMESTAMP: 0
 
 jobs:
   before_build:
@@ -41,12 +42,11 @@ jobs:
         $isPush = "${{github.event_name }}" -eq "push" ? $true : $false
         $isMaster = $isPush -and $${{ github.ref_name == github.event.repository.master_branch }}
 
-        $commit_message = $isPush ? $(git show -s --format=%B) : $(git log -1 --no-merges --pretty=%B)
+        $commit_message = $isPush ? @(git show -s --format=%B) : @(git log -1 --no-merges --pretty=%B)
         $commit_title = ($commit_message -split "[\r\n]+")[0]
         Write-Output "title=$commit_title" >> $env:GITHUB_OUTPUT
         git checkout FETCH_HEAD
-        #  "HEAD~1"
-        $files_modified = $(git diff --name-only HEAD)
+        $files_modified = @(git diff --name-only "HEAD~1")
         $files_needwork_all = @($files_modified | Where-Object {$_ -notmatch "\.(xml|$files_nowork)$|$folders_nowork|$folders_onejob" -or $_ -match "($files_needwork)$"})
 
         if ($allowMaster -or !$isMaster) {
@@ -190,7 +190,9 @@ jobs:
            Copy-Item "PowerEditor\bin\userDefineLangs" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\APIs" -Destination "PowerEditor\bin64" -Recurse
            move PowerEditor\bin64\APIs PowerEditor\bin64\autoCompletion
-           Write-Output "BUILD_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")" >> $GITHUB_ENV
+           echo "BUILD_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")"
+           Write-Output "BUILD_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")" >> $env:GITHUB_ENV
+           Get-TimeZone -ListAvailable
 
            
     - name: Archive artifacts for x64 / Release
