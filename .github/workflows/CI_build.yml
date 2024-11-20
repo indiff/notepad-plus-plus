@@ -34,8 +34,8 @@ jobs:
         $files_needwork = "CMakeLists\.txt"
         echo "timestamp=$(Get-Date -Format "yyyyMMddHHmmss")" >> $GITHUB_ENV
         
-        $matrix_all = 'matrix={"build_configuration": ["Release"], "build_platform": ["x64", "ARM64"], "timestamp":"$(Get-Date -Format "yyyyMMddHHmmss")"}'
-        $matrix_onejob = 'matrix={"build_configuration": ["Debug"], "build_platform": ["Win32"], "timestamp":"$(Get-Date -Format "yyyyMMddHHmmss")"}'
+        $matrix_all = 'matrix={"build_configuration": ["Release"], "build_platform": ["x64", "ARM64"], "timestamp":"' + $(Get-Date -Format "yyyyMMddHHmmss") + '"}'
+        $matrix_onejob = 'matrix={"build_configuration": ["Debug"], "build_platform": ["Win32"], "timestamp":"' + $(Get-Date -Format "yyyyMMddHHmmss") + '"}'
         Write-Output $matrix_all >> $env:GITHUB_OUTPUT
 
         $isPush = "${{github.event_name }}" -eq "push" ? $true : $false
