@@ -32,9 +32,10 @@ jobs:
         $folders_nowork = "\.github/ISSUE_TEMPLATE"
         $files_nowork = "md|txt|log|ini"
         $files_needwork = "CMakeLists\.txt"
+        echo "timestamp=$(Get-Date -Format "yyyyMMddHHmmss")" >> $GITHUB_ENV
         
-        $matrix_all = 'matrix={"build_configuration": ["Release"], "build_platform": ["x64", "ARM64"]}'
-        $matrix_onejob = 'matrix={"build_configuration": ["Debug"], "build_platform": ["Win32"]}'
+        $matrix_all = 'matrix={"build_configuration": ["Release"], "build_platform": ["x64", "ARM64"], "timestamp":"$(Get-Date -Format "yyyyMMddHHmmss")"}'
+        $matrix_onejob = 'matrix={"build_configuration": ["Debug"], "build_platform": ["Win32"], "timestamp":"$(Get-Date -Format "yyyyMMddHHmmss")"}'
         Write-Output $matrix_all >> $env:GITHUB_OUTPUT
 
         $isPush = "${{github.event_name }}" -eq "push" ? $true : $false
@@ -177,9 +178,9 @@ jobs:
       working-directory: .\
       run: | # >> $env:GITHUB_OUTPUT >> $GITHUB_ENV 
            $mem = Get-WmiObject Win32_OperatingSystem
+           echo "Timestamp:$(Get-Date -Format "yyyyMMddHHmmss")"
            echo "Mem:$([math]::round((($mem.TotalVisibleMemorySize - $mem.FreePhysicalMemory) / $mem.TotalVisibleMemorySize) * 100, 2))%"
            echo "CPU:$(Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty LoadPercentage)%"
-           echo "timestamp=$(Get-Date -Format "yyyyMMddHHmmss")" >> $GITHUB_ENV
            Copy-Item "PowerEditor\installer\themes" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\functionList" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\nativeLang" -Destination "PowerEditor\bin64" -Recurse
@@ -193,7 +194,7 @@ jobs:
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
       uses: actions/upload-artifact@v4
       with:
-          name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ env.timestamp }}
+          name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ matrix.timestamp }}
  #         path: PowerEditor\bin64\Notepad++.exe
           retention-days: 5 # 保留期 
           compression-level: 9 # 压缩级别
