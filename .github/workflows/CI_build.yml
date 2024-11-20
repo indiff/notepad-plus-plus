@@ -7,6 +7,7 @@ on:
 env:
   PYTHON_ALLOW_CACHE: true
   PYTHON_DIR_CACHE: D:\.cache\python
+  NPP_TIMESTAMP: 0
 
 jobs:
   before_build:
@@ -17,6 +18,7 @@ jobs:
       matrix: ${{ steps.filter.outputs.matrix }}
       title: ${{ steps.filter.outputs.title }}
       python: ${{ steps.filter.outputs.python }}
+      timestamp: ${{ steps.filter.outputs.timestamp }}
 
     steps:
     - name: Checkout repo
@@ -32,11 +34,12 @@ jobs:
         $folders_nowork = "\.github/ISSUE_TEMPLATE"
         $files_nowork = "md|txt|log|ini"
         $files_needwork = "CMakeLists\.txt"
-        echo "timestamp=$(Get-Date -Format "yyyyMMddHHmmss")" >> $GITHUB_ENV
+        $timestamp=$(Get-Date -Format "yyyyMMddHHmmss")
         
-        $matrix_all = 'matrix={"build_configuration": ["Release"], "build_platform": ["x64", "ARM64"], "timestamp": ' + $(Get-Date -Format "yyyyMMddHHmmss") + '}'
-        $matrix_onejob = 'matrix={"build_configuration": ["Debug"], "build_platform": ["Win32"], "timestamp":' + $(Get-Date -Format "yyyyMMddHHmmss") + '}'
+        $matrix_all = 'matrix={"build_configuration": ["Release"], "build_platform": ["x64", "ARM64"]}'
+        $matrix_onejob = 'matrix={"build_configuration": ["Debug"], "build_platform": ["Win32"]}'
         Write-Output $matrix_all >> $env:GITHUB_OUTPUT
+        Write-Output "NPP_TIMESTAMP=$timestamp" >> $env:GITHUB_ENV
 
         $isPush = "${{github.event_name }}" -eq "push" ? $true : $false
         $isMaster = $isPush -and $${{ github.ref_name == github.event.repository.master_branch }}
@@ -194,7 +197,7 @@ jobs:
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
       uses: actions/upload-artifact@v4
       with:
-          name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ matrix.timestamp }}
+          name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ env.NPP_TIMESTAMP }}
  #         path: PowerEditor\bin64\Notepad++.exe
           retention-days: 5 # 保留期 
           compression-level: 9 # 压缩级别
