@@ -176,6 +176,7 @@ jobs:
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
       working-directory: .\
       run: |
+           echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV 
            Copy-Item "PowerEditor\installer\themes" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\functionList" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\nativeLang" -Destination "PowerEditor\bin64" -Recurse
@@ -189,7 +190,7 @@ jobs:
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
       uses: actions/upload-artifact@v4
       with:
-          name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}
+          name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ env.timestamp }}
  #         path: PowerEditor\bin64\Notepad++.exe
           retention-days: 5 # 保留期 
           compression-level: 9 # 压缩级别
@@ -301,7 +302,7 @@ jobs:
 
     runs-on: windows-latest
     needs: before_build
-    if: needs.before_build.outputs.result == ''
+    if: needs.before_build.outputs.result == '' && 1 == 2 # 取消 cmake 编译
     strategy:
       matrix:
         include:
@@ -355,7 +356,7 @@ jobs:
 
     runs-on: windows-latest
     needs: before_build
-    if: needs.before_build.outputs.result == ''
+    if: needs.before_build.outputs.result == '' && 1 == 2 # 取消 msys2 编译
     strategy:
       fail-fast: false
       matrix:
