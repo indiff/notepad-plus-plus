@@ -201,8 +201,13 @@ jobs:
            echo "BUILD_VERSION_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")"
            Write-Output "BUILD_VERSION_TIMESTAMP=$($version).$(Get-Date -Format "yyyyMMddHHmmss")" >> $env:GITHUB_ENV
            Get-TimeZone -ListAvailable
+           del PowerEditor\bin64\*.pdb
+           del PowerEditor\bin64\*.lib
+           del PowerEditor\bin64\*.exp
            ls PowerEditor\bin64\
-
+           
+#echo "Notepad++.MSVC.${{ env.matrix.build_platform }}.${{ env.matrix.build_configuration }}.$($version).$(Get-Date -Format "yyyyMMddHHmmss")"
+#Compress-Archive -Path "PowerEditor\bin64\" -DestinationPath ".\Notepad++.MSVC.${{ env.matrix.build_platform }}.${{ env.matrix.build_configuration }}.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
            
     - name: Archive artifacts for x64 / Release
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
