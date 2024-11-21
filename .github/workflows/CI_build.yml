@@ -201,6 +201,7 @@ jobs:
            echo "BUILD_VERSION_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")"
            Write-Output "BUILD_VERSION_TIMESTAMP=$($version).$(Get-Date -Format "yyyyMMddHHmmss")" >> $env:GITHUB_ENV
            Get-TimeZone -ListAvailable
+           ls PowerEditor\bin64\
 
            
     - name: Archive artifacts for x64 / Release
