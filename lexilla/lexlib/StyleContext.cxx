@@ -66,24 +66,6 @@ bool StyleContext::MatchIgnoreCase(const char *s) {
 	return true;
 }
 
-bool StyleContext::MatchIgnoreCase2(const char *s) {
-	if (MakeLowerCase(ch) != MakeLowerCase(static_cast<unsigned char>(*s)))
-		return false;
-	s++;
-	if (!*s)
-		return true;
-	if (MakeLowerCase(chNext) != MakeLowerCase(static_cast<unsigned char>(*s)))
-		return false;
-	s++;
-	for (int n = 2; *s; n++) {
-		if (MakeLowerCase(static_cast<unsigned char>(*s)) !=
-			MakeLowerCase(static_cast<unsigned char>(styler.SafeGetCharAt(currentPos + n))))
-			return false;
-		s++;
-	}
-	return true;
-}
-
 void StyleContext::GetCurrent(char *s, Sci_PositionU len) const {
 	styler.GetRange(styler.GetStartSegment(), currentPos, s, len);
 }

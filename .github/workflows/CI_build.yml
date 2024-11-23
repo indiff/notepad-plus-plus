@@ -22,8 +22,12 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
-      #with:
-        #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+      with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+        # Number of commits to fetch. 0 indicates all history for all branches and tags
+        fetch-depth: 0
+        # Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules.
+        submodules: true
+        
 
     - name: Commit filtering
       id: filter
@@ -158,7 +162,11 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
-
+      with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+        # Number of commits to fetch. 0 indicates all history for all branches and tags
+        fetch-depth: 0
+        # Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules.
+        submodules: true
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v2
 
@@ -336,7 +344,11 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
-
+      with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+        # Number of commits to fetch. 0 indicates all history for all branches and tags
+        fetch-depth: 0
+        # Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules.
+        submodules: true
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v2
 

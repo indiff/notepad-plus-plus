@@ -1,0 +1,4 @@
+[submodule "lexilla"]
+	path = lexilla
+	url = https://github.com/ScintillaOrg/lexilla.git
+	branch = master
