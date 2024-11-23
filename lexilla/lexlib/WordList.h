@@ -37,6 +37,14 @@ public:
 	bool InListAbbreviated(const char *s, const char marker) const noexcept;
 	bool InListAbridged(const char *s, const char marker) const noexcept;
 	const char *WordAt(int n) const noexcept;
+
+	void SetWordAt(int n, const char* word2Set) {
+		words[n] = (char*)word2Set;
+};
+
+	int StartAt(int n) const {
+		return starts[n];
+	};
 };
 
 }
