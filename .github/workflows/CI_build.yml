@@ -26,7 +26,7 @@ jobs:
         # Number of commits to fetch. 0 indicates all history for all branches and tags
         fetch-depth: 0
         # Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules.
-        submodules: true
+        submodules: recursive
         
 
     - name: Commit filtering
@@ -166,7 +166,7 @@ jobs:
         # Number of commits to fetch. 0 indicates all history for all branches and tags
         fetch-depth: 0
         # Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules.
-        submodules: true
+        submodules: recursive
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v2
 
@@ -348,7 +348,7 @@ jobs:
         # Number of commits to fetch. 0 indicates all history for all branches and tags
         fetch-depth: 0
         # Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules.
-        submodules: true
+        submodules: recursive
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v2
 
@@ -401,6 +401,11 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
+      with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+        # Number of commits to fetch. 0 indicates all history for all branches and tags
+        fetch-depth: 0
+        # Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules.
+        submodules: recursive
 
     - name: Modify resource.h N++ version to avoid confusion
       working-directory: PowerEditor\src\
