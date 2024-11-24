@@ -1,0 +1,8 @@
+[submodule "lexilla"]
+	path = lexilla
+	url = https://github.com/indiff/lexilla.git
+	branch = remotes/origin/dev
+[submodule "scintilla"]
+	path = scintilla
+	url = https://github.com/indiff/scintilla.git
+	branch = dev
