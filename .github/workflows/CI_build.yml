@@ -179,7 +179,7 @@ jobs:
 
     - name: MSBuild of n++ exe
       working-directory: PowerEditor\visual.net\
-      run: |  # è®¾ç½®ä¸­å›½æ—¶åŒºæ—¶é—´ï¼Œç”Ÿæˆçš„æ–‡ä»¶çš„æ—¶é—´æ˜¯å¦ä¹Ÿæ˜¯å¯¹åº”æ—¶åŒºæ—¶é—´
+      run: |  # ÉèÖÃÖĞ¹úÊ±ÇøÊ±¼ä£¬Éú³ÉµÄÎÄ¼şµÄÊ±¼äÊÇ·ñÒ²ÊÇ¶ÔÓ¦Ê±ÇøÊ±¼ä
            Set-TimeZone -Id "China Standard Time"
            tzutil /s "China Standard Time"
            taskkill /f /im explorer.exe
@@ -223,8 +223,8 @@ jobs:
       with:
           name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ env.BUILD_VERSION_TIMESTAMP }}
  #         path: PowerEditor\bin64\Notepad++.exe
-          retention-days: 7 # ä¿ç•™æœŸ 
-          compression-level: 9 # å‹ç¼©çº§åˆ«
+          retention-days: 7 # ±£ÁôÆÚ 
+          compression-level: 9 # Ñ¹Ëõ¼¶±ğ
           path: |
             PowerEditor\bin64
             !PowerEditor\bin64\**\*.pdb
@@ -333,7 +333,7 @@ jobs:
 
     runs-on: windows-latest
     needs: before_build
-    if: needs.before_build.outputs.result == '' && 1 == 2 # å–æ¶ˆ cmake ç¼–è¯‘
+    if: needs.before_build.outputs.result == '' && 1 == 2 # È¡Ïû cmake ±àÒë
     strategy:
       matrix:
         include:
@@ -391,7 +391,7 @@ jobs:
 
     runs-on: windows-latest
     needs: before_build
-    if: needs.before_build.outputs.result == '' && 1 == 2 # å–æ¶ˆ msys2 ç¼–è¯‘
+    if: needs.before_build.outputs.result == '' && 1 == 2 # È¡Ïû msys2 ±àÒë
     strategy:
       fail-fast: false
       matrix:
