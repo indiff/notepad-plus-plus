@@ -204,6 +204,9 @@ jobs:
            Copy-Item "PowerEditor\installer\nativeLang" -Destination "PowerEditor\bin64" -Recurse
            move PowerEditor\bin64\nativeLang PowerEditor\bin64\localization
            Copy-Item "PowerEditor\bin\userDefineLangs" -Destination "PowerEditor\bin64" -Recurse
+           Copy-Item "PowerEditor\bin\doLocalConf.xml" -Destination "PowerEditor\bin64" -Recurse
+           Copy-Item "PowerEditor\bin\nppLogNulContentCorruptionIssue.xml" -Destination "PowerEditor\bin64" -Recurse
+           Copy-Item "PowerEditor\src\toolbarIcons.xml" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\APIs" -Destination "PowerEditor\bin64" -Recurse
            move PowerEditor\bin64\APIs PowerEditor\bin64\autoCompletion
            echo "BUILD_VERSION_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")"
@@ -227,6 +230,8 @@ jobs:
           compression-level: 9 # Ñ¹Ëõ¼¶±ð
           path: |
             PowerEditor\bin64
+            PowerEditor\bin64\plugins
+            PowerEditor\bin64\updater
             !PowerEditor\bin64\**\*.pdb
             !PowerEditor\bin64\**\*.lib
             !PowerEditor\bin64\**\*.exp
