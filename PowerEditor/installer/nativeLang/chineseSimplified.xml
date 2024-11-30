@@ -1120,7 +1120,7 @@ Translation note:
 					<Item id="6510" name="使用默认值"/>
 					<Item id="6512" name="退格键取消缩进而不是删除单个空格"/>
 				</Indentation>
-				
+
 				<Highlighting title="高亮">
 					<Item id="6351" name="用格式标记全部"/>
 					<Item id="6352" name="匹配大小写"/>
