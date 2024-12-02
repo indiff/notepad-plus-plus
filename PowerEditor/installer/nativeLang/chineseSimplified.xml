@@ -93,6 +93,7 @@ Translation note:
 					<Item id="41003" name="关闭(&amp;C)"/>
 					<Item id="41004" name="全部关闭(&amp;E)"/>
 					<Item id="41005" name="关闭当前以外所有文件"/>
+					<Item id="41026" name="除固定标签页之外全部关闭"/>
 					<Item id="41009" name="关闭左侧所有文件"/>
 					<Item id="41018" name="关闭右侧所有文件"/>
 					<Item id="41024" name="关闭所有未修改文件"/>
@@ -316,6 +317,7 @@ Translation note:
 					<Item id="44112" name="使用颜色2"/>
 					<Item id="44113" name="使用颜色3"/>
 					<Item id="44114" name="使用颜色4"/>
+					<Item id="44097" name="监控 (tail -f)"/>
 					<Item id="44115" name="使用颜色5"/>
 					<Item id="44130" name="显示非打印字符"/>
 					<Item id="44131" name="显示控制字符和 Unicode 行尾符"/>
@@ -637,6 +639,7 @@ Translation note:
 					<Item id="2231" name="使用全局斜体样式"/>
 					<Item id="2232" name="使用全局下划线样式"/>
 					<Item id="2234" name="前往设置"/>
+					<Item id="2235" name="什么是「Global override」？"/>
 				</SubDialog>
 			</StyleConfig>
 
@@ -725,6 +728,12 @@ Translation note:
 					<Item id="44066" name="展开层次6"/>
 					<Item id="44067" name="展开层次7"/>
 					<Item id="44068" name="展开层次8"/>
+					<Item id="44110" name="移除页签颜色"/>
+					<Item id="44111" name="页签使用颜色一"/>
+					<Item id="44112" name="页签使用颜色二"/>
+					<Item id="44113" name="页签使用颜色三"/>
+					<Item id="44114" name="页签使用颜色四"/>
+					<Item id="44115" name="页签使用颜色五"/>
 					<Item id="44081" name="开启/关闭工程面板1"/>
 					<Item id="44082" name="开启/关闭工程面板2"/>
 					<Item id="44083" name="开启/关闭工程面板3"/>
@@ -778,6 +787,16 @@ Translation note:
 				<Item id="20015" name="导入..."/>
 				<Item id="20016" name="导出..."/>
 				<Item id="20017" name="取消停靠"/>
+
+				<Item id="0" name="色彩格式"/>
+				<Item id="1" name="字型色彩"/>
+				<Item id="2" name="背景色彩"/>
+				<Item id="3" name="字型格式"/>
+				<Item id="4" name="字型名称："/>
+				<Item id="5" name="字型大小"/>
+				<Item id="6" name="粗体"/>
+				<Item id="7" name="斜体"/>
+				<Item id="8" name="底线"/>
 				<StylerDialog title="格式设计框">
 					<Item id="25030" name="字体"/>
 					<Item id="25006" name="前景颜色"/>
