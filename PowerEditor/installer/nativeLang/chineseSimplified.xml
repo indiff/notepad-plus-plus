@@ -5,7 +5,7 @@ Translation note:
 2. All the comments are for explanation, they are not for translation.
 -->
 <NotepadPlus>
-	<Native-Langue name="简体中文" filename="chineseSimplified.xml" version="8.6.8">
+	<Native-Langue name="简体中文" filename="chineseSimplified.xml" version="8.7.3">
 		<Menu>
 			<Main>
 				<!-- Main Menu Entries -->
@@ -357,6 +357,7 @@ Translation note:
 					<Item id="10005" name="移动到最前"/>
 					<Item id="10006" name="移动到最后"/>
 					<Item id="46001" name="语言格式设置..."/>
+					<Item id="46016" name="无(普通文本)"/>
 					<Item id="46250" name="自定义语言格式..."/>
 					<Item id="46300" name="打开用户自定义语言文件夹..."/>
 					<Item id="46301" name="Notepad++ 用户自定义语言仓库"/>
@@ -429,6 +430,7 @@ Translation note:
 				<Item CMDID="41019" name="打开所在文件夹"/>
 				<Item CMDID="41020" name="打开所在文件夹(命令行)"/>
 				<Item CMDID="41025" name="打开所在文件夹工作区"/>
+				<Item CMDID="41026" name="除固定全部关闭"/>
 				<Item CMDID="41023" name="使用默认查看器打开"/>
 				<Item CMDID="41017" name="重命名..."/>
 				<Item CMDID="41016" name="移至回收站"/>
@@ -448,6 +450,7 @@ Translation note:
 				<Item CMDID="10003" name="移动到新窗口"/>
 				<Item CMDID="10004" name="在新窗口中打开"/>
 				<Item CMDID="4" name="对标签使用颜色"/>
+				<Item CMDID="44048" name="固定标签" alternativeName="取消固定标签"/>
 				<Item CMDID="44111" name="使用颜色1"/>
 				<Item CMDID="44112" name="使用颜色2"/>
 				<Item CMDID="44113" name="使用颜色3"/>
@@ -734,14 +737,14 @@ Translation note:
 					<Item id="44113" name="页签使用颜色三"/>
 					<Item id="44114" name="页签使用颜色四"/>
 					<Item id="44115" name="页签使用颜色五"/>
-					<Item id="44081" name="开启/关闭工程面板1"/>
-					<Item id="44082" name="开启/关闭工程面板2"/>
-					<Item id="44083" name="开启/关闭工程面板3"/>
-					<Item id="44085" name="开启/关闭文件夹工作区"/>
-					<Item id="44080" name="开启/关闭文档结构图"/>
-					<Item id="44070" name="开启/关闭文档列表"/>
-					<Item id="44084" name="开启/关闭函数列表"/>
-					<Item id="50005" name="开启/关闭宏录制"/>
+					<Item id="44081" name="切换工程面板1"/>
+					<Item id="44082" name="切换工程面板2"/>
+					<Item id="44083" name="切换工程面板3"/>
+					<Item id="44085" name="切换文件夹工作区"/>
+					<Item id="44080" name="切换文档结构图"/>
+					<Item id="44070" name="切换文档列表"/>
+					<Item id="44084" name="切换函数列表"/>
+					<Item id="50005" name="切换宏录制"/>
 					<Item id="44104" name="切换到工程面板1"/>
 					<Item id="44105" name="切换到工程面板2"/>
 					<Item id="44106" name="切换到工程面板3"/>
@@ -1092,9 +1095,9 @@ Translation note:
 					<Item id="6405" name="编码"/>
 					<Item id="6406" name="ANSI"/>
 					<Item id="6407" name="UTF-8 (无BOM)"/>
-					<Item id="6408" name="UTF-8 含 BOM"/>
-					<Item id="6409" name="UTF-16 Big Endian 含 BOM"/>
-					<Item id="6410" name="UTF-16 Little Endian 含 BOM"/>
+					<Item id="6408" name="UTF-8 (含BOM)"/>
+					<Item id="6409" name="UTF-16 Big Endian (含BOM)"/>
+					<Item id="6410" name="UTF-16 Little Endian (含BOM)"/>
 					<Item id="6411" name="默认语言 :"/>
 					<Item id="6419" name="新建文档"/>
 					<Item id="6420" name="应用于打开 ANSI 文件"/>
@@ -1242,8 +1245,8 @@ Translation note:
 					<Item id="6810" name="单词自动补全"/>
 					<Item id="6816" name="参数与单词"/>
 					<Item id="6869" name="插入选中项"/>
-					<Item id="6870" name="TAB"/><!-- TAB key on the keyboard, it's not necessary to translate it normally -->
-					<Item id="6871" name="ENTER(回车)"/><!-- ENTER key on the keyboard, it's not necessary to translate it normally -->
+					<Item id="6870" name="TAB(制表键)"/><!-- TAB key on the keyboard, it's not necessary to translate it normally -->
+					<Item id="6871" name="ENTER(回车键)"/><!-- ENTER key on the keyboard, it's not necessary to translate it normally -->
 					<Item id="6824" name="忽略数字"/>
 					<Item id="6811" name="从第"/>
 					<Item id="6813" name="个字符开始"/>
@@ -1327,10 +1330,17 @@ Translation note:
 
 				<MISC title="其他">
 					<ComboBox id="6347">
-						<Element name="启用"/>
+						<Element name="当前文件启用"/>
 						<Element name="对所有已打开文件启用"/>
 						<Element name="禁用"/>
 					</ComboBox>
+					<ComboBox id="6307">
+						<Element name="无动作"/>
+						<Element name="缩小至"/>
+						<Element name="关闭至"/>
+						<Element name="最小化 / 关闭至"/>
+					</ComboBox>
+					<Item id="6308" name="系统托盘"/>
 					<Item id="6312" name="自动检测文件状态"/>
 					<Item id="6313" name="自动更新文件"/>
 					<Item id="6325" name="更新后定位到末行"/>

@@ -3901,13 +3901,6 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 		}
 		break;
 
-		case NPPM_INTERNAL_REFRESHTABAR:
-		{
-			::InvalidateRect(_mainDocTab.getHSelf(), NULL, TRUE);
-			::InvalidateRect(_subDocTab.getHSelf(), NULL, TRUE);
-
-			break;
-		}
 		case NPPM_INTERNAL_LOCKTABBAR:
 		{
 			bool isDrag = TabBarPlus::doDragNDropOrNot();
@@ -3967,7 +3960,7 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 				::SendMessage(_subDocTab.getHSelf(), WM_SETFONT, reinterpret_cast<WPARAM>(hf), MAKELPARAM(TRUE, 0));
 			}
 
-			::SendMessage(_pPublicInterface->getHSelf(), NPPM_INTERNAL_REFRESHTABAR, 0, 0);
+			::SendMessage(_pPublicInterface->getHSelf(), WM_SIZE, 0, 0);
 
 			_mainDocTab.refresh();
 			_subDocTab.refresh();
