@@ -10,4 +10,6 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "daily"
+      time: "01:50"  # 对应中国时区 15:00
+      timezone: "Asia/Shanghai"
