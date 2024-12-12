@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <time.h>
 #include <locale>
+#include <codecvt>
 #include <sys/stat.h>
 #include "Buffer.h"
 #include "Scintilla.h"
@@ -131,8 +132,6 @@ void Buffer::setLangType(LangType lang, const wchar_t* userLangName)
 	_lang = lang;
 	if (_lang == L_USER)
 		_userLangExt = userLangName;
-	else if (_lang == L_ASCII)
-		_encoding = NPP_CP_DOS_437;
 
 	_needLexer = true;	//change of lang means lexern needs updating
 	doNotify(BufferChangeLanguage | BufferChangeLexing);
@@ -167,7 +166,8 @@ void Buffer::updateTimeStamp()
 				wstring nppIssueLog = nppParam.getUserPath();
 				pathAppend(nppIssueLog, issueFn);
 
-				std::string msg = wstring2string(_fullPathName, CP_UTF8);
+				std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+				std::string msg = converter.to_bytes(_fullPathName);
 				char buf[1024];
 				sprintf(buf, "  in updateTimeStamp(): timeStampLive (%lu/%lu) < _timeStamp (%lu/%lu)", timeStampLive.dwLowDateTime, timeStampLive.dwHighDateTime, _timeStamp.dwLowDateTime, _timeStamp.dwHighDateTime);
 				msg += buf;
@@ -341,7 +341,8 @@ bool Buffer::checkFileState() // returns true if the status has been changed (it
 					wstring nppIssueLog = nppParam.getUserPath();
 					pathAppend(nppIssueLog, issueFn);
 
-					std::string msg = wstring2string(_fullPathName, CP_UTF8);
+					std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+					std::string msg = converter.to_bytes(_fullPathName);
 					char buf[1024];
 					sprintf(buf, "  in checkFileState(): attributes.ftLastWriteTime (%lu/%lu) < _timeStamp (%lu/%lu)", attributes.ftLastWriteTime.dwLowDateTime, attributes.ftLastWriteTime.dwHighDateTime, _timeStamp.dwLowDateTime, _timeStamp.dwHighDateTime);
 					msg += buf;
@@ -728,7 +729,7 @@ BufferID FileManager::loadFile(const wchar_t* filename, Document doc, int encodi
 	if (fileSize == -1)
 	{
 		// we cannot continue (or Scintilla will throw SC_STATUS_FAILURE in the loadFileData later)
-		// - no error message here as this can be also a dir with files to open or globbing attempt
+		::MessageBox(_pNotepadPlus->_pEditView->getHSelf(), L"Cannot obtain the file size before loading!", L"File to load size-check failed", MB_OK | MB_APPLMODAL);
 		return BUFFER_INVALID;
 	}
 
@@ -814,20 +815,18 @@ BufferID FileManager::loadFile(const wchar_t* filename, Document doc, int encodi
 		if (res != 0) // res == 1 or res == -1
 			newBuf->_timeStamp = fileNameTimestamp;
 
-		// restore the encoding (ANSI based) while opening the existing file
-		if (newBuf->_lang == L_ASCII)
-			newBuf->setEncoding(NPP_CP_DOS_437);
-		else
-			newBuf->setEncoding(-1);
-
-		// if not a large file, no file extension, and the language has been detected,  we use the detected value
-		if (!newBuf->_isLargeFile && ((newBuf->getLangType() == L_TEXT) && (loadedFileFormat._language != L_TEXT)))
-			newBuf->setLangType(loadedFileFormat._language);
-
-		setLoadedBufferEncodingAndEol(newBuf, UnicodeConvertor, loadedFileFormat._encoding, loadedFileFormat._eolFormat);
-
 		_buffers.push_back(newBuf);
 		++_nbBufs;
+		Buffer* buf = _buffers.at(_nbBufs - 1);
+
+		// restore the encoding (ANSI based) while opening the existing file
+		buf->setEncoding(-1);
+
+		// if not a large file, no file extension, and the language has been detected,  we use the detected value
+		if (!newBuf->_isLargeFile && ((buf->getLangType() == L_TEXT) && (loadedFileFormat._language != L_TEXT)))
+			buf->setLangType(loadedFileFormat._language);
+
+		setLoadedBufferEncodingAndEol(buf, UnicodeConvertor, loadedFileFormat._encoding, loadedFileFormat._eolFormat);
 
 		//determine buffer properties
 		++_nextBufferID;
@@ -1011,10 +1010,7 @@ For untitled document (new  4)
 	1. track UNTITLED_NAME@CREATION_TIMESTAMP (backup\new  4@198776) in session.xml.
 */
 
-// The previously used std::mutex here crashed with the _RESOURCE_DEADLOCK_WOULD_OCCUR code (0x5) when entered recursively from the same thread!
-// Ref: https://en.cppreference.com/w/cpp/thread/mutex/lock
-// And the std::recursive_mutex has not its own locking counter method (and its native_handle() method is not implemented on the Windows platform).
-StdMutexEx g_backupMutex;
+std::mutex backup_mutex;
 
 bool FileManager::backupCurrentBuffer()
 {
@@ -1022,15 +1018,7 @@ bool FileManager::backupCurrentBuffer()
 	if (buffer->isLargeFile())
 		return false;
 
-	std::lock_guard<StdMutexEx> lock(g_backupMutex);
-	if (g_backupMutex.lockCount() > 1)
-	{
-		// BAD
-		// - being here means that probably something unexpected happens like the file-saving has been blocked/stalled somehow!
-		// - in such a situation, we definitely do not want to stack up multiple backup requests from the same thread here,
-		//   so returning immediately (this also decrements the current lock-holder counter back to 1)
-		return false;
-	}
+	std::lock_guard<std::mutex> lock(backup_mutex);
 
 	bool result = false;
 	bool hasModifForSession = false;
@@ -1097,7 +1085,7 @@ bool FileManager::backupCurrentBuffer()
 			{
 				size_t lengthDoc = _pNotepadPlus->_pEditView->getCurrentDocLen();
 				char* buf = (char*)_pNotepadPlus->_pEditView->execute(SCI_GETCHARACTERPOINTER);	//to get characters directly from Scintilla buffer
-				bool isWrittenSuccessful = false;
+				boolean isWrittenSuccessful = false;
 
 				if (encoding == -1) //no special encoding; can be handled directly by Utf8_16_Write
 				{
@@ -1259,7 +1247,7 @@ SavingStatus FileManager::saveBuffer(BufferID id, const wchar_t* filename, bool 
 
 		size_t lengthDoc = _pscratchTilla->getCurrentDocLen();
 		char* buf = (char*)_pscratchTilla->execute(SCI_GETCHARACTERPOINTER);	//to get characters directly from Scintilla buffer
-		bool isWrittenSuccessful = false;
+		boolean isWrittenSuccessful = false;
 
 		if (encoding == -1) //no special encoding; can be handled directly by Utf8_16_Write
 		{

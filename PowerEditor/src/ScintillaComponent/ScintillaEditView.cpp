@@ -879,8 +879,6 @@ void ScintillaEditView::setEmbeddedJSLexer()
 	execute(SCI_STYLESETEOLFILLED, SCE_HJ_DEFAULT, true);
 	execute(SCI_STYLESETEOLFILLED, SCE_HJ_COMMENT, true);
 	execute(SCI_STYLESETEOLFILLED, SCE_HJ_COMMENTDOC, true);
-	execute(SCI_STYLESETEOLFILLED, SCE_HJ_TEMPLATELITERAL, true);
-	execute(SCI_STYLESETEOLFILLED, SCE_HJA_TEMPLATELITERAL, true);
 }
 
 void ScintillaEditView::setJsonLexer(bool isJson5)
@@ -1861,11 +1859,12 @@ void ScintillaEditView::defineDocType(LangType typeDoc)
 			setSpecialStyle(nfoStyle);
 			execute(SCI_STYLECLEARALL);
 
-			Buffer* buf = MainFileManager.getBufferByID(_currentBufferID);
+			Buffer * buf = MainFileManager.getBufferByID(_currentBufferID);
 
-			if (buf->getEncoding() == NPP_CP_DOS_437)
+			if (buf->getEncoding() != NPP_CP_DOS_437)
 			{
-				MainFileManager.reloadBuffer(buf);
+			   buf->setEncoding(NPP_CP_DOS_437);
+			   ::SendMessage(_hParent, WM_COMMAND, IDM_FILE_RELOAD, 0);
 			}
 		}
 		break;

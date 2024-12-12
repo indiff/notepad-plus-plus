@@ -458,7 +458,6 @@ BEGIN
         POPUP "Close &Multiple Documents"
         BEGIN
             MENUITEM "Close All but Active Document",    IDM_FILE_CLOSEALL_BUT_CURRENT
-            MENUITEM "Close All but Pinned Documents",   IDM_FILE_CLOSEALL_BUT_PINNED
             MENUITEM "Close All to the Left",            IDM_FILE_CLOSEALL_TOLEFT
             MENUITEM "Close All to the Right",           IDM_FILE_CLOSEALL_TORIGHT
             MENUITEM "Close All Unchanged",              IDM_FILE_CLOSEALL_UNCHANGED
@@ -1374,7 +1373,6 @@ BEGIN
     //LTEXT           "20th-Year Anniversary",IDC_AUTHOR_NAME,85,38,100,8
     //LTEXT           "The short story",IDC_HOME_ADDR,85,48,126,10
 	//LTEXT           "Support Taiwan's Sovereignty", IDC_AUTHOR_NAME, 85, 38, 120, 10
-	LTEXT           "支持台湾统一", IDC_AUTHOR_NAME, 85, 38, 130, 10
 	//LTEXT           "支持台灣獨立", IDC_AUTHOR_NAME, 85, 38, 120, 10
 	//LTEXT           "Support Taiwan's return to the UN", IDC_AUTHOR_NAME, 85, 38, 130, 10
     LTEXT           "Home:",IDC_STATIC,21,58,47,8

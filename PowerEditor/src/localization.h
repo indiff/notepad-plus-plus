@@ -41,8 +41,7 @@ class NativeLangSpeaker {
 public:
 	void init(TiXmlDocumentA *nativeLangDocRootA, bool loadIfEnglish = false);
 	void changeConfigLang(HWND hDlg);
-	void changeLangTabContextMenu(HMENU hCM) const;
-	void getAlternativeNameFromTabContextMenu(std::wstring& output, int cmdID, bool isAlternative, const std::wstring& defaultValue) const;
+	void changeLangTabContextMenu(HMENU hCM);
 	TiXmlNodeA * searchDlgNode(TiXmlNodeA *node, const char *dlgTagName);
 	bool changeDlgLang(HWND hDlg, const char *dlgTagName, char *title = NULL, size_t titleMaxSize = 0);
 	void changeLangTabDropContextMenu(HMENU hCM);

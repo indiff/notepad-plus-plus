@@ -634,7 +634,7 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 			if (nppParam.getNativeLangA()) // if nativeLangA is not NULL, then we can be sure the default language (English) is not used
 			{
 				string fn = localizationSwitcher.getFileName();
-				wstring fnW = string2wstring(fn, CP_UTF8);
+				wstring fnW = s2ws(fn);
 				lang = localizationSwitcher.getLangFromXmlFileName(fnW.c_str());
 			}
 			auto index = ::SendDlgItemMessage(_hSelf, IDC_COMBO_LOCALIZATION, CB_FINDSTRINGEXACT, static_cast<WPARAM>(-1), reinterpret_cast<LPARAM>(lang.c_str()));
@@ -3298,7 +3298,7 @@ intptr_t CALLBACK IndentationSubDlg::run_dlgProc(UINT message, WPARAM wParam, LP
 
 			wstring tipAutoIndentAdvanced2show = pNativeSpeaker->getLocalizedStrFromID("autoIndentAdvanced-tip",
 				L"Enable smart indentation for \"C-like\" languages and Python. The \"C-like\" languages include:\n"\
-				L"C, C++, Java, C#, Objective-C, PHP, JavaScript, JSP, CSS, Perl, Rust, PowerShell, TypeScript, Go, Swift and JSON.\n"\
+				L"C, C++, Java, C#, Objective-C, PHP, JavaScript, JSP, CSS, Perl, Rust, PowerShell and JSON.\n"\
 				L"\n"\
 				L"If you select advanced mode but do not edit files in the aforementioned languages, the indentation will remain in basic mode.");
 
