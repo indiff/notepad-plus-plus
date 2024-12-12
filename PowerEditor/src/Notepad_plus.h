@@ -46,9 +46,12 @@
 #include <vector>
 #include <iso646.h>
 #include <chrono>
+#include <atomic>
 
 extern std::chrono::steady_clock::time_point g_nppStartTimePoint;
 extern std::chrono::steady_clock::duration g_pluginsLoadingTime;
+
+extern std::atomic<bool> g_bNppExitFlag;
 
 
 #define MENU 0x01
@@ -179,6 +182,7 @@ public:
 	bool fileClose(BufferID id = BUFFER_INVALID, int curView = -1);	//use curView to override view to close from
 	bool fileCloseAll(bool doDeleteBackup, bool isSnapshotMode = false);
 	bool fileCloseAllButCurrent();
+	void fileCloseAllButPinned();
 	bool fileCloseAllGiven(const std::vector<BufferViewInfo>& krvecBuffer);
 	bool fileCloseAllToLeft();
 	bool fileCloseAllToRight();

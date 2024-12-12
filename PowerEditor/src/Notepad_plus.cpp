@@ -3632,7 +3632,8 @@ void Notepad_plus::maintainIndentation(wchar_t ch)
 
 	if (type == L_C || type == L_CPP || type == L_JAVA || type == L_CS || type == L_OBJC ||
 		type == L_PHP || type == L_JS || type == L_JAVASCRIPT || type == L_JSP || type == L_CSS || type == L_PERL || 
-		type == L_RUST || type == L_POWERSHELL || type == L_JSON || type == L_JSON5 || autoIndentMode == ExternalLexerAutoIndentMode::C_Like)
+		type == L_RUST || type == L_POWERSHELL || type == L_JSON || type == L_JSON5 || type == L_TYPESCRIPT || type == L_GOLANG || type == L_SWIFT || 
+		autoIndentMode == ExternalLexerAutoIndentMode::C_Like)
 	{
 		if (((eolMode == SC_EOL_CRLF || eolMode == SC_EOL_LF) && ch == '\n') ||
 			(eolMode == SC_EOL_CR && ch == '\r'))
@@ -4607,9 +4608,9 @@ void Notepad_plus::hideView(int whichOne)
 	// resize the main window
 	::SendMessage(_pPublicInterface->getHSelf(), WM_SIZE, 0, 0);
 
-	switchEditViewTo(otherFromView(whichOne));
 	auto viewToDisable = static_cast<UCHAR>(whichOne == SUB_VIEW ? WindowSubActive : WindowMainActive);
 	_mainWindowStatus &= static_cast<UCHAR>(~viewToDisable);
+	switchEditViewTo(otherFromView(whichOne));
 }
 
 bool Notepad_plus::loadStyles()
@@ -6699,7 +6700,7 @@ void Notepad_plus::notifyBufferChanged(Buffer * buffer, int mask)
 	if (mask & (BufferChangeDirty|BufferChangeFilename))
 	{
 		if (mask & BufferChangeFilename)
-			::SendMessage(_pPublicInterface->getHSelf(), NPPM_INTERNAL_REFRESHTABAR, 0, 0);
+			::SendMessage(_pPublicInterface->getHSelf(), WM_SIZE, 0, 0);
 
 		checkDocState();
 		setTitle();
@@ -8652,23 +8653,22 @@ void Notepad_plus::launchDocumentBackupTask()
 
 DWORD WINAPI Notepad_plus::backupDocument(void * /*param*/)
 {
-	bool isSnapshotMode = true;
-	while (isSnapshotMode)
-	{
-		NppParameters& nppParam = NppParameters::getInstance();
+	NppGUI& nppGUI = (NppParameters::getInstance()).getNppGUI();
 
-		size_t timer = nppParam.getNppGUI()._snapshotBackupTiming;
+	while (!g_bNppExitFlag.load() && nppGUI.isSnapshotMode())
+	{
+		size_t timer = nppGUI._snapshotBackupTiming;
 		if (timer < 1000)
 			timer = 1000;
 
 		::Sleep(DWORD(timer));
 
-		isSnapshotMode = nppParam.getNppGUI().isSnapshotMode();
-		if (!isSnapshotMode)
+		if (g_bNppExitFlag.load() || !nppGUI.isSnapshotMode())
 			break;
 
 		::SendMessage(Notepad_plus_Window::gNppHWND, NPPM_INTERNAL_SAVEBACKUP, 0, 0);
 	}
+
 	return ERROR_SUCCESS;
 }
 

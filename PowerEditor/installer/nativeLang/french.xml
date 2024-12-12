@@ -5,7 +5,7 @@ Translation note:
 2. All the comments are for explanation, they are not for translation.
 -->
 <NotepadPlus>
-	<Native-Langue name="Français" filename="french.xml" version="8.7.2">
+	<Native-Langue name="Français" filename="french.xml" version="8.7.3">
 		<Menu>
 			<Main>
 				<!-- Main Menu Entries -->
@@ -93,6 +93,7 @@ Translation note:
 					<Item id="41003" name="Fermer"/>
 					<Item id="41004" name="Fermer tout"/>
 					<Item id="41005" name="Fermer tout sauf le document actuel"/>
+					<Item id="41026" name="Fermer tout sauf les documents épinglés"/>
 					<Item id="41009" name="Fermer tout à gauche"/>
 					<Item id="41018" name="Fermer tout à droite"/>
 					<Item id="41024" name="Fermer tous les documents non-modifiés"/>
@@ -418,10 +419,12 @@ Translation note:
 			<TabBar>
 				<Item CMDID="41003" name="Fermer"/>
 				<Item CMDID="0" name="Fermer plusieurs onglets"/>
-				<Item CMDID="41005" name="Fermer tout sauf ce fichier"/>
+				<Item CMDID="41005" name="Fermer tout sauf ce document"/>
+				<Item CMDID="41026" name="Fermer tout sauf les documents épinglés"/>
 				<Item CMDID="41009" name="Fermer les onglets sur la gauche"/>
 				<Item CMDID="41018" name="Fermer les onglets sur la droite"/>
 				<Item CMDID="41024" name="Fermer tous les documents non-modifiés"/>
+				<Item CMDID="44048" name="Epingler l’onglet" alternativeName="Désépingler l’onglet"/>
 				<Item CMDID="41006" name="Enregistrer"/>
 				<Item CMDID="41008" name="Enregistrer sous..."/>
 				<Item CMDID="1" name="Ouvrir dans"/>
@@ -955,7 +958,7 @@ Translation note:
 					<Item id="6108" name="Verrouiller (pas de glisser-déposer)"/>
 					<Item id="6109" name="Colorer les onglets inactifs"/>
 					<Item id="6110" name="Barre colorée sur l’onglet actif"/>
-					<Item id="6112" name="Bouton de fermeture sur chaque onglet"/>
+					<Item id="6112" name="Activer bouton de fermeture"/>
 					<Item id="6113" name="Fermer l’onglet par double clic"/>
 					<Item id="6115" name="Activer l’option épingler l’onglet"/>
 					<Item id="6118" name="Cacher"/>
