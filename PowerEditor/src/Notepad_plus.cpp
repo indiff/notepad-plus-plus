@@ -8650,31 +8650,23 @@ void Notepad_plus::launchDocumentBackupTask()
 		::CloseHandle(hThread);
 }
 
-// Notepad++ backup working thread
-extern StdMutexEx g_backupMutex;
+
 DWORD WINAPI Notepad_plus::backupDocument(void * /*param*/)
 {
-	NppParameters& nppParam = NppParameters::getInstance();
+	NppGUI& nppGUI = (NppParameters::getInstance()).getNppGUI();
 
-	while (nppParam.getNppGUI().isSnapshotMode() && !g_bNppExitFlag.load())
+	while (!g_bNppExitFlag.load() && nppGUI.isSnapshotMode())
 	{
-		size_t timer = nppParam.getNppGUI()._snapshotBackupTiming;
+		size_t timer = nppGUI._snapshotBackupTiming;
 		if (timer < 1000)
 			timer = 1000;
 
 		::Sleep(DWORD(timer));
 
-		if (!nppParam.getNppGUI().isSnapshotMode() || g_bNppExitFlag.load())
+		if (g_bNppExitFlag.load() || !nppGUI.isSnapshotMode())
 			break;
 
-		if (g_backupMutex.isOwner())
-		{
-			// probably already busy with the previous backup request issued from this thread
-			// - we do not want to stack up the periodic backup requests here via multiple PostMessages
-			continue; // rather try in the next time slot
-		}
-
-		::PostMessage(Notepad_plus_Window::gNppHWND, NPPM_INTERNAL_SAVEBACKUP, 0, 0);
+		::SendMessage(Notepad_plus_Window::gNppHWND, NPPM_INTERNAL_SAVEBACKUP, 0, 0);
 	}
 
 	return ERROR_SUCCESS;
