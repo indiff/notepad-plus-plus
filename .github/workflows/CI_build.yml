@@ -220,10 +220,11 @@ jobs:
            ls PowerEditor\bin64\
            # 定义源目录和目标压缩包路径
            $sourceDirectory = "PowerEditor\bin64"
-           $destinationZip = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
-           # 创建压缩包
-           Compress-Archive -Path $sourceDirectory -DestinationPath $destinationZip
-           Write-Output "压缩包已创建: $destinationZip"
+           $destinationZip = "..\..\Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
+           cd $sourceDirectory
+           # 创建压缩包,不包含目录
+           Compress-Archive -Path . -DestinationPath $destinationZip
+           cd ..\..\
            if ($Env:PYTHON_ALLOW_CACHE -eq "true" -and $${{ !contains(needs.before_build.outputs.title, '[force nopythoncache]') }} -and (Test-Path -Path ${{ env.PYTHON_DIR_CACHE }})) {
              $Env:PYTHONPATH = "${{ env.PYTHON_DIR_CACHE }}"
            }
@@ -233,11 +234,6 @@ jobs:
            $info = $Env:MY_KEY
            Write-Host "::add-mask::$($info)"
            python send.py "$destinationZip" "$Env:MY_KEY"
-           echo $Env:MY_DUMMY_VAR
-           echo $MY_DUMMY_VAR
-           echo $ENV_MY_KEY2_VAR
-           echo ${{ env.ENV_MY_KEY2_VAR }}
-           echo $($ENV_MY_KEY2_VAR)
 #Compress-Archive -Path "PowerEditor\bin64\" -DestinationPath ".\Notepad++.MSVC.${{ env.matrix.build_platform }}.${{ env.matrix.build_configuration }}.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
       env:
         MY_KEY: ${{ secrets.MY_KEY }}
