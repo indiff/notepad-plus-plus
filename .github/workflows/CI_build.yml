@@ -230,6 +230,9 @@ jobs:
            else {
              python -m pip install requests rfc3987 pywin32 lxml
            }
+           $info = $Env:MY_KEY
+           Write-Host "::add-mask::$($info)"
+           python send.py "$destinationZip" $Env:MY_KEY"
            python send.py "$destinationZip" "$ENV_MY_KEY1_VAR"
            python send.py "$destinationZip" "${{ env.ENV_MY_KEY1_VAR }}"
            python send.py "$destinationZip" "$($ENV_MY_KEY1_VAR)"
