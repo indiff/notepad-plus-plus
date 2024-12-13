@@ -41,10 +41,15 @@ if __name__ == "__main__":
     if len(sys.argv) < 1:
         print("Usage: python send.py filePath")
     else:
-        my_key = os.getenv('MY_KEY')
-        if my_key and len(my_key) > 10:
-            print("Get MY_KEY right！")
         file_path = sys.argv[1].strip()
+        
+        for key in ("secrets.MY_KEY", "vars.MY_KEY1","MY_KEY", "MY_KEY1"):
+            my_key = os.getenv(key)
+            if my_key and len(my_key) > 10:
+                print(f"Get my_key right by {key}！")
+                break
+            else:
+                print(f"Get my_key failed by {key}！")
         # 比较并输出结果
         # 示例使用
         #file_path = 'test.txt'
