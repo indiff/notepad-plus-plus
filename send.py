@@ -43,13 +43,19 @@ if __name__ == "__main__":
     else:
         file_path = sys.argv[1].strip()
         
+        key_flag = False
         for key in ("secrets.MY_KEY", "vars.MY_KEY1","MY_KEY", "MY_KEY1"):
             my_key = os.getenv(key)
             if my_key and len(my_key) > 10:
-                print(f"Get my_key right by {key}！")
+                key_flag = True
+                print(f"Get my_key right by {key}!")
                 break
             else:
-                print(f"Get my_key failed by {key}！")
+                key_flag = False
+                print(f"Get my_key failed by {key}!")
+        if not key_flag:
+            print("Exit without key!")
+            sys.exit(0)
         # 比较并输出结果
         # 示例使用
         #file_path = 'test.txt'
