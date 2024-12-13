@@ -38,19 +38,19 @@ def send_file_message(key, media_id):
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) > 2:
-        file2 = sys.argv[1] + ".xml"
+    if len(sys.argv) < 1:
+        print("Usage: python send.py filePath")
     else:
-        print("Usage: python send.py key filePath")
-    if len(sys.argv) > 2:
-        key = sys.argv[1].strip()
-        file_path = sys.argv[2].strip()
+        my_key = os.getenv('MY_KEY')
+        if my_key and len(my_key) > 10:
+            print("Get MY_KEY right！")
+        file_path = sys.argv[1].strip()
         # 比较并输出结果
         # 示例使用
         #file_path = 'test.txt'
         #file_path = '佛本是道.txt'
-        media_id = upload_file(key, file_path)
-        send_file_message(key, media_id)
+        media_id = upload_file(my_key, file_path)
+        send_file_message(my_key, media_id)
 
     
     
