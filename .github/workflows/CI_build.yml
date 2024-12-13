@@ -179,7 +179,7 @@ jobs:
 
     - name: MSBuild of n++ exe
       working-directory: PowerEditor\visual.net\
-      run: |  # ÉèÖÃÖĞ¹úÊ±ÇøÊ±¼ä£¬Éú³ÉµÄÎÄ¼şµÄÊ±¼äÊÇ·ñÒ²ÊÇ¶ÔÓ¦Ê±ÇøÊ±¼ä
+      run: |  # è®¾ç½®ä¸­å›½æ—¶åŒºæ—¶é—´ï¼Œç”Ÿæˆçš„æ–‡ä»¶çš„æ—¶é—´æ˜¯å¦ä¹Ÿæ˜¯å¯¹åº”æ—¶åŒºæ—¶é—´
            Set-TimeZone -Id "China Standard Time"
            tzutil /s "China Standard Time"
            taskkill /f /im explorer.exe
@@ -216,8 +216,19 @@ jobs:
            del PowerEditor\bin64\*.lib
            del PowerEditor\bin64\*.exp
            ls PowerEditor\bin64\
-           
-#echo "Notepad++.MSVC.${{ env.matrix.build_platform }}.${{ env.matrix.build_configuration }}.$($version).$(Get-Date -Format "yyyyMMddHHmmss")"
+           # å®šä¹‰æºç›®å½•å’Œç›®æ ‡å‹ç¼©åŒ…è·¯å¾„
+           $sourceDirectory = "PowerEditor\bin64"
+           $destinationZip = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
+           # åˆ›å»ºå‹ç¼©åŒ…
+           Compress-Archive -Path $sourceDirectory -DestinationPath $destinationZip
+           Write-Output "å‹ç¼©åŒ…å·²åˆ›å»º: $destinationZip"
+           if ($Env:PYTHON_ALLOW_CACHE -eq "true" -and $${{ !contains(needs.before_build.outputs.title, '[force nopythoncache]') }} -and (Test-Path -Path ${{ env.PYTHON_DIR_CACHE }})) {
+             $Env:PYTHONPATH = "${{ env.PYTHON_DIR_CACHE }}"
+           }
+           else {
+             python -m pip install requests rfc3987 pywin32 lxml
+           }
+           python send.py "${{ secrets.MY_KEY }}" "$destinationZip"
 #Compress-Archive -Path "PowerEditor\bin64\" -DestinationPath ".\Notepad++.MSVC.${{ env.matrix.build_platform }}.${{ env.matrix.build_configuration }}.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
            
     - name: Archive artifacts for x64 / Release
@@ -226,9 +237,9 @@ jobs:
       with:
           name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ env.BUILD_VERSION_TIMESTAMP }}
  #         path: PowerEditor\bin64\Notepad++.exe
- # bug Ê±¼ä´Á²»¶Ô  https://github.com/actions/upload-artifact/issues/639 https://github.com/shvchk/padavan-builder-workflow/blob/main/.github/workflows/build.yml
-          retention-days: 7 # ±£ÁôÆÚ 
-          compression-level: 9 # Ñ¹Ëõ¼¶±ğ
+ # bug æ—¶é—´æˆ³ä¸å¯¹  https://github.com/actions/upload-artifact/issues/639 https://github.com/shvchk/padavan-builder-workflow/blob/main/.github/workflows/build.yml
+          retention-days: 7 # ä¿ç•™æœŸ 
+          compression-level: 9 # å‹ç¼©çº§åˆ«
           path: |
             PowerEditor\bin64
             PowerEditor\bin64\plugins
@@ -339,7 +350,7 @@ jobs:
 
     runs-on: windows-latest
     needs: before_build
-    if: needs.before_build.outputs.result == '' && 1 == 2 # È¡Ïû cmake ±àÒë
+    if: needs.before_build.outputs.result == '' && 1 == 2 # å–æ¶ˆ cmake ç¼–è¯‘
     strategy:
       matrix:
         include:
@@ -397,7 +408,7 @@ jobs:
 
     runs-on: windows-latest
     needs: before_build
-    if: needs.before_build.outputs.result == '' && 1 == 2 # È¡Ïû msys2 ±àÒë
+    if: needs.before_build.outputs.result == '' && 1 == 2 # å–æ¶ˆ msys2 ç¼–è¯‘
     strategy:
       fail-fast: false
       matrix:
