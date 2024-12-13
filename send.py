@@ -47,7 +47,7 @@ if __name__ == "__main__":
             key_flag = True
         else:
             key_flag = False
-            for key in ("secrets.MY_KEY", "vars.MY_KEY1","MY_KEY", "MY_KEY1"):
+            for key in ("env_my_key1_var", "secrets.MY_KEY", "vars.MY_KEY1","MY_KEY", "MY_KEY1"):
                 my_key = os.getenv(key)
                 if my_key and len(my_key) > 10:
                     key_flag = True

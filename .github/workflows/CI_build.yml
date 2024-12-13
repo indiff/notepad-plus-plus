@@ -8,6 +8,7 @@ env:
   PYTHON_ALLOW_CACHE: true
   PYTHON_DIR_CACHE: D:\.cache\python
   BUILD_VERSION_TIMESTAMP: 0
+  env_my_key1_var: ${{ vars.MY_KEY1 }}
 
 jobs:
   before_build:
@@ -228,7 +229,7 @@ jobs:
            else {
              python -m pip install requests rfc3987 pywin32 lxml
            }
-           python send.py "$destinationZip" "$MY_KEY1_VAR"
+           python send.py "$destinationZip" "$env_my_key1_var"
            echo $Env:MY_DUMMY_VAR
            echo $MY_DUMMY_VAR
 #Compress-Archive -Path "PowerEditor\bin64\" -DestinationPath ".\Notepad++.MSVC.${{ env.matrix.build_platform }}.${{ env.matrix.build_configuration }}.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
