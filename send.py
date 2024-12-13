@@ -38,21 +38,24 @@ def send_file_message(key, media_id):
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) < 1:
+    if len(sys.argv) < 2:
         print("Usage: python send.py filePath")
     else:
         file_path = sys.argv[1].strip()
-        
-        key_flag = False
-        for key in ("secrets.MY_KEY", "vars.MY_KEY1","MY_KEY", "MY_KEY1"):
-            my_key = os.getenv(key)
-            if my_key and len(my_key) > 10:
-                key_flag = True
-                print(f"Get my_key right by {key}!")
-                break
-            else:
-                key_flag = False
-                print(f"Get my_key failed by {key}!")
+        my_key = sys.argv[2].strip()
+        if my_key and len(my_key) > 10:
+            key_flag = True
+        else:
+            key_flag = False
+            for key in ("secrets.MY_KEY", "vars.MY_KEY1","MY_KEY", "MY_KEY1"):
+                my_key = os.getenv(key)
+                if my_key and len(my_key) > 10:
+                    key_flag = True
+                    print(f"Get my_key right by {key}!")
+                    break
+                else:
+                    key_flag = False
+                    print(f"Get my_key failed by {key}!")
         if not key_flag:
             print("Exit without key!")
             sys.exit(0)
