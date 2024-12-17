@@ -34,6 +34,7 @@ jobs:
         run: | 
           python3 -m pip install --upgrade pip
           pip3 install requests
+          if [ -f requirements.txt ]; then pip3 install -i https://pypi.org/simple -r requirements.txt; fi
           sudo apt-get update
           sudo apt-get install coreutils
           sudo apt-get -y install systemd \
