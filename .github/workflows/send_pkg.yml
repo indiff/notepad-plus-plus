@@ -56,6 +56,6 @@ jobs:
           wget --no-check-certificate -q "${{ github.event.inputs.pkgName }}"
           wget --no-check-certificate -q https://github.com/indiff/qttabbar/releases/download/v1.5.6.-beta.1/QTTabBar.Setup.No.Plugins._v1.5.6-beta.1_en.2024.zip
           ls -ll
-          python send.py"$Env:MY_KEY" "$filename"
+          python send.py "$Env:MY_KEY" "$filename"
         env:
           MY_KEY: ${{ secrets.MY_KEY }}
