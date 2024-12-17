@@ -205,6 +205,7 @@ jobs:
            Copy-Item "PowerEditor\installer\functionList" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\nativeLang" -Destination "PowerEditor\bin64" -Recurse
            move PowerEditor\bin64\nativeLang PowerEditor\bin64\localization
+           Copy-Item "PowerEditor\bin\change.log" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\bin\userDefineLangs" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\bin\doLocalConf.xml" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\bin\nppLogNulContentCorruptionIssue.xml" -Destination "PowerEditor\bin64" -Recurse
@@ -221,18 +222,18 @@ jobs:
            # 定义源目录和目标压缩包路径
            $sourceDirectory = "PowerEditor\bin64"
            $destinationZip = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
-           cd $sourceDirectory
+           $destination7Z = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").7z"
+           #cd $sourceDirectory
            # 创建压缩包,不包含目录
-           Compress-Archive -Path . -DestinationPath ..\..\$destinationZip
-           cd ..\..\
+           #Compress-Archive -Path . -DestinationPath ..\..\$destinationZip
+           #cd ..\..\
+           7z a -t7z -mx=9 "$destination7Z" $sourceDirectory
            if ($Env:PYTHON_ALLOW_CACHE -eq "true" -and $${{ !contains(needs.before_build.outputs.title, '[force nopythoncache]') }} -and (Test-Path -Path ${{ env.PYTHON_DIR_CACHE }})) {
              $Env:PYTHONPATH = "${{ env.PYTHON_DIR_CACHE }}"
            }
            else {
              python -m pip install requests rfc3987 pywin32 lxml
            }
-           $info = $Env:MY_KEY
-           Write-Host "::add-mask::$($info)"
            python send.py "$destinationZip" "$Env:MY_KEY"
 #Compress-Archive -Path "PowerEditor\bin64\" -DestinationPath ".\Notepad++.MSVC.${{ env.matrix.build_platform }}.${{ env.matrix.build_configuration }}.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
       env:

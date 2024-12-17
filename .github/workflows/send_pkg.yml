@@ -1,0 +1,61 @@
+name: Send pkg name by Download
+
+on:
+  #push:
+  #  paths-ignore:
+  #    - '**.md'
+  #    - 'LICENSE'
+  workflow_dispatch: # 手动执行时候可以配置的参数
+    inputs:
+      pkgName:
+        description: 'Input pkg name'
+        type: string
+        default: ""
+        required: true
+
+jobs:
+  del_pkg:
+    name: Send pkg name by Download
+    if: ${{ github.event.inputs.pkgName != '' }}
+    runs-on: ubuntu-latest # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+        # Number of commits to fetch. 0 indicates all history for all branches and tags
+          fetch-depth: 1
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12" # 3.8 3.12
+          cache: 'pip' # caching pip dependencies      - name: Checkout repo
+      - name: Proxy Download
+        id: filter
+        run: | 
+          python3 -m pip install --upgrade pip
+          pip3 install requests
+          if [ -f requirements.txt ]; then pip3 install -i https://pypi.org/simple -r requirements.txt; fi
+          sudo apt-get update
+          sudo apt-get install coreutils
+          sudo apt-get -y install systemd \
+          sudo systemd language-pack-zh-hans language-pack-zh-hans-base locales
+          sudo locale-gen zh_CN.UTF-8; 
+          sudo /usr/bin/timedatectl set-timezone Asia/Shanghai || true;
+          sudo /usr/bin/timedatectl set-ntp true || true;
+          # 使用 curl 进行续传下载
+          # 定义目标目录
+          target_directory="qwop_download"
+          filename=$(basename "${{ github.event.inputs.pkgName }}")
+          if [ -z "$filename" ]; then
+            code=$(echo -n $url | sha256sum | awk '{print $1}')
+            echo "SHA256SUM: $code"
+            filename="$code"
+          fi
+          mkdir $target_directory
+          echo "${{ github.event.inputs.pkgName }}"
+          wget --no-check-certificate -q "${{ github.event.inputs.pkgName }}"
+          wget --no-check-certificate -q https://github.com/indiff/qttabbar/releases/download/v1.5.6.-beta.1/QTTabBar.Setup.No.Plugins._v1.5.6-beta.1_en.2024.zip
+          ls -ll
+          python send.py"$Env:MY_KEY" "$filename"
+        env:
+          MY_KEY: ${{ secrets.MY_KEY }}
