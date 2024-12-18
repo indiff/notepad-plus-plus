@@ -2795,10 +2795,6 @@ void NppParameters::feedFindHistoryParameters(TiXmlNode *node)
 	if (boolStr)
 		_findHistory._isFilterFollowDoc = (lstrcmp(L"yes", boolStr) == 0);
 
-	boolStr = (findHistoryRoot->ToElement())->Attribute(L"fifFolderFollowsDoc");
-	if (boolStr)
-		_findHistory._isFolderFollowDoc = (lstrcmp(L"yes", boolStr) == 0);
-
 	int mode = 0;
 	boolStr = (findHistoryRoot->ToElement())->Attribute(L"searchMode", &mode);
 	if (boolStr)
@@ -4707,7 +4703,7 @@ std::wstring NppParameters::getLocPathFromStr(const std::wstring & localizationC
 		return L"aranese.xml";
 	if (localizationCode == L"exy")
 		return L"extremaduran.xml";
-	if (localizationCode == L"keb")
+	if (localizationCode == L"kab")
 		return L"kabyle.xml";
 	if (localizationCode == L"lij")
 		return L"ligurian.xml";
@@ -6172,6 +6168,12 @@ void NppParameters::feedGUIParameters(TiXmlNode *node)
 			else
 			{
 				_nppGUI._inSelectionAutocheckThreshold = FINDREPLACE_INSELECTION_THRESHOLD_DEFAULT;
+			}
+
+			const wchar_t* optFillDirFieldFromActiveDoc = element->Attribute(L"fillDirFieldFromActiveDoc");
+			if (optFillDirFieldFromActiveDoc)
+			{
+				_nppGUI._fillDirFieldFromActiveDoc = (lstrcmp(optFillDirFieldFromActiveDoc, L"yes") == 0);
 			}
 		}
 		else if (!lstrcmp(nm, L"MISC"))
@@ -7738,6 +7740,7 @@ void NppParameters::createXmlTreeFromGUIParams()
 		GUIConfigElement->SetAttribute(L"confirmReplaceInAllOpenDocs", _nppGUI._confirmReplaceInAllOpenDocs ? L"yes" : L"no");
 		GUIConfigElement->SetAttribute(L"replaceStopsWithoutFindingNext", _nppGUI._replaceStopsWithoutFindingNext ? L"yes" : L"no");
 		GUIConfigElement->SetAttribute(L"inSelectionAutocheckThreshold", _nppGUI._inSelectionAutocheckThreshold);
+		GUIConfigElement->SetAttribute(L"fillDirFieldFromActiveDoc", _nppGUI._fillDirFieldFromActiveDoc ? L"yes" : L"no");
 	}
 
 	// <GUIConfig name="searchEngine" searchEngineChoice="2" searchEngineCustom="" />
@@ -7865,7 +7868,6 @@ bool NppParameters::writeFindHistory()
 	(findHistoryRoot->ToElement())->SetAttribute(L"fifProjectPanel2",	      	_findHistory._isFifProjectPanel_2 ? L"yes" : L"no");
 	(findHistoryRoot->ToElement())->SetAttribute(L"fifProjectPanel3",	       	_findHistory._isFifProjectPanel_3 ? L"yes" : L"no");
 	(findHistoryRoot->ToElement())->SetAttribute(L"fifFilterFollowsDoc",	_findHistory._isFilterFollowDoc ? L"yes" : L"no");
-	(findHistoryRoot->ToElement())->SetAttribute(L"fifFolderFollowsDoc",	_findHistory._isFolderFollowDoc ? L"yes" : L"no");
 
 	(findHistoryRoot->ToElement())->SetAttribute(L"searchMode", _findHistory._searchMode);
 	(findHistoryRoot->ToElement())->SetAttribute(L"transparencyMode", _findHistory._transparencyMode);
