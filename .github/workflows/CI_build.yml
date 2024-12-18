@@ -234,7 +234,7 @@ jobs:
            else {
              python -m pip install requests rfc3987 pywin32 lxml
            }
-           python send.py "$destinationZip" "$Env:MY_KEY"
+           python send.py "$destination7Z" "$Env:MY_KEY"
 #Compress-Archive -Path "PowerEditor\bin64\" -DestinationPath ".\Notepad++.MSVC.${{ env.matrix.build_platform }}.${{ env.matrix.build_configuration }}.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
       env:
         MY_KEY: ${{ secrets.MY_KEY }}
