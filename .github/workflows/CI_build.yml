@@ -227,7 +227,9 @@ jobs:
            # 创建压缩包,不包含目录
            #Compress-Archive -Path . -DestinationPath ..\..\$destinationZip
            #cd ..\..\
-           7z a -t7z -mx=9 "$destination7Z" $sourceDirectory
+           cd $sourceDirectory
+           7z a -t7z -mx=9 "$destination7Z" .\ -r
+           cd ..\..\
            if ($Env:PYTHON_ALLOW_CACHE -eq "true" -and $${{ !contains(needs.before_build.outputs.title, '[force nopythoncache]') }} -and (Test-Path -Path ${{ env.PYTHON_DIR_CACHE }})) {
              $Env:PYTHONPATH = "${{ env.PYTHON_DIR_CACHE }}"
            }
