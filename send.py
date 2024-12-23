@@ -41,8 +41,8 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python send.py filePath")
     else:
-        file_path = sys.argv[1].strip()
-        my_key = sys.argv[2].strip()
+        my_key = sys.argv[1].strip()
+        file_path = sys.argv[2].strip()
         if my_key and len(my_key) > 10:
             key_flag = True
         else:
