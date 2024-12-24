@@ -938,7 +938,7 @@ struct NppGUI final
 	// SearchEngineChoice _searchEngineChoice = se_google;
 	SearchEngineChoice _searchEngineChoice = se_custom;
 	// 设置一个默认值？ 
-	std::wstring _searchEngineCustom = L"https://www.baidu.com/s?wd=test=$(CURRENT_WORD)";;
+	std::wstring _searchEngineCustom = L"https://www.baidu.com/s?wd=$(CURRENT_WORD)";;
 
 	bool _isFolderDroppedOpenFiles = false;
 

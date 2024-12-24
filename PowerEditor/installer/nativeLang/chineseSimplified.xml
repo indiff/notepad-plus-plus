@@ -1337,7 +1337,7 @@ Translation note:
 					<Item id="6275" name="雅虎!"/>
 					<Item id="6276" name="设定你的搜索引擎:"/>
 					<!-- Don't change anything after Example: https://www.google.com/search?q=$(CURRENT_WORD) -->
-					<Item id="6278" name="例: https://www.baidu.com/s?wd=test=$(CURRENT_WORD)"/>
+					<Item id="6278" name="例: https://www.baidu.com/s?wd=$(CURRENT_WORD)"/>
 				</SearchEngine>
 
 				<MISC title="其他">
