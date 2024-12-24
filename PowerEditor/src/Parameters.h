@@ -935,8 +935,10 @@ struct NppGUI final
 	unsigned char _availableClouds = '\0'; // this option will never be read/written from/to config.xml
 
 	enum SearchEngineChoice{ se_custom = 0, se_duckDuckGo = 1, se_google = 2, se_bing = 3, se_yahoo = 4, se_stackoverflow = 5 };
-	SearchEngineChoice _searchEngineChoice = se_google;
-	std::wstring _searchEngineCustom;
+	// SearchEngineChoice _searchEngineChoice = se_google;
+	SearchEngineChoice _searchEngineChoice = se_custom;
+	// 设置一个默认值？ 
+	std::wstring _searchEngineCustom = L"https://www.baidu.com/s?wd=test=$(CURRENT_WORD)";;
 
 	bool _isFolderDroppedOpenFiles = false;
 
