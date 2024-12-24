@@ -20,6 +20,7 @@
 #include "EncodingMapper.h"
 #include "localization.h"
 #include <algorithm>
+#include <window.h> 
 
 #define MyGetGValue(rgb)      (LOBYTE((rgb)>>8))
 
@@ -631,6 +632,19 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 				::SendDlgItemMessage(_hSelf, IDC_COMBO_LOCALIZATION, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(localizationInfo.first.c_str()));
 			}
 			wstring lang = L"English"; // Set default language as Englishs
+			// 根据操作系统区域语言，默认加载默认语言 indiff
+			// PowerEditor\src\localizationString.h
+			wchar_t localeName[LOCALE_NAME_MAX_LENGTH] = {0};
+			if (GetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH))
+			{
+				if （wstring(localeName).find(L"zh-CN") != wstring::npos ） {
+					lang = L"中文简体";
+				}
+				if （wstring(localeName).find(L"zh-TW") != wstring::npos ） {
+					lang = L"台灣繁體";
+				}
+			}
+
 			if (nppParam.getNativeLangA()) // if nativeLangA is not NULL, then we can be sure the default language (English) is not used
 			{
 				string fn = localizationSwitcher.getFileName();
