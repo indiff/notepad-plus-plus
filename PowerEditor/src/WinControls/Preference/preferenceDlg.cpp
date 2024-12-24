@@ -637,11 +637,11 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 			wchar_t localeName[LOCALE_NAME_MAX_LENGTH] = {0};
 			if (GetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH))
 			{
-				if （wstring(localeName).find(L"zh-CN") != wstring::npos ） {
-					lang = L"中文简体";
+				if (wstring(localeName).find(L"zh-CN") != wstring::npos) {
+					lang = L"中文简体"; 
 				}
-				if （wstring(localeName).find(L"zh-TW") != wstring::npos ） {
-					lang = L"台灣繁體";
+				if (wstring(localeName).find(L"zh-TW") != wstring::npos) {
+					lang = L"台灣繁體"; 
 				}
 			}
 
