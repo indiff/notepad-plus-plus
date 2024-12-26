@@ -640,9 +640,18 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 				if (wstring(localeName).find(L"zh-CN") != wstring::npos) {
 					lang = L"中文简体"; 
 				}
+				if (wstring(localeName).find(L"zh-HK") != wstring::npos) {
+					lang = L"香港繁體"; 
+				}
 				if (wstring(localeName).find(L"zh-TW") != wstring::npos) {
 					lang = L"台灣繁體"; 
 				}
+				if (wstring(localeName).find(L"ja-JP") != wstring::npos) {
+					lang = L"日本語"; 
+				}				
+				if (wstring(localeName).find(L"ko-KR") != wstring::npos) {
+					lang = L"한국어"; 
+				}				
 			}
 
 			if (nppParam.getNativeLangA()) // if nativeLangA is not NULL, then we can be sure the default language (English) is not used
