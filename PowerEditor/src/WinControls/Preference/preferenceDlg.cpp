@@ -655,6 +655,14 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 				} else {
 					lang = L"English"; 
 				}
+
+				HWND _hParent = NULL;
+				// Change the language 
+				if (localizationSwitcher.switchToLang(lang.c_str()))
+				{
+					::SendMessage(::GetParent(_hParent), NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
+					::InvalidateRect(_hParent, NULL, TRUE);
+				}
 			}
 
 			if (nppParam.getNativeLangA()) // if nativeLangA is not NULL, then we can be sure the default language (English) is not used

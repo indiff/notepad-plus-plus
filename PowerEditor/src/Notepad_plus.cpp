@@ -181,6 +181,17 @@ Notepad_plus::Notepad_plus()
 				fn = "english.xml";
 			}
 			localizationSwitcher.setFileName(fn);
+			string fn = localizationSwitcher.getFileName();
+			wstring fnW = string2wstring(fn, CP_UTF8);
+			lang = localizationSwitcher.getLangFromXmlFileName(fnW.c_str());
+
+			HWND _hParent = NULL;
+			// Change the language 
+			if (localizationSwitcher.switchToLang(lang.c_str()))
+			{
+				::SendMessage(::GetParent(_hParent), NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
+				::InvalidateRect(_hParent, NULL, TRUE);
+			}
 		}
 	}
 
