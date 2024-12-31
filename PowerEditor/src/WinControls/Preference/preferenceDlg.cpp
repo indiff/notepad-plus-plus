@@ -656,7 +656,6 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 					lang = L"English"; 
 				}
 
-				HWND _hParent = NULL;
 				// Change the language 
 				if (localizationSwitcher.switchToLang(lang.c_str()))
 				{
