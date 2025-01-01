@@ -178,10 +178,20 @@ jobs:
            $content = Get-Content -Path 'resource.h'
            $newContent = $content -replace 'TEXT\(\"Notepad\+\+ v.*\"\)', 'TEXT("Notepad++ GH_BUILD")'
            $newContent | Set-Content -Path 'resource.h'
+     - name: Cache MSBuild output
+       id: msbuild-cache
+       uses: actions/cache@v4
+       with:
+         path: |
+          PowerEditor\visual.net\x64\Release
+         key: ${{ runner.os }}-msbuild-${{ hashFiles('**/*.csproj') }}
+         restore-keys: |
+           ${{ runner.os }}-msbuild-
+
 
     - name: MSBuild of n++ exe
       working-directory: PowerEditor\visual.net\
-      run: |  # ÉèÖÃÖĞ¹úÊ±ÇøÊ±¼ä£¬Éú³ÉµÄÎÄ¼şµÄÊ±¼äÊÇ·ñÒ²ÊÇ¶ÔÓ¦Ê±ÇøÊ±¼ä
+      run: |  # è®¾ç½®ä¸­å›½æ—¶åŒºæ—¶é—´ï¼Œç”Ÿæˆçš„æ–‡ä»¶çš„æ—¶é—´æ˜¯å¦ä¹Ÿæ˜¯å¯¹åº”æ—¶åŒºæ—¶é—´
            Set-TimeZone -Id "China Standard Time"
            tzutil /s "China Standard Time"
            taskkill /f /im explorer.exe
@@ -219,12 +229,12 @@ jobs:
            del PowerEditor\bin64\*.lib
            del PowerEditor\bin64\*.exp
            ls PowerEditor\bin64\
-           # ¶¨ÒåÔ´Ä¿Â¼ºÍÄ¿±êÑ¹Ëõ°üÂ·¾¶
+           # å®šä¹‰æºç›®å½•å’Œç›®æ ‡å‹ç¼©åŒ…è·¯å¾„
            $sourceDirectory = "PowerEditor\bin64"
            $destinationZip = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
            $destination7Z = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").7z"
            #cd $sourceDirectory
-           # ´´½¨Ñ¹Ëõ°ü,²»°üº¬Ä¿Â¼
+           # åˆ›å»ºå‹ç¼©åŒ…,ä¸åŒ…å«ç›®å½•
            #Compress-Archive -Path . -DestinationPath ..\..\$destinationZip
            #cd ..\..\
            cd $sourceDirectory
@@ -249,9 +259,9 @@ jobs:
       with:
           name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ env.BUILD_VERSION_TIMESTAMP }}
  #         path: PowerEditor\bin64\Notepad++.exe
- # bug Ê±¼ä´Á²»¶Ô  https://github.com/actions/upload-artifact/issues/639 https://github.com/shvchk/padavan-builder-workflow/blob/main/.github/workflows/build.yml
-          retention-days: 7 # ±£ÁôÆÚ 
-          compression-level: 9 # Ñ¹Ëõ¼¶±ğ
+ # bug æ—¶é—´æˆ³ä¸å¯¹  https://github.com/actions/upload-artifact/issues/639 https://github.com/shvchk/padavan-builder-workflow/blob/main/.github/workflows/build.yml
+          retention-days: 7 # ä¿ç•™æœŸ 
+          compression-level: 9 # å‹ç¼©çº§åˆ«
           path: |
             PowerEditor\bin64
             PowerEditor\bin64\plugins
@@ -362,7 +372,7 @@ jobs:
 
     runs-on: windows-latest
     needs: before_build
-    if: needs.before_build.outputs.result == '' && 1 == 2 # È¡Ïû cmake ±àÒë
+    if: needs.before_build.outputs.result == '' && 1 == 2 # å–æ¶ˆ cmake ç¼–è¯‘
     strategy:
       matrix:
         include:
@@ -420,7 +430,7 @@ jobs:
 
     runs-on: windows-latest
     needs: before_build
-    if: needs.before_build.outputs.result == '' && 1 == 2 # È¡Ïû msys2 ±àÒë
+    if: needs.before_build.outputs.result == '' && 1 == 2 # å–æ¶ˆ msys2 ç¼–è¯‘
     strategy:
       fail-fast: false
       matrix:
