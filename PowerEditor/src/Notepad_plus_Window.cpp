@@ -209,6 +209,45 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 	for (size_t i = 0, len = fileNames.size(); i < len; ++i)
 		localizationSwitcher.addLanguageFromXml(fileNames[i]);
 
+	// Auto switch language by user region
+	if ( !nppParams.getNativeLangA()) {
+		auto fn = localizationSwitcher.getFileName();
+		// 获取当前的语言
+		wstring lang = L"English";
+		wchar_t localeName[LOCALE_NAME_MAX_LENGTH] = { 0 };
+		if (GetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH))
+		{
+			if (wstring(localeName).find(L"zh-CN") != wstring::npos) {
+				localizationSwitcher.setFileName("chineseSimplified.xml");
+				localizationSwitcher.switchToLang(L"中文简体");
+				::SendMessage(_hSelf, NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
+			}
+			else if (wstring(localeName).find(L"zh-HK") != wstring::npos) {
+				localizationSwitcher.setFileName("hongKongCantonese.xml");
+				localizationSwitcher.switchToLang(L"香港繁體");
+				::SendMessage(_hSelf, NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
+			}
+			else if (wstring(localeName).find(L"zh-TW") != wstring::npos) {
+				localizationSwitcher.setFileName("taiwaneseMandarin.xml");
+				localizationSwitcher.switchToLang(L"台灣繁體");
+				::SendMessage(_hSelf, NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
+			}
+			else if (wstring(localeName).find(L"ja-JP") != wstring::npos) {
+				localizationSwitcher.setFileName("japanese.xml");
+				localizationSwitcher.switchToLang(L"日本語");
+				::SendMessage(_hSelf, NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
+			}
+			else if (wstring(localeName).find(L"ko-KR") != wstring::npos) {
+				localizationSwitcher.setFileName("korean.xml");
+				localizationSwitcher.switchToLang(L"한국어");
+				::SendMessage(_hSelf, NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
+			}
+			else {
+				lang = L"English";
+			}
+		}
+	}
+
 	fileNames.clear();
 	ThemeSwitcher & themeSwitcher = nppParams.getThemeSwitcher();
 
@@ -321,6 +360,7 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 
 	::SendMessage(_hSelf, NPPM_INTERNAL_LINECUTCOPYWITHOUTSELECTION, 0, 0);
 
+	
 	if (nppGUI._newDocDefaultSettings._addNewDocumentOnStartup && nppGUI._rememberLastSession)
 	{
 		::SendMessage(_hSelf, WM_COMMAND, IDM_FILE_NEW, 0);

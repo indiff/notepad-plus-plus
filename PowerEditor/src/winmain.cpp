@@ -380,7 +380,7 @@ void stripIgnoredParams(ParamVector & params)
 
 std::chrono::steady_clock::time_point g_nppStartTimePoint{};
 
-
+// 这里是 Windows应用程序的标准入口点
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE /*hPrevInstance*/, _In_ PWSTR pCmdLine, _In_ int /*nShowCmd*/)
 {
 	g_nppStartTimePoint = std::chrono::steady_clock::now();

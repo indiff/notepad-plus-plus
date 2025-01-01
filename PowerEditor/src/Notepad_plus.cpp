@@ -141,58 +141,12 @@ Notepad_plus::Notepad_plus()
     _nativeLangSpeaker.init(nativeLangDocRootA);
 
 	LocalizationSwitcher & localizationSwitcher = nppParam.getLocalizationSwitcher();
+	// localizationSwitcher.switchToLang(L"简体中文"); // 这里并不生效
     const char *fn = _nativeLangSpeaker.getFileName();
     if (fn)
     {
+		// fn = "chineseSimplified.xml"; // 这里并不生效
         localizationSwitcher.setFileName(fn);
-	}
-	else {
-		// 这里通过加载区域语言来设置中文
-		wstring lang = L"中文简体"; // Set default language as 中文简体
-		// 根据操作系统区域语言，默认加载默认语言 indiff
-		/*
-		PowerEditor\src\localizationString.h
-		*/
-		wchar_t localeName[LOCALE_NAME_MAX_LENGTH] = { 0 };
-		if (GetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH))
-		{
-			if (wstring(localeName).find(L"zh-CN") != wstring::npos) {
-				lang = L"中文简体";
-				fn = "chineseSimplified.xml";
-			}
-			else if (wstring(localeName).find(L"zh-HK") != wstring::npos) {
-				lang = L"香港繁體";
-				fn = "chineseSimplified.xml";
-			}
-			else if (wstring(localeName).find(L"zh-TW") != wstring::npos) {
-				lang = L"台灣繁體";
-				fn = "chineseSimplified.xml";
-			}
-			else if (wstring(localeName).find(L"ja-JP") != wstring::npos) {
-				lang = L"日本語";
-				fn = "chineseSimplified.xml";
-			}
-			else if (wstring(localeName).find(L"ko-KR") != wstring::npos) {
-				lang = L"한국어";
-				fn = "chineseSimplified.xml";
-			}
-			else {
-				lang = L"English";
-				fn = "english.xml";
-			}
-			localizationSwitcher.setFileName(fn);
-			string fn = localizationSwitcher.getFileName();
-			wstring fnW = string2wstring(fn, CP_UTF8);
-			lang = localizationSwitcher.getLangFromXmlFileName(fnW.c_str());
-
-			HWND _hParent = NULL;
-			// Change the language 
-			if (localizationSwitcher.switchToLang(lang.c_str()))
-			{
-				::SendMessage(::GetParent(_hParent), NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
-				::InvalidateRect(_hParent, NULL, TRUE);
-			}
-		}
 	}
 
 	nppParam.setNativeLangSpeaker(&_nativeLangSpeaker);

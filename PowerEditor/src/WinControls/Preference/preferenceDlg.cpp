@@ -631,10 +631,11 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 				pair<wstring, wstring> localizationInfo = localizationSwitcher.getElementFromIndex(i);
 				::SendDlgItemMessage(_hSelf, IDC_COMBO_LOCALIZATION, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(localizationInfo.first.c_str()));
 			}
-			// wstring lang = L"English"; // Set default language as Englishs
-			wstring lang = L"中文简体"; // Set default language as 中文简体
+			wstring lang = L"English"; // Set default language as Englishs
+			/*wstring lang = L"中文简体"; // Set default language as 中文简体
 			// 根据操作系统区域语言，默认加载默认语言 indiff
 			// PowerEditor\src\localizationString.h
+			
 			wchar_t localeName[LOCALE_NAME_MAX_LENGTH] = {0};
 			if (GetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH))
 			{
@@ -663,6 +664,7 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 					::InvalidateRect(_hParent, NULL, TRUE);
 				}
 			}
+			*/
 
 			if (nppParam.getNativeLangA()) // if nativeLangA is not NULL, then we can be sure the default language (English) is not used
 			{
