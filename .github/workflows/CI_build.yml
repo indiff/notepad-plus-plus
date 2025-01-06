@@ -179,14 +179,12 @@ jobs:
            $newContent = $content -replace 'TEXT\(\"Notepad\+\+ v.*\"\)', 'TEXT("Notepad++ GH_BUILD")'
            $newContent | Set-Content -Path 'resource.h'
 
-    - name: Cache MSBuild output
-      id: msbuild-cache
-      uses: actions/cache@v4
+
+    - name: (cache) Restore MSBuild Release
+      uses: actions/cache/restore@v4
       with:
         path: PowerEditor\visual.net\x64\Release
-        key: ${{ runner.os }}-msbuild-${{ hashFiles('**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-msbuild-
+        key: ${{ runner.os }}-msbuild-
 
 
 # /m:4：启用并行生成，并指定使用 4 个 CPU。
@@ -208,6 +206,15 @@ jobs:
            sleep 5
            echo "Restart Explorer for TimeZone"
            msbuild notepadPlus.sln /m /p:UseSharedCompilation=true /p:RunCodeAnalysis=false /p:BuildInParallel=true /p:DebugType=None /p:Optimize=true /p:configuration="${{ matrix.build_configuration }}" /p:platform="${{ matrix.build_platform }}" /p:PlatformToolset="v143"
+
+    - name: Cache MSBuild Release
+      id: msbuild-cache
+      uses: actions/cache@v4
+      with:
+        path: PowerEditor\visual.net\x64\Release
+        key: ${{ runner.os }}-msbuild-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-msbuild-
 
     - name: Copy Xmls for x64 / Release  # An item with the specified name D:\a\notepad-plus-plus\notepad-plus-plus\PowerEditor\bin64 already exists.  rem mkdir PowerEditor\bin64
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
