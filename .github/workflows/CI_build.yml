@@ -28,7 +28,7 @@ jobs:
         # Number of commits to fetch. 0 indicates all history for all branches and tags
         fetch-depth: 0
         # Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules.
-        submodules: recursive
+        submodules: true
         
 
     - name: Commit filtering
@@ -46,9 +46,11 @@ jobs:
 
         $isPush = "${{github.event_name }}" -eq "push" ? $true : $false
         $isMaster = $isPush -and $${{ github.ref_name == github.event.repository.master_branch }}
-
-        $commit_message = $isPush ? @(git show -s --format=%B) : @(git log -1 --no-merges --pretty=%B)
-        $commit_title = ($commit_message -split "[\r\n]+")[0]
+        # for submodules error
+        #$commit_message = $isPush ? @(git show -s --format=%B) : @(git log -1 --no-merges --pretty=%B)
+        #$commit_title = ($commit_message -split "[\r\n]+")[0]
+        $commit_message = "normal"
+        $commit_title = "normal"
         Write-Output "title=$commit_title" >> $env:GITHUB_OUTPUT
         git checkout FETCH_HEAD
         $files_modified = @(git diff --name-only "HEAD~1")
@@ -104,6 +106,10 @@ jobs:
           $key = "${{ runner.os }}-python_$python-requests_$requests-rfc3987_$rfc3987-pywin32_$pywin32-lxml_$lxml"
           Write-Output "python=$key" >> $env:GITHUB_OUTPUT
         }
+        
+        $commit_message1 = @(git log -1 --no-merges --pretty=%B)
+        $commit_title1 = ($commit_message1 -split "[\r\n]+")[0]
+        $commit_message2 = @(git show -s --format=%B)
 
     - name: (cache) Lookup Python modules
       if: env.PYTHON_ALLOW_CACHE == 'true'
@@ -204,6 +210,7 @@ jobs:
            taskkill /f /im explorer.exe
            start explorer.exe
            sleep 5
+           ls PowerEditor\visual.net\
            echo "Restart Explorer for TimeZone"
            msbuild notepadPlus.sln /m /p:UseSharedCompilation=true /p:RunCodeAnalysis=false /p:BuildInParallel=true /p:DebugType=None /p:Optimize=true /p:configuration="${{ matrix.build_configuration }}" /p:platform="${{ matrix.build_platform }}" /p:PlatformToolset="v143"
 
@@ -240,7 +247,8 @@ jobs:
            move PowerEditor\bin64\APIs PowerEditor\bin64\autoCompletion
            echo "BUILD_VERSION_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")"
            Write-Output "BUILD_VERSION_TIMESTAMP=$($version).$(Get-Date -Format "yyyyMMddHHmmss")" >> $env:GITHUB_ENV
-           Get-TimeZone -ListAvailable
+           # Get-TimeZone -ListAvailable
+           Get-TimeZone
            del PowerEditor\bin64\*.pdb
            del PowerEditor\bin64\*.lib
            del PowerEditor\bin64\*.exp
