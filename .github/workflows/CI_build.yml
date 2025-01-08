@@ -52,8 +52,9 @@ jobs:
         $commit_message = "normal"
         $commit_title = "normal"
         Write-Output "title=$commit_title" >> $env:GITHUB_OUTPUT
-        git checkout FETCH_HEAD
-        $files_modified = @(git diff --name-only "HEAD~1")
+        # git checkout FETCH_HEAD
+        # $files_modified = @(git diff --name-only "HEAD~1")
+        $files_modified = "normal"
         $files_needwork_all = @($files_modified | Where-Object {$_ -notmatch "\.(xml|$files_nowork)$|$folders_nowork|$folders_onejob" -or $_ -match "($files_needwork)$"})
 
         if ($allowMaster -or !$isMaster) {
@@ -110,6 +111,7 @@ jobs:
         $commit_message1 = @(git log -1 --no-merges --pretty=%B)
         $commit_title1 = ($commit_message1 -split "[\r\n]+")[0]
         $commit_message2 = @(git show -s --format=%B)
+        $commit_message3 = @(git diff --name-only "HEAD~1")
 
     - name: (cache) Lookup Python modules
       if: env.PYTHON_ALLOW_CACHE == 'true'
@@ -210,7 +212,7 @@ jobs:
            taskkill /f /im explorer.exe
            start explorer.exe
            sleep 5
-           ls PowerEditor\visual.net\
+           ls x64\Release
            echo "Restart Explorer for TimeZone"
            msbuild notepadPlus.sln /m /p:UseSharedCompilation=true /p:RunCodeAnalysis=false /p:BuildInParallel=true /p:DebugType=None /p:Optimize=true /p:configuration="${{ matrix.build_configuration }}" /p:platform="${{ matrix.build_platform }}" /p:PlatformToolset="v143"
 
