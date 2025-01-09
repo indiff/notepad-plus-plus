@@ -7,8 +7,6 @@
 *.sln.docstates
 
 #-- Build results
-lexilla/
-scintilla/
 [Dd]ebug/
 [Rr]elease/
 x64/
