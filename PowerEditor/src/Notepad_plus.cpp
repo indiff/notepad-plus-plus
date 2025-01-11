@@ -5036,6 +5036,7 @@ bool Notepad_plus::activateBuffer(BufferID id, int whichOne, bool forceApplyHili
 		// Before switching off, synchronize backup file
 		MainFileManager.backupCurrentBuffer();
 	}
+
 	Buffer * pBuf = MainFileManager.getBufferByID(id);
 	bool reload = pBuf->getNeedReload();
 	if (reload)
@@ -5043,6 +5044,7 @@ bool Notepad_plus::activateBuffer(BufferID id, int whichOne, bool forceApplyHili
 		MainFileManager.reloadBuffer(id);
 		pBuf->setNeedReload(false);
 	}
+
 	if (whichOne == MAIN_VIEW)
 	{
 		if (_mainDocTab.activateBuffer(id))	//only activate if possible
