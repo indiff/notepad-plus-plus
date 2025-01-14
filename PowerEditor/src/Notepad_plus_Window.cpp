@@ -225,9 +225,11 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 				// 这里强制默认加载暗色模式
 				NppGUI& nppGUI = nppParams.getNppGUI();
 				nppGUI._darkmode._isEnabled = true;
+				// NppDarkMode::refreshDarkMode();
 				if (NppDarkMode::isEnabled())
 					setStartupBgColor(NppDarkMode::getBackgroundColor()); //draw dark background when opening Npp without position data
-				::SendMessage(_hSelf, NPPM_INTERNAL_REFRESHDARKMODE, TRUE, 0);
+				//::SendMessage(_hSelf, NPPM_INTERNAL_REFRESHDARKMODE, TRUE, 0);
+				NppDarkMode::refreshDarkMode(_hSelf, true);
 			}
 			else if (wstring(localeName).find(L"zh-HK") != wstring::npos) {
 				localizationSwitcher.setFileName("hongKongCantonese.xml");
