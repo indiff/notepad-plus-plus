@@ -221,6 +221,13 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 				localizationSwitcher.setFileName("chineseSimplified.xml");
 				localizationSwitcher.switchToLang(L"中文简体");
 				::SendMessage(_hSelf, NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
+
+				// 这里强制默认加载暗色模式
+				NppGUI& nppGUI = nppParams.getNppGUI();
+				nppGUI._darkmode._isEnabled = true;
+				if (NppDarkMode::isEnabled())
+					setStartupBgColor(NppDarkMode::getBackgroundColor()); //draw dark background when opening Npp without position data
+
 			}
 			else if (wstring(localeName).find(L"zh-HK") != wstring::npos) {
 				localizationSwitcher.setFileName("hongKongCantonese.xml");
