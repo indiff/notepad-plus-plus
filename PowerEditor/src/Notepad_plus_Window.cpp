@@ -227,7 +227,7 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 				nppGUI._darkmode._isEnabled = true;
 				if (NppDarkMode::isEnabled())
 					setStartupBgColor(NppDarkMode::getBackgroundColor()); //draw dark background when opening Npp without position data
-
+				::SendMessage(_hSelf, NPPM_INTERNAL_REFRESHDARKMODE, TRUE, 0);
 			}
 			else if (wstring(localeName).find(L"zh-HK") != wstring::npos) {
 				localizationSwitcher.setFileName("hongKongCantonese.xml");
