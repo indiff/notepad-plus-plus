@@ -1530,7 +1530,7 @@ intptr_t CALLBACK Editing2SubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 }
 
 
-public void DarkModeSubDlg::enableCustomizedColorCtrls(bool doEnable)
+void DarkModeSubDlg::enableCustomizedColorCtrls(bool doEnable)
 {
 	::EnableWindow(_pBackgroundColorPicker->getHSelf(), doEnable);
 	::EnableWindow(_pSofterBackgroundColorPicker->getHSelf(), doEnable);

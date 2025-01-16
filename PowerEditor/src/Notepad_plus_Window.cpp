@@ -245,8 +245,7 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 				bool doEnableCustomizedColorCtrls = false;
 				doEnableCustomizedColorCtrls = enableDarkMode && nppGUI._darkmode._colorTone == NppDarkMode::customizedTone;
 				// enableCustomizedColorCtrls(doEnableCustomizedColorCtrls);
-				DarkModeSubDlg::enableCustomizedColorCtrls(doEnableCustomizedColorCtrls);
-
+				// DarkModeSubDlg::enableCustomizedColorCtrls(doEnableCustomizedColorCtrls);
 				::SendMessage(_hSelf, PREF_MSG_SETGUITOOLICONSSET, static_cast<WPARAM>(enableDarkMode), 0);
 				::SendMessage(_hSelf, PREF_MSG_SETGUITABBARICONS, static_cast<WPARAM>(enableDarkMode), 0);
 				NppDarkMode::refreshDarkMode(_hSelf, true);
