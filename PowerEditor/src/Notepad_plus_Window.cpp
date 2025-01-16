@@ -225,10 +225,28 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 				// 这里强制默认加载暗色模式
 				NppGUI& nppGUI = nppParams.getNppGUI();
 				nppGUI._darkmode._isEnabled = true;
+				
 				// NppDarkMode::refreshDarkMode();
 				if (NppDarkMode::isEnabled())
 					setStartupBgColor(NppDarkMode::getBackgroundColor()); //draw dark background when opening Npp without position data
 				//::SendMessage(_hSelf, NPPM_INTERNAL_REFRESHDARKMODE, TRUE, 0);
+				
+				// https://vscode.dev/github/indiff/notepad-plus-plus/blob/dev_sync/PowerEditor/src/WinControls/Preference/preferenceDlg.cpp#L1853
+				const bool enableDarkMode = true;
+				::EnableWindow(::GetDlgItem(_hSelf, IDC_RADIO_DARKMODE_BLACK), enableDarkMode);
+				::EnableWindow(::GetDlgItem(_hSelf, IDC_RADIO_DARKMODE_RED), enableDarkMode);
+				::EnableWindow(::GetDlgItem(_hSelf, IDC_RADIO_DARKMODE_GREEN), enableDarkMode);
+				::EnableWindow(::GetDlgItem(_hSelf, IDC_RADIO_DARKMODE_BLUE), enableDarkMode);
+				::EnableWindow(::GetDlgItem(_hSelf, IDC_RADIO_DARKMODE_PURPLE), enableDarkMode);
+				::EnableWindow(::GetDlgItem(_hSelf, IDC_RADIO_DARKMODE_CYAN), enableDarkMode);
+				::EnableWindow(::GetDlgItem(_hSelf, IDC_RADIO_DARKMODE_OLIVE), enableDarkMode);
+				::EnableWindow(::GetDlgItem(_hSelf, IDC_RADIO_DARKMODE_CUSTOMIZED), enableDarkMode);
+
+				doEnableCustomizedColorCtrls = enableDarkMode && nppGUI._darkmode._colorTone == NppDarkMode::customizedTone;
+				enableCustomizedColorCtrls(doEnableCustomizedColorCtrls);
+
+				::SendMessage(_hSelf, PREF_MSG_SETGUITOOLICONSSET, static_cast<WPARAM>(enableDarkMode), 0);
+				::SendMessage(_hSelf, PREF_MSG_SETGUITABBARICONS, static_cast<WPARAM>(enableDarkMode), 0);
 				NppDarkMode::refreshDarkMode(_hSelf, true);
 			}
 			else if (wstring(localeName).find(L"zh-HK") != wstring::npos) {
