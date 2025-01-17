@@ -205,6 +205,7 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 	std::wstring localizationDir = nppDir;
 	pathAppend(localizationDir, L"localization\\");
 
+	bool loadedChinese = false;
 	_notepad_plus_plus_core.getMatchedFileNames(localizationDir.c_str(), 0, patterns, fileNames, false, false);
 	for (size_t i = 0, len = fileNames.size(); i < len; ++i)
 		localizationSwitcher.addLanguageFromXml(fileNames[i]);
@@ -222,7 +223,9 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 				localizationSwitcher.switchToLang(L"中文简体");
 				::SendMessage(_hSelf, NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
 
-				// 这里强制默认加载暗色模式
+				loadedChinese = true;
+				// 这里强制默认加载暗色模式, 这里加载的不全
+				/*
 				NppGUI& nppGUI = nppParams.getNppGUI();
 				nppGUI._darkmode._isEnabled = true;
 				
@@ -249,6 +252,7 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 				::SendMessage(_hSelf, PREF_MSG_SETGUITOOLICONSSET, static_cast<WPARAM>(enableDarkMode), 0);
 				::SendMessage(_hSelf, PREF_MSG_SETGUITABBARICONS, static_cast<WPARAM>(enableDarkMode), 0);
 				NppDarkMode::refreshDarkMode(_hSelf, true);
+				*/
 			}
 			else if (wstring(localeName).find(L"zh-HK") != wstring::npos) {
 				localizationSwitcher.setFileName("hongKongCantonese.xml");
@@ -324,6 +328,20 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 			}
 		}
 	}
+
+	wstring configXml = nppDir; // <- load default dark mode for first.
+	pathAppend(configXml, L"config.xml");
+	if (!doesFileExist(configXml.c_str()) && loadedChinese) {
+		NppGUI& nppGUI = nppParams.getNppGUI();
+		nppGUI._darkmode._isEnabled = true;
+
+		NppDarkMode::refreshDarkMode(_hSelf, true );
+		if (NppDarkMode::isEnabled())
+			setStartupBgColor(NppDarkMode::getBackgroundColor());
+		NppDarkMode::setWindowsMode( true);
+	}
+	
+
 
 	if (NppDarkMode::isWindowsModeEnabled())
 	{
