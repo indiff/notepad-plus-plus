@@ -205,10 +205,10 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 	std::wstring localizationDir = nppDir;
 	pathAppend(localizationDir, L"localization\\");
 
-	bool loadedChinese = false;
 	_notepad_plus_plus_core.getMatchedFileNames(localizationDir.c_str(), 0, patterns, fileNames, false, false);
 	for (size_t i = 0, len = fileNames.size(); i < len; ++i)
 		localizationSwitcher.addLanguageFromXml(fileNames[i]);
+
 
 	// Auto switch language by user region
 	if ( !nppParams.getNativeLangA()) {
@@ -223,7 +223,41 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 				localizationSwitcher.switchToLang(L"中文简体");
 				::SendMessage(_hSelf, NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
 
-				loadedChinese = true;
+
+				// 开启暗黑模式
+				// Parameters.cpp 7793
+				wstring configXml = nppDir; // <- load default dark mode for first.
+				wstring themePath = nppDir; // <- load default dark mode for first.
+				pathAppend(configXml, L"config.xml");
+				pathAppend(themePath, L"themes\\DarkModeDefault.xml");
+				if (!doesFileExist(configXml.c_str())) {
+					NppGUI& nppGUI = nppParams.getNppGUI();
+
+					NppDarkMode::setWindowsMode(false);
+					nppGUI._darkmode._isEnabled = true;
+					
+					// NppDarkMode::setThemeName(L"DarkModeDefault");
+
+					NppDarkMode::setDarkMode(true, true);
+					// if (NppDarkMode::isEnabled())
+					// 	setStartupBgColor(NppDarkMode::getBackgroundColor());
+					NppDarkMode::refreshDarkMode(_hSelf, true);
+
+					if (doesFileExist(themePath.c_str()))
+					{
+						nppGUI._themeName.assign(themePath);
+						nppParams.reloadStylers(themePath.c_str());
+						::SendMessage(_hSelf, WM_UPDATESCINTILLAS, TRUE, 0);
+					}
+				}
+
+				// 默认开启 自动换行
+				ScintillaViewParams& svp1 = (ScintillaViewParams&)(NppParameters::getInstance()).getSVP();
+				svp1._doWrap = true;
+				_notepad_plus_plus_core.command(IDM_VIEW_WRAP);
+				_notepad_plus_plus_core.checkMenuItem(IDM_VIEW_WRAP, true);
+				// (&FileManager::getInstance()) -> wrap; 
+
 				// 这里强制默认加载暗色模式, 这里加载的不全
 				/*
 				NppGUI& nppGUI = nppParams.getNppGUI();
@@ -329,17 +363,7 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 		}
 	}
 
-	wstring configXml = nppDir; // <- load default dark mode for first.
-	pathAppend(configXml, L"config.xml");
-	if (!doesFileExist(configXml.c_str()) && loadedChinese) {
-		NppGUI& nppGUI = nppParams.getNppGUI();
-		nppGUI._darkmode._isEnabled = true;
-
-		NppDarkMode::refreshDarkMode(_hSelf, true );
-		if (NppDarkMode::isEnabled())
-			setStartupBgColor(NppDarkMode::getBackgroundColor());
-		NppDarkMode::setWindowsMode( true);
-	}
+	
 	
 
 
