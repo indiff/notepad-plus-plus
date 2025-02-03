@@ -252,8 +252,9 @@ void ScintillaEditView::init(HINSTANCE hInst, HWND hPere)
 	const COLORREF hiddenLinesGreen = RGB(0x77, 0xCC, 0x77);
 	long hiddenLinesGreenWithAlpha = hiddenLinesGreen | 0xFF000000;
 	setElementColour(SC_ELEMENT_HIDDEN_LINE, hiddenLinesGreenWithAlpha);
-
-	if (NppParameters::getInstance()._dpiManager.scaleX(100) >= 150)
+	
+	NppParameters& nppParams = NppParameters::getInstance();
+	if (nppParams._dpiManager.scaleX(100) >= 150)
 	{
 		execute(SCI_RGBAIMAGESETWIDTH, 18);
 		execute(SCI_RGBAIMAGESETHEIGHT, 18);
@@ -311,7 +312,7 @@ void ScintillaEditView::init(HINSTANCE hInst, HWND hPere)
 	execute(SCI_INDICSETUNDER, SCE_UNIVERSAL_FOUND_STYLE_EXT4, true);
 	execute(SCI_INDICSETUNDER, SCE_UNIVERSAL_FOUND_STYLE_EXT5, true);
 
-	NppGUI& nppGui = (NppParameters::getInstance()).getNppGUI();
+	NppGUI& nppGui = nppParams.getNppGUI();
 
 	HMODULE hNtdllModule = ::GetModuleHandle(L"ntdll.dll");
 	FARPROC isWINE = nullptr;
@@ -347,6 +348,7 @@ void ScintillaEditView::init(HINSTANCE hInst, HWND hPere)
 			delete[] defaultCharList;
 		}
 	}
+	unsigned long MODEVENTMASK_ON = nppParams.getScintillaModEventMask();
 	execute(SCI_SETMODEVENTMASK, MODEVENTMASK_ON);
 	//Get the startup document and make a buffer for it so it can be accessed like a file
 	attachDefaultDoc();
@@ -382,6 +384,7 @@ LRESULT CALLBACK ScintillaEditView::scintillaStatic_Proc(HWND hwnd, UINT Message
 		return ::DefWindowProc(hwnd, Message, wParam, lParam);
 
 }
+
 LRESULT ScintillaEditView::scintillaNew_Proc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	switch (Message)
@@ -1807,12 +1810,12 @@ void ScintillaEditView::defineDocType(LangType typeDoc)
             setTclLexer(); break;
 
 
-        case L_OBJC :
-            setObjCLexer(typeDoc); break;
+		case L_OBJC :
+			setObjCLexer(typeDoc); break;
 
 	    case L_PHP :
 		case L_ASP :
-        case L_JSP :
+		case L_JSP :
 		case L_HTML :
 		case L_XML :
 			setXmlLexer(typeDoc); break;
@@ -1842,7 +1845,7 @@ void ScintillaEditView::defineDocType(LangType typeDoc)
 				setUserLexer();
 			break; }
 
-        case L_ASCII :
+		case L_ASCII :
 		{
 			LexerStyler *pStyler = (NppParameters::getInstance().getLStylerArray()).getLexerStylerByName(L"nfo");
 
@@ -1910,52 +1913,52 @@ void ScintillaEditView::defineDocType(LangType typeDoc)
 			setFortran77Lexer(); break;
 
 		case L_LISP :
-            setLispLexer(); break;
+			setLispLexer(); break;
 
 		case L_SCHEME :
-            setSchemeLexer(); break;
+			setSchemeLexer(); break;
 
 		case L_ASM :
-            setAsmLexer(); break;
+			setAsmLexer(); break;
 
 		case L_DIFF :
-            setDiffLexer(); break;
+			setDiffLexer(); break;
 
 		case L_PROPS :
-            setPropsLexer(); break;
+			setPropsLexer(); break;
 
 		case L_PS :
-            setPostscriptLexer(); break;
+			setPostscriptLexer(); break;
 
 		case L_RUBY :
-            setRubyLexer(); break;
+			setRubyLexer(); break;
 
 		case L_SMALLTALK :
-            setSmalltalkLexer(); break;
+			setSmalltalkLexer(); break;
 
 		case L_VHDL :
-            setVhdlLexer(); break;
+			setVhdlLexer(); break;
 
 		case L_KIX :
-            setKixLexer(); break;
+			setKixLexer(); break;
 
 		case L_CAML :
-            setCamlLexer(); break;
+			setCamlLexer(); break;
 
 		case L_ADA :
-            setAdaLexer(); break;
+			setAdaLexer(); break;
 
 		case L_VERILOG :
-            setVerilogLexer(); break;
+			setVerilogLexer(); break;
 
 		case L_AU3 :
-            setAutoItLexer(); break;
+			setAutoItLexer(); break;
 
 		case L_MATLAB :
-            setMatlabLexer(); break;
+			setMatlabLexer(); break;
 
 		case L_HASKELL :
-            setHaskellLexer(); break;
+			setHaskellLexer(); break;
 
 		case L_INNO :
 			setInnoLexer(); break;
@@ -1966,19 +1969,19 @@ void ScintillaEditView::defineDocType(LangType typeDoc)
 		case L_YAML :
 			setYamlLexer(); break;
 
-        case L_COBOL :
+		case L_COBOL :
 			setCobolLexer(); break;
 
-        case L_GUI4CLI :
+		case L_GUI4CLI :
 			setGui4CliLexer(); break;
 
-        case L_D :
+		case L_D :
 			setDLexer(); break;
 
-        case L_POWERSHELL :
+		case L_POWERSHELL :
 			setPowerShellLexer(); break;
 
-        case L_R :
+		case L_R :
 			setRLexer(); break;
 
 		case L_COFFEESCRIPT :
@@ -2114,9 +2117,6 @@ void ScintillaEditView::defineDocType(LangType typeDoc)
 		if (currentIndentMode != docIndentMode)
 			execute(SCI_SETINDENTATIONGUIDES, docIndentMode);
 	}
-
-	execute(SCI_SETLAYOUTCACHE, SC_CACHE_DOCUMENT, 0);
-	execute(SCI_STARTSTYLING, 0, 0);
 }
 
 Document ScintillaEditView::getBlankDocument()
@@ -2304,6 +2304,7 @@ void ScintillaEditView::activateBuffer(BufferID buffer, bool force)
 	const int currentLangInt = static_cast<int>(_currentBuffer->getLangType());
 	const bool isFirstActiveBuffer = (_currentBuffer->getLastLangType() != currentLangInt);
 
+	unsigned long MODEVENTMASK_ON = NppParameters::getInstance().getScintillaModEventMask();
 	if (isFirstActiveBuffer)  // Entering the tab for the 1st time
 	{
 		// change the doc, this operation will decrease
