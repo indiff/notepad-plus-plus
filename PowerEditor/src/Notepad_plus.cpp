@@ -3878,6 +3878,7 @@ void Notepad_plus::setLanguage(LangType langType)
 	//If so, release one document
 	bool reset = false;
 	Document prev = 0;
+	unsigned long MODEVENTMASK_ON = NppParameters::getInstance().getScintillaModEventMask();
 	if (bothActive())
 	{
 		if (_mainEditView.getCurrentBufferID() == _subEditView.getCurrentBufferID())
