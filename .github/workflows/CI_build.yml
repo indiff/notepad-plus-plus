@@ -212,7 +212,7 @@ jobs:
            taskkill /f /im explorer.exe
            start explorer.exe
            sleep 5
-           ls x64\Release
+           # ls x64\Release
            echo "Restart Explorer for TimeZone"
            msbuild notepadPlus.sln /m /p:UseSharedCompilation=true /p:RunCodeAnalysis=false /p:BuildInParallel=true /p:DebugType=None /p:Optimize=true /p:configuration="${{ matrix.build_configuration }}" /p:platform="${{ matrix.build_platform }}" /p:PlatformToolset="v143"
 
