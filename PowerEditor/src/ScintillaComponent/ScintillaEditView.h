@@ -89,7 +89,7 @@ const int CP_GREEK = 1253;
 #define LIST_7 128
 #define LIST_8 256
 
-const bool fold_uncollapse = true;
+const bool fold_expand = true;
 const bool fold_collapse = false;
 #define MAX_FOLD_COLLAPSE_LEVEL	8
 
@@ -1268,6 +1268,10 @@ protected:
 
 	void setTomlLexer(){
 		setLexer(L_TOML, LIST_0);
+	};
+
+	void setSasLexer(){
+		setLexer(L_SAS, LIST_0 | LIST_1 | LIST_2 | LIST_3);
 	};
 
     //--------------------
