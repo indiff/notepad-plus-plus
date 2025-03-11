@@ -6704,14 +6704,6 @@ void Notepad_plus::notifyBufferChanged(Buffer * buffer, int mask)
 		return;
 	}
 
-	if (mask & (BufferChangeLanguage))
-	{
-		if (mainActive)
-			_autoCompleteMain.setLanguage(buffer->getLangType());
-		if (subActive)
-			_autoCompleteSub.setLanguage(buffer->getLangType());
-	}
-
 	if ((currentView() == MAIN_VIEW) && !mainActive)
 		return;
 
@@ -6734,10 +6726,13 @@ void Notepad_plus::notifyBufferChanged(Buffer * buffer, int mask)
 	{
 		checkLangsMenu(-1);	//let Notepad++ do search for the item
 		setLangStatus(buffer->getLangType());
-		if (_mainEditView.getCurrentBuffer() == buffer)
+		if (mainActive)
 			_autoCompleteMain.setLanguage(buffer->getLangType());
-		else if (_subEditView.getCurrentBuffer() == buffer)
+		else if (subActive)
 			_autoCompleteSub.setLanguage(buffer->getLangType());
+
+		if (_pFuncList && (!_pFuncList->isClosed()) && _pFuncList->isVisible())
+			_pFuncList->reload(); // sync FL with the current buffer lang
 
 		SCNotification scnN{};
 		scnN.nmhdr.code = NPPN_LANGCHANGED;
