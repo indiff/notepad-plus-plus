@@ -1,1 +1,2 @@
-"./scintilla merge=ours" 
+./lexilla merge=ours
+./scintilla merge=ours
