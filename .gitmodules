@@ -5,4 +5,4 @@
 [submodule "scintilla"]
 	path = scintilla
 	url = https://github.com/indiff/scintilla.git
-	branch = dev_new
+	branch = dev
