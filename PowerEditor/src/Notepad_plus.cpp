@@ -922,6 +922,7 @@ bool Notepad_plus::saveGUIParams()
 						(nppGUI._tabStatus & TAB_HIDE) | \
 						(nppGUI._tabStatus & TAB_QUITONEMPTY) | \
 						(nppGUI._tabStatus & TAB_ALTICONS);
+
 	nppGUI._splitterPos = _subSplitter.isVertical()?POS_VERTICAL:POS_HORIZOTAL;
 	UserDefineDialog *udd = _pEditView->getUserDefineDlg();
 	bool b = udd->isDocked();
@@ -3893,7 +3894,7 @@ void Notepad_plus::setLanguage(LangType langType)
 		_subEditView.execute(SCI_SETDOCPOINTER, 0, 0);
 		_subEditView.execute(SCI_SETMODEVENTMASK, MODEVENTMASK_ON);
 
-		_mainEditView.setLanguage(langType);
+		(_mainEditView.getCurrentBuffer())->setLangType(langType);
 
 		_subEditView.execute(SCI_SETMODEVENTMASK, MODEVENTMASK_OFF);
 		_subEditView.execute(SCI_SETDOCPOINTER, 0, subPrev);
@@ -3904,7 +3905,7 @@ void Notepad_plus::setLanguage(LangType langType)
 	}
 	else
 	{
-		_pEditView->setLanguage(langType);
+		(_pEditView->getCurrentBuffer())->setLangType(langType);
 	}
 }
 
