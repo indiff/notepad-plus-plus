@@ -36,7 +36,7 @@
 #include "CellBuffer.h"
 #include "CharClassify.h"
 #include "Decoration.h"
-// #include "ILexer.h" // ¶à´Î°üº¬
+#include "ILexer.h"
 #include "CaseFolder.h"
 #include "CharacterCategoryMap.h"
 #include "Document.h"
