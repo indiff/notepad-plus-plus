@@ -196,6 +196,7 @@ jobs:
 
 
 # /m:4：启用并行生成，并指定使用 4 个 CPU。
+#  -maxCpuCount:4 -property:PlatformToolset=v143
 # /p:Configuration=${{ matrix.build_configuration }}：设置生成配置（例如 Release 或 Debug）。
 # /p:Platform=${{ matrix.build_platform }}：设置生成平台（例如 x64）。
 # /p:PlatformToolset="v143"：指定要使用的工具集版本。
