@@ -408,6 +408,7 @@ LRESULT Notepad_plus::init(HWND hwnd)
 
 	_mainDocTab.display();
 	TabBarPlus::triggerOwnerDrawTabbar(&(_mainDocTab.dpiManager()));
+	drawTabbarColoursFromStylerArray();
 
 	//
 	// Initialize the default foreground & background color
