@@ -170,6 +170,7 @@ intptr_t CALLBACK WordStyleDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM 
 			_globalOverrideTip = CreateToolTip(IDC_GLOBAL_WHATISGLOBALOVERRIDE_LINK, _hSelf, _hInst, const_cast<PTSTR>(globalOverrideTipStr.c_str()), false);
 
 			NppDarkMode::autoSubclassAndThemeChildControls(_hSelf);
+			NppDarkMode::autoSubclassAndThemeWindowNotify(_hSelf);
 
 			goToCenter(SWP_SHOWWINDOW | SWP_NOSIZE);
 
@@ -178,13 +179,7 @@ intptr_t CALLBACK WordStyleDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM 
 
 		case WM_CTLCOLOREDIT:
 		{
-			auto hdcStatic = reinterpret_cast<HDC>(wParam);
-			auto dlgCtrlID = ::GetDlgCtrlID(reinterpret_cast<HWND>(lParam));
-			if (dlgCtrlID == IDC_USER_EXT_EDIT || dlgCtrlID == IDC_USER_KEYWORDS_EDIT)
-			{
-				return NppDarkMode::onCtlColorSofter(hdcStatic);
-			}
-			return NppDarkMode::onCtlColor(hdcStatic);
+			return NppDarkMode::onCtlColorSofter(reinterpret_cast<HDC>(wParam));
 		}
 
 		case WM_CTLCOLORLISTBOX:
@@ -652,6 +647,7 @@ void WordStyleDlg::loadLangListFromNppParam()
 
 	const int index2Begin = 0;
 	::SendDlgItemMessage(_hSelf, IDC_LANGUAGES_COMBO, CB_SETCURSEL, index2Begin, 0);
+	::RedrawWindow(::GetDlgItem(_hSelf, IDC_LANGUAGES_COMBO), nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 	setStyleListFromLexer(index2Begin);
 }
 
@@ -1271,6 +1267,7 @@ void WordStyleDlg::setVisualFromStyleList()
 
 	::SendMessage(_hFontNameCombo, CB_SETCURSEL, iFontName, 0);
 	::EnableWindow(_hFontNameCombo, style._isFontEnabled);
+	::RedrawWindow(_hFontNameCombo, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 	InvalidateRect(_hFontNameStaticText, NULL, FALSE);
 
 	//-- font size
@@ -1284,6 +1281,7 @@ void WordStyleDlg::setVisualFromStyleList()
 	}
 	::SendMessage(_hFontSizeCombo, CB_SETCURSEL, iFontSize, 0);
 	::EnableWindow(_hFontSizeCombo, style._isFontEnabled);
+	::RedrawWindow(_hFontSizeCombo, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 	InvalidateRect(_hFontSizeStaticText, NULL, FALSE);
 	
 	//-- font style : bold & italic

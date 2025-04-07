@@ -604,10 +604,12 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 
 			bool showCloseButton = tabBarStatus & TAB_CLOSEBUTTON;
 			bool enablePinButton = tabBarStatus & TAB_PINBUTTON;
+			bool showOnlyPinnedButton = tabBarStatus & TAB_SHOWONLYPINNEDBUTTON;
 			bool showButtonOnInactiveTabs = tabBarStatus & TAB_INACTIVETABSHOWBUTTON;
 
 			::SendDlgItemMessage(_hSelf, IDC_CHECK_ENABLETABCLOSE, BM_SETCHECK, showCloseButton, 0);
 			::SendDlgItemMessage(_hSelf, IDC_CHECK_ENABLETABPIN, BM_SETCHECK, enablePinButton, 0);
+			::SendDlgItemMessage(_hSelf, IDC_CHECK_SHOWONLYPINNEDBUTTON, BM_SETCHECK, showOnlyPinnedButton, 0);
 			::SendDlgItemMessage(_hSelf, IDC_CHECK_INACTTABDRAWBUTTON, BM_SETCHECK, showButtonOnInactiveTabs, 0);
 
 			if (!(showCloseButton || enablePinButton))
@@ -617,6 +619,11 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 				::EnableWindow(::GetDlgItem(_hSelf, IDC_CHECK_INACTTABDRAWBUTTON), FALSE);
 			}
 
+			if (!enablePinButton)
+			{
+				::EnableWindow(::GetDlgItem(_hSelf, IDC_CHECK_SHOWONLYPINNEDBUTTON), FALSE);
+			}
+			
 			::SendDlgItemMessage(_hSelf, IDC_CHECK_DBCLICK2CLOSE, BM_SETCHECK, tabBarStatus & TAB_DBCLK2CLOSE, 0);
 			::SendDlgItemMessage(_hSelf, IDC_CHECK_TAB_VERTICAL, BM_SETCHECK, tabBarStatus & TAB_VERTICAL, 0);
 			::SendDlgItemMessage(_hSelf, IDC_CHECK_TAB_MULTILINE, BM_SETCHECK, tabBarStatus & TAB_MULTILINE, 0);
@@ -727,6 +734,7 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 					::EnableWindow(::GetDlgItem(_hSelf, IDC_CHECK_DRAWINACTIVE), !toBeHidden);
 					::EnableWindow(::GetDlgItem(_hSelf, IDC_CHECK_ENABLETABCLOSE), !toBeHidden);
 					::EnableWindow(::GetDlgItem(_hSelf, IDC_CHECK_ENABLETABPIN), !toBeHidden);
+					::EnableWindow(::GetDlgItem(_hSelf, IDC_CHECK_SHOWONLYPINNEDBUTTON), !toBeHidden);
 					::EnableWindow(::GetDlgItem(_hSelf, IDC_CHECK_INACTTABDRAWBUTTON), !toBeHidden);
 					::EnableWindow(::GetDlgItem(_hSelf, IDC_CHECK_DBCLICK2CLOSE), !toBeHidden);
 					::EnableWindow(::GetDlgItem(_hSelf, IDC_CHECK_TAB_LAST_EXIT), !toBeHidden);
@@ -862,9 +870,14 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 					{
 						nppGUI._tabStatus &= ~TAB_INACTIVETABSHOWBUTTON;
 						::SendDlgItemMessage(_hSelf, IDC_CHECK_INACTTABDRAWBUTTON, BM_SETCHECK, FALSE, 0);
-						::SendMessage(::GetParent(_hParent), NPPM_INTERNAL_DRAWINACTIVETABBARBUTTON, 0, 0);
+						::SendMessage(::GetParent(_hParent), NPPM_INTERNAL_REFRESHTABBAR, 0, 0);
 					}
 					::EnableWindow(::GetDlgItem(_hSelf, IDC_CHECK_INACTTABDRAWBUTTON), showCloseButton || enablePinButton);
+					
+					if (wParam == IDC_CHECK_ENABLETABPIN)
+					{
+						::EnableWindow(::GetDlgItem(_hSelf, IDC_CHECK_SHOWONLYPINNEDBUTTON), enablePinButton);
+					}
 
 					return TRUE;
 				}
@@ -877,7 +890,19 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 					else
 						nppGUI._tabStatus &= ~TAB_INACTIVETABSHOWBUTTON;
 
-					::SendMessage(::GetParent(_hParent), NPPM_INTERNAL_DRAWINACTIVETABBARBUTTON, 0, 0);
+					::SendMessage(::GetParent(_hParent), NPPM_INTERNAL_REFRESHTABBAR, 0, 0);
+					return TRUE;
+				}
+				
+				case IDC_CHECK_SHOWONLYPINNEDBUTTON:
+				{
+					const bool isChecked = isCheckedOrNot(IDC_CHECK_SHOWONLYPINNEDBUTTON);
+					if (isChecked)
+						nppGUI._tabStatus |= TAB_SHOWONLYPINNEDBUTTON;
+					else
+						nppGUI._tabStatus &= ~TAB_SHOWONLYPINNEDBUTTON;
+
+					::SendMessage(::GetParent(_hParent), NPPM_INTERNAL_REFRESHTABBAR, 0, 0);
 					return TRUE;
 				}
 
@@ -1159,6 +1184,8 @@ intptr_t CALLBACK EditingSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 			::SetDlgItemInt(_hSelf, IDC_CARETLINEFRAME_WIDTH_DISPLAY, svp._currentLineFrameWidth, FALSE);
 
 			initScintParam();
+
+			NppDarkMode::autoSubclassAndThemeWindowNotify(_hSelf);
 
 			return TRUE;
 		}
@@ -2290,6 +2317,8 @@ intptr_t CALLBACK MarginsBorderEdgeSubDlg::run_dlgProc(UINT message, WPARAM wPar
 				::SendMessage(_verticalEdgeTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, MAKELPARAM((30000), (0)));
 			}
 			initScintParam();
+
+			NppDarkMode::autoSubclassAndThemeWindowNotify(_hSelf);
 
 			return TRUE;
 		}
@@ -5038,6 +5067,8 @@ intptr_t CALLBACK AutoCompletionSubDlg::run_dlgProc(UINT message, WPARAM wParam,
 					::SendDlgItemMessage(_hSelf, IDC_MACHEDPAIRCLOSE_EDIT3, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(closeChar));
 				}
 			}
+
+			NppDarkMode::autoSubclassAndThemeWindowNotify(_hSelf);
 
 			return TRUE;
 		}
