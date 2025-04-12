@@ -41,7 +41,7 @@ LRESULT CALLBACK ColourStaticTextHooker::colourStaticProc(HWND hwnd, UINT Messag
 
 			if (NppDarkMode::isEnabled())
 			{
-				::SetBkColor(hdc, NppDarkMode::getDarkerBackgroundColor());
+				::SetBkColor(hdc, NppDarkMode::getDlgBackgroundColor());
 			}
 
 			// Get the default GUI font
@@ -170,6 +170,7 @@ intptr_t CALLBACK WordStyleDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM 
 			_globalOverrideTip = CreateToolTip(IDC_GLOBAL_WHATISGLOBALOVERRIDE_LINK, _hSelf, _hInst, const_cast<PTSTR>(globalOverrideTipStr.c_str()), false);
 
 			NppDarkMode::autoSubclassAndThemeChildControls(_hSelf);
+			NppDarkMode::autoSubclassAndThemeWindowNotify(_hSelf);
 
 			goToCenter(SWP_SHOWWINDOW | SWP_NOSIZE);
 
@@ -178,13 +179,7 @@ intptr_t CALLBACK WordStyleDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM 
 
 		case WM_CTLCOLOREDIT:
 		{
-			auto hdcStatic = reinterpret_cast<HDC>(wParam);
-			auto dlgCtrlID = ::GetDlgCtrlID(reinterpret_cast<HWND>(lParam));
-			if (dlgCtrlID == IDC_USER_EXT_EDIT || dlgCtrlID == IDC_USER_KEYWORDS_EDIT)
-			{
-				return NppDarkMode::onCtlColorSofter(hdcStatic);
-			}
-			return NppDarkMode::onCtlColor(hdcStatic);
+			return NppDarkMode::onCtlColorCtrl(reinterpret_cast<HDC>(wParam));
 		}
 
 		case WM_CTLCOLORLISTBOX:
@@ -194,7 +189,7 @@ intptr_t CALLBACK WordStyleDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM 
 
 		case WM_CTLCOLORDLG:
 		{
-			return NppDarkMode::onCtlColorDarker(reinterpret_cast<HDC>(wParam));
+			return NppDarkMode::onCtlColorDlg(reinterpret_cast<HDC>(wParam));
 		}
 
 		case WM_CTLCOLORSTATIC:
@@ -219,7 +214,7 @@ intptr_t CALLBACK WordStyleDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM 
 					// Selected text colour style
 					if (style._styleDesc == L"Selected text colour")
 					{
-						isTextEnabled = NppParameters::getInstance().isSelectFgColorEnabled();
+						isTextEnabled = NppParameters::getInstance().getSVP()._selectedTextForegroundSingleColor;
 					}
 				}
 				else if (dlgCtrlID == IDC_BG_STATIC)
@@ -235,14 +230,14 @@ intptr_t CALLBACK WordStyleDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM 
 					isTextEnabled = style._fontSize != STYLE_NOT_USED && style._fontSize < 100; // style._fontSize has only 2 digits
 				}
 
-				return NppDarkMode::onCtlColorDarkerBGStaticText(hdcStatic, isTextEnabled);
+				return NppDarkMode::onCtlColorDlgStaticText(hdcStatic, isTextEnabled);
 			}
 
 			if (dlgCtrlID == IDC_DEF_EXT_EDIT || dlgCtrlID == IDC_DEF_KEYWORDS_EDIT)
 			{
 				return NppDarkMode::onCtlColor(hdcStatic);
 			}
-			return NppDarkMode::onCtlColorDarker(hdcStatic);
+			return NppDarkMode::onCtlColorDlg(hdcStatic);
 		}
 
 		case WM_PRINTCLIENT:
@@ -652,6 +647,7 @@ void WordStyleDlg::loadLangListFromNppParam()
 
 	const int index2Begin = 0;
 	::SendDlgItemMessage(_hSelf, IDC_LANGUAGES_COMBO, CB_SETCURSEL, index2Begin, 0);
+	::RedrawWindow(::GetDlgItem(_hSelf, IDC_LANGUAGES_COMBO), nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 	setStyleListFromLexer(index2Begin);
 }
 
@@ -1180,6 +1176,20 @@ std::pair<intptr_t, intptr_t> WordStyleDlg::goToPreferencesSettings()
 	return result;
 }
 
+void WordStyleDlg::syncWithSelFgSingleColorCtrl()
+{
+	const Style& style = getCurrentStyler();
+
+	// Selected text colour style
+	if (style._styleDesc == L"Selected text colour")
+	{
+		// Only in case that dialog is on "Selected text colour":
+		// Switch to a section then switch back for refresh current state of "Selected text colour"
+		goToSection(L"Global Styles:Default Style");
+		goToSection(L"Global Styles:Selected text colour");
+	}
+}
+
 void WordStyleDlg::setVisualFromStyleList()
 {
 	showGlobalOverrideCtrls(false);
@@ -1244,7 +1254,7 @@ void WordStyleDlg::setVisualFromStyleList()
 	{
 		isEnable = false; // disable by default for "Selected text colour" style
 
-		if (NppParameters::getInstance().isSelectFgColorEnabled())
+		if (NppParameters::getInstance().getSVP()._selectedTextForegroundSingleColor)
 			isEnable = true;
 	}
 	::EnableWindow(_pFgColour->getHSelf(), isEnable);
@@ -1271,6 +1281,7 @@ void WordStyleDlg::setVisualFromStyleList()
 
 	::SendMessage(_hFontNameCombo, CB_SETCURSEL, iFontName, 0);
 	::EnableWindow(_hFontNameCombo, style._isFontEnabled);
+	::RedrawWindow(_hFontNameCombo, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 	InvalidateRect(_hFontNameStaticText, NULL, FALSE);
 
 	//-- font size
@@ -1284,6 +1295,7 @@ void WordStyleDlg::setVisualFromStyleList()
 	}
 	::SendMessage(_hFontSizeCombo, CB_SETCURSEL, iFontSize, 0);
 	::EnableWindow(_hFontSizeCombo, style._isFontEnabled);
+	::RedrawWindow(_hFontSizeCombo, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 	InvalidateRect(_hFontSizeStaticText, NULL, FALSE);
 	
 	//-- font style : bold & italic

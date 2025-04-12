@@ -684,8 +684,8 @@ LRESULT ScintillaEditView::scintillaNew_Proc(HWND hwnd, UINT Message, WPARAM wPa
 			bool rightClickKeepsSelection = ((NppParameters::getInstance()).getSVP())._rightClickKeepsSelection;
 			if (rightClickKeepsSelection)
 			{
-				size_t clickX = GET_X_LPARAM(lParam);
-				size_t marginX = execute(SCI_POINTXFROMPOSITION, 0, 0);
+				LONG clickX = GET_X_LPARAM(lParam);
+				LONG marginX = static_cast<LONG>(execute(SCI_POINTXFROMPOSITION, 0, 0)) + static_cast<LONG>(execute(SCI_GETXOFFSET, 0, 0));
 				if (clickX >= marginX)
 				{
 					// if right-click in the editing area (not the margins!),
@@ -3068,10 +3068,9 @@ void ScintillaEditView::performGlobalStyles()
 	}
 	setElementColour(SC_ELEMENT_SELECTION_ADDITIONAL_BACK, selectMultiSelectColorBack);
 
-	if (nppParams.isSelectFgColorEnabled())
+	if (svp._selectedTextForegroundSingleColor)
 	{
-		//execute(SCI_SETSELFORE, 1, selectColorFore);
-		setElementColour(SC_ELEMENT_SELECTION_TEXT, selectColorFore);  // SCI_SETSELFORE is deprecated
+		setElementColour(SC_ELEMENT_SELECTION_TEXT, selectColorFore);
 		setElementColour(SC_ELEMENT_SELECTION_INACTIVE_TEXT, selectColorFore);
 		setElementColour(SC_ELEMENT_SELECTION_ADDITIONAL_TEXT, selectColorFore);
 	}
