@@ -963,6 +963,7 @@ Translation note:
 					<Item id="6112" name="Show close button"/>
 					<Item id="6113" name="Double click to close document"/>
 					<Item id="6115" name="Enable pin tab feature"/>
+					<Item id="6135" name="Show only pinned button"/>
 					<Item id="6118" name="Hide"/>
 					<Item id="6119" name="Multi-line"/>
 					<Item id="6120" name="Vertical"/>
@@ -996,6 +997,7 @@ Translation note:
 					<Item id="6239" name="Keep selection when right-click outside of selection"/>
 					<Item id="6245" name="Enable virtual space"/>
 					<Item id="6214" name="Enable Copy/Cut Line without selection"/>
+					<Item id="6225" name="Apply custom color to selected text foreground"/>
 					<Item id="6651" name="Current Line Indicator"/>
 					<Item id="6652" name="None"/>
 					<Item id="6653" name="Highlight Background"/>
@@ -1032,10 +1034,10 @@ Translation note:
 					<Item id="7108" name="Cyan"/>
 					<Item id="7109" name="Olive"/>
 					<Item id="7115" name="Customized"/>
-					<Item id="7116" name="Top"/>
-					<Item id="7117" name="Menu hot track"/>
-					<Item id="7118" name="Active"/>
-					<Item id="7119" name="Main"/>
+					<Item id="7116" name="Content background"/>
+					<Item id="7117" name="Hot track item"/>
+					<Item id="7118" name="Control background"/>
+					<Item id="7119" name="Dialog background"/>
 					<Item id="7120" name="Error"/>
 					<Item id="7121" name="Text"/>
 					<Item id="7122" name="Darker text"/>
