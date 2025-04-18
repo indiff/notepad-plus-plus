@@ -376,7 +376,7 @@ namespace NppDarkMode
 	}
 
 	static Options _options;			// actual runtime options
-	static AdvancedOptions g_advOptions;
+	static ::AdvancedOptions g_advOptions;
 
 	static Options configuredOptions()
 	{
@@ -392,6 +392,56 @@ namespace NppDarkMode
 		return opt;
 	}
 
+	constexpr COLORREF cDefaultMainDark = RGB(0xDE, 0xDE, 0xDE);
+	constexpr COLORREF cDefaultSecondaryDark = RGB(0x4C, 0xC2, 0xFF);
+	constexpr COLORREF cDefaultMainLight = RGB(0x21, 0x21, 0x21);
+	constexpr COLORREF cDefaultSecondaryLight = RGB(0x00, 0x78, 0xD4);
+
+	static COLORREF cAccentDark = cDefaultSecondaryDark;
+	static COLORREF cAccentLight = cDefaultSecondaryLight;
+
+	static COLORREF adjustClrLightness(COLORREF clr, bool useDark)
+	{
+		WORD h = 0;
+		WORD s = 0;
+		WORD l = 0;
+		::ColorRGBToHLS(clr, &h, &l, &s);
+
+		constexpr double lightnessThreshold = 50.0 - 3.0;
+		if (NppDarkMode::calculatePerceivedLightness(clr) < lightnessThreshold)
+		{
+			s -= 20;
+			l += 50;
+			return useDark ? ::ColorHLSToRGB(h, l, s) : clr;
+		}
+		else
+		{
+			s += 20;
+			l -= 50;
+			return useDark ? clr : ::ColorHLSToRGB(h, l, s);
+		}
+	}
+
+	static bool initAccentColor()
+	{
+		BOOL opaque = TRUE;
+		COLORREF cAccent = 0;
+
+		if (SUCCEEDED(::DwmGetColorizationColor(&cAccent, &opaque)))
+		{
+			cAccent = RGB(GetBValue(cAccent), GetGValue(cAccent), GetRValue(cAccent));
+
+			cAccentDark = NppDarkMode::adjustClrLightness(cAccent, true);
+			cAccentLight = NppDarkMode::adjustClrLightness(cAccent, false);
+			return true;
+		}
+
+		cAccentDark = cDefaultSecondaryDark;
+		cAccentLight = cDefaultSecondaryLight;
+		return false;
+	}
+
+
 	static bool g_isAtLeastWindows10 = false;
 	static bool g_isWine = false;
 
@@ -401,6 +451,7 @@ namespace NppDarkMode
 
 		initExperimentalDarkMode();
 		initAdvancedOptions();
+		initAccentColor();
 
 		g_isAtLeastWindows10 = NppDarkMode::isWindows10();
 
@@ -520,23 +571,72 @@ namespace NppDarkMode
 		return (lstrcmp(theme.c_str(), L"stylers.xml") == 0) ? L"" : theme;
 	}
 
-	static bool g_isCustomToolIconUsed = NppParameters::getInstance().getCustomizedToolButtons() != nullptr;
-
-	void setToolBarIconSet(int state2Set, bool useDark)
+	TbIconInfo getToolbarIconInfo(bool useDark)
 	{
-		if (useDark)
-			g_advOptions._darkDefaults._toolBarIconSet = state2Set;
-		else
-			g_advOptions._lightDefaults._toolBarIconSet = state2Set;
+		auto& toolbarInfo = useDark ? g_advOptions._darkDefaults._tbIconInfo
+			: g_advOptions._lightDefaults._tbIconInfo;
+
+		if (toolbarInfo._tbCustomColor == 0)
+			toolbarInfo._tbCustomColor = NppDarkMode::getAccentColor(useDark);
+
+		return toolbarInfo;
 	}
 
-	int getToolBarIconSet(bool useDark)
+	TbIconInfo getToolbarIconInfo()
 	{
-		if (g_isCustomToolIconUsed)
-		{
-			return -1;
-		}
-		return useDark ? g_advOptions._darkDefaults._toolBarIconSet : g_advOptions._lightDefaults._toolBarIconSet;
+		return NppDarkMode::getToolbarIconInfo(NppDarkMode::isEnabled());
+	}
+
+	void setToolbarIconSet(int state2Set, bool useDark)
+	{
+		if (useDark)
+			g_advOptions._darkDefaults._tbIconInfo._tbIconSet = static_cast<toolBarStatusType>(state2Set);
+		else
+			g_advOptions._lightDefaults._tbIconInfo._tbIconSet = static_cast<toolBarStatusType>(state2Set);
+	}
+
+	void setToolbarIconSet(int state2Set)
+	{
+		NppDarkMode::setToolbarIconSet(state2Set, NppDarkMode::isEnabled());
+	}
+
+	void setToolbarFluentColor(FluentColor color2Set, bool useDark)
+	{
+		if (useDark)
+			g_advOptions._darkDefaults._tbIconInfo._tbColor = color2Set;
+		else
+			g_advOptions._lightDefaults._tbIconInfo._tbColor = color2Set;
+	}
+
+	void setToolbarFluentColor(FluentColor color2Set)
+	{
+		NppDarkMode::setToolbarFluentColor(color2Set, NppDarkMode::isEnabled());
+	}
+
+	void setToolbarFluentMonochrome(bool setMonochrome, bool useDark)
+	{
+		if (useDark)
+			g_advOptions._darkDefaults._tbIconInfo._tbUseMono = setMonochrome;
+		else
+			g_advOptions._lightDefaults._tbIconInfo._tbUseMono = setMonochrome;
+	}
+
+	void setToolbarFluentMonochrome(bool setMonochrome)
+	{
+		NppDarkMode::setToolbarFluentMonochrome(setMonochrome, NppDarkMode::isEnabled());
+	}
+	
+	void setToolbarFluentCustomColor(COLORREF color, bool useDark)
+	{
+		if (useDark)
+			g_advOptions._darkDefaults._tbIconInfo._tbCustomColor = color;
+		else
+			g_advOptions._lightDefaults._tbIconInfo._tbCustomColor = color;
+	}
+
+	void setToolbarFluentCustomColor(COLORREF color)
+	{
+		NppDarkMode::setToolbarFluentCustomColor(color, NppDarkMode::isEnabled());
 	}
 
 	void setTabIconSet(bool useAltIcons, bool useDark)
@@ -618,6 +718,16 @@ namespace NppDarkMode
 
 		double lightness = (luminance <= 216.0 / 24389.0) ? (luminance * 24389.0 / 27.0) : (std::pow(luminance, (1.0 / 3.0)) * 116.0 - 16.0);
 		return lightness;
+	}
+
+	COLORREF getAccentColor(bool useDark)
+	{
+		return useDark ? cAccentDark : cAccentLight;
+	}
+
+	COLORREF getAccentColor()
+	{
+		return getAccentColor(NppDarkMode::isEnabled());
 	}
 
 	COLORREF getBackgroundColor()         { return getTheme()._colors.background; }
@@ -3750,5 +3860,4 @@ namespace NppDarkMode
 		}
 		return NppDarkMode::onCtlColor(hdc);
 	}
-
 }
