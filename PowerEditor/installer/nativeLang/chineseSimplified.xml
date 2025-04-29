@@ -5,7 +5,7 @@ Translation note:
 2. All the comments are for explanation, they are not for translation.
 -->
 <NotepadPlus>
-	<Native-Langue name="简体中文" filename="chineseSimplified.xml" version="8.7.5">
+	<Native-Langue name="简体中文" filename="chineseSimplified.xml" version="8.8">
 		<Menu>
 			<Main>
 				<!-- Main Menu Entries -->
@@ -964,22 +964,50 @@ Translation note:
 				</Operator>
 			</UserDefine>
 			<Preference title="首选项">
-				<Item id="6001" name="关闭"/>
-				<Global title="常用">
+				<Item id="6001" name="储存并关闭"/>
+				<Global title="一般">
+					<Item id="6125" name="文件切换器"/>
+					<Item id="6131" name="菜单"/>
+			
+					<Item id="6122" name="隐藏菜单栏 (按下 Alt 或 F10 显示)"/>
+					<Item id="6132" name="隐藏菜单栏右侧 ＋ ▼ ✕ 快捷键 (需重启Notepad++)"/>
+					<Item id="6123" name="语言"/>
+					<Item id="6133" name="状态列"/>
+					<Item id="6134" name="隐藏"/>
+				</Global>
+				<Toolbar title="工具列">
 					<Item id="6102" name="隐藏"/>
 					<Item id="6103" name="Fluent UI 图标：小"/>
 					<Item id="6104" name="Fluent UI 图标：大"/>
 					<Item id="6129" name="Fluent UI 填充图标：小"/>
 					<Item id="6130" name="Fluent UI 填充图标：大"/>
 					<Item id="6105" name="标准图标：小"/>
-					<Item id="6107" name="缩小"/>
+					<Item id="6011" name="着色"/>
+					
+					<Item id="6012" name="全部"/>
+					<Item id="6013" name="部分"/>
+					<Item id="6014" name="颜色选择"/>
+					<Item id="6015" name="内定色"/>
+					<Item id="6016" name="红色"/>
+					<Item id="6017" name="绿色"/>
+					<Item id="6018" name="蓝色"/>
+					<Item id="6019" name="紫色"/>
+					<Item id="6020" name="青色"/>
+					<Item id="6021" name="橄榄色"/>
+					<Item id="6022" name="黄色"/>
+					<Item id="6023" name="系统强色调"/>
+					<Item id="6024" name="指定色调"/>
+					
+				</Toolbar>
+
+				<Tabbar title="页签列">
+				        <Item id="6107" name="缩小"/>
+					<Item id="6112" name="标签显示关闭按钮"/>
+					<Item id="6113" name="双击关闭标签"/>
 					<Item id="6108" name="锁定 (不允许拖放)"/>
 					<Item id="6109" name="非当前标签变暗"/>
 					<Item id="6110" name="为当前标签绘制颜色条"/>					
 					<Item id="6111" name="显示状态列"/>
-
-					<Item id="6112" name="标签显示关闭按钮"/>
-					<Item id="6113" name="双击关闭标签"/>
 					<Item id="6115" name="启用固定标签功能"/>
 					<Item id="6118" name="隐藏标签栏"/>
 					<Item id="6119" name="多行显示"/>
@@ -989,12 +1017,11 @@ Translation note:
 					<Item id="6133" name="状态栏"/>
 					<Item id="6134" name="隐藏"/>
 					<Item id="6131" name="菜单"/>
-					<Item id="6122" name="隐藏菜单栏 (按下 Alt 或 F10 显示)"/>
-					<Item id="6132" name="隐藏菜单栏右侧 ＋ ▼ ✕ 快捷键 (需重启Notepad++)"/>
+					
 					<Item id="6123" name="界面语言"/>
 					<Item id="6125" name="文件切換器"/>
 					<Item id="6127" name="停用副档名栏"/>
-				</Global>
+				</Tabbar>
 
 				<Scintillas title="编辑1">
 					<Item id="6216" name="光标设置"/>
