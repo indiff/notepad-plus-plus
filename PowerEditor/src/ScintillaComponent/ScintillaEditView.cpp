@@ -163,6 +163,7 @@ LanguageNameInfo ScintillaEditView::_langNameInfoArray[L_EXTERNAL + 1] = {
 	{L"raku",             L"Raku",                   L"Raku source file",                                  L_RAKU,            "raku"},
 	{L"toml",             L"TOML",                   L"Tom's Obvious Minimal Language file",               L_TOML,            "toml"},
 	{L"sas",              L"SAS",                    L"SAS file",                                          L_SAS,             "sas"},
+	{L"errorlist",        L"ErrorList",              L"ErrorList",                                         L_ERRORLIST,       "errorlist"},
 	{L"ext",              L"External",               L"External",                                          L_EXTERNAL,        "null"}
 };
 
@@ -2087,6 +2088,9 @@ void ScintillaEditView::defineDocType(LangType typeDoc)
 
 		case L_SAS:
 			setSasLexer(); break;
+
+		case L_ERRORLIST:
+			setErrorListLexer(); break;
 
 		case L_TEXT :
 		default :
@@ -4262,17 +4266,31 @@ void ScintillaEditView::restoreHiddenLines()
 
 	while (line != -1)
 	{
-		line = static_cast<int>(execute(SCI_MARKERNEXT, line, 1 << MARK_HIDELINESBEGIN));
-		
-		if (line != -1)
-		{
-			int startHiding = line + 1;
-			line = static_cast<int>(execute(SCI_MARKERNEXT, line, 1 << MARK_HIDELINESEND));
+		int lineBegin = static_cast<int>(execute(SCI_MARKERNEXT, line, 1 << MARK_HIDELINESBEGIN));
+		int lineEnd = static_cast<int>(execute(SCI_MARKERNEXT, line, 1 << MARK_HIDELINESEND));
 
-			if (line != -1)
-			{
-				execute(SCI_HIDELINES, startHiding, line - 1);
-			}
+		if (lineBegin != -1 && lineEnd != -1 && lineBegin != lineEnd)
+		{
+			execute(SCI_HIDELINES, lineBegin + 1, lineEnd - 1);
+			
+			// Check if the end mark & the begin mark are on the same line
+			lineBegin = static_cast<int>(execute(SCI_MARKERNEXT, lineEnd, 1 << MARK_HIDELINESBEGIN));
+			lineEnd = static_cast<int>(execute(SCI_MARKERNEXT, lineEnd, 1 << MARK_HIDELINESEND));
+			
+			line = lineEnd + ((lineBegin == lineEnd) ? 0 : 1);
+		}
+		else if (lineBegin != -1 && lineEnd != -1 && lineBegin == lineEnd) // The end mark & the begin mark are on the same line
+		{
+			lineEnd = static_cast<int>(execute(SCI_MARKERNEXT, line + 1, 1 << MARK_HIDELINESEND));
+
+			if (lineEnd != -1)
+				execute(SCI_HIDELINES, lineBegin + 1, lineEnd - 1);
+
+			line = lineEnd;
+		}
+		else // one of (or both) lineBegin & lineEnd cannot be found - let's get out here
+		{
+			line = -1;
 		}
 	}
 }

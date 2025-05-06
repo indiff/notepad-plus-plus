@@ -1220,26 +1220,26 @@ void FindReplaceDlg::resizeDialogElements()
 	const size_t nComboboxes = resizeWindowIDs.size();
 
 	//elements that need to be moved
-	const auto moveCheckIds = {
+	constexpr std::array moveCheckIds{
 		IDD_FINDINFILES_RECURSIVE_CHECK, IDD_FINDINFILES_INHIDDENDIR_CHECK,
 		IDD_FINDINFILES_PROJECT1_CHECK, IDD_FINDINFILES_PROJECT2_CHECK, IDD_FINDINFILES_PROJECT3_CHECK,
 	};
 
-	const auto moveBtnIDs = {
+	constexpr std::array moveBtnIDs{
 		IDCMARKALL, IDC_CLEAR_ALL, IDCCOUNTALL, IDC_FINDALL_OPENEDFILES, IDC_FINDALL_CURRENTFILE,
 		IDREPLACE, IDREPLACEALL, IDC_REPLACE_OPENEDFILES, IDD_FINDINFILES_FIND_BUTTON, IDD_FINDINFILES_REPLACEINFILES, IDCANCEL,
-		IDC_FINDPREV, IDC_COPY_MARKED_TEXT, IDD_FINDINFILES_REPLACEINPROJECTS, IDD_FINDINFILES_SETDIRFROMDOC_BUTTON
+		IDC_FINDPREV, IDC_COPY_MARKED_TEXT, IDD_FINDINFILES_REPLACEINPROJECTS
 	};
 
-	const auto moveOtherCtrlsIDs = {
+	constexpr std::array moveOtherCtrlsIDs{
 		IDC_REPLACEINSELECTION, IDD_RESIZE_TOGGLE_BUTTON, IDD_FINDREPLACE_SWAP_BUTTON
 	};
 
-	const auto moveLaterIDs = {
-		IDC_FINDPREV, IDD_FINDINFILES_BROWSE_BUTTON
+	constexpr std::array moveLaterIDs{
+		IDC_FINDPREV, IDD_FINDINFILES_BROWSE_BUTTON, IDD_FINDINFILES_SETDIRFROMDOC_BUTTON, IDC_FIF_FILTER_TIP_STATIC
 	};
 
-	const auto moveTransIDs = {
+	constexpr std::array moveTransIDs{
 		IDC_TRANSPARENT_CHECK, IDC_TRANSPARENT_LOSSFOCUS_RADIO, IDC_TRANSPARENT_ALWAYS_RADIO, IDC_PERCENTAGE_SLIDER
 	};
 
@@ -1304,7 +1304,7 @@ void FindReplaceDlg::resizeDialogElements()
 	RECT rcSwapBtn{};
 	HWND hSwapBtn = ::GetDlgItem(_hSelf, IDD_FINDREPLACE_SWAP_BUTTON);
 	getMappedChildRect(hSwapBtn, rcSwapBtn);
-	hdwp = setOrDeferWindowPos(hdwp, hSwapBtn, nullptr, rcOkBtn.left - getRcWidth(rcSwapBtn) - gap, rcSwapBtn.top, 0, 0, SWP_NOSIZE | flags);
+	hdwp = setOrDeferWindowPos(hdwp, hSwapBtn, nullptr, rcOkBtn.left - getRcWidth(rcSwapBtn) - gap * 6, rcSwapBtn.top, 0, 0, SWP_NOSIZE | flags);
 
 	if (hdwp)
 		::EndDeferWindowPos(hdwp);
@@ -1335,12 +1335,15 @@ void FindReplaceDlg::resizeDialogElements()
 	RECT rcFilterTipStatic{};
 	HWND FilterTipStatic = ::GetDlgItem(_hSelf, IDC_FIF_FILTER_TIP_STATIC);
 	getMappedChildRect(FilterTipStatic, rcFilterTipStatic);
-	hdwp = setOrDeferWindowPos(hdwp, FilterTipStatic, nullptr, rcSwapBtn.left + 4, rcFilterTipStatic.top, 0, 0, SWP_NOSIZE | flags);
+	hdwp = setOrDeferWindowPos(hdwp, FilterTipStatic, nullptr, rcSwapBtn.left + (gap / 2), rcFilterTipStatic.top, 0, 0, SWP_NOSIZE | flags);
 
 	RECT rcBrowseBtn{};
 	HWND hBrowseBtn = ::GetDlgItem(_hSelf, IDD_FINDINFILES_BROWSE_BUTTON);
 	getMappedChildRect(hBrowseBtn, rcBrowseBtn);
 	hdwp = setOrDeferWindowPos(hdwp, hBrowseBtn, nullptr, rcSwapBtn.left, rcBrowseBtn.top, 0, 0, SWP_NOSIZE | flags);
+
+	HWND hSetDirBtn = ::GetDlgItem(_hSelf, IDD_FINDINFILES_SETDIRFROMDOC_BUTTON);
+	hdwp = setOrDeferWindowPos(hdwp, hSetDirBtn, nullptr, rcSwapBtn.left + getRcWidth(rcBrowseBtn) + gap, rcBrowseBtn.top, 0, 0, SWP_NOSIZE | flags);
 
 	if (!isLessModeOn)
 	{
@@ -6627,7 +6630,9 @@ LRESULT APIENTRY Progress::wndProc(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM l
 				::FillRect(reinterpret_cast<HDC>(wparam), &rc, NppDarkMode::getDlgBackgroundBrush());
 				return TRUE;
 			}
-			break;
+			// With "break;" here it will cause the visual regression: https://community.notepad-plus-plus.org/topic/26815/notepad-v8-8-release/4?_=1746285454720
+			// Use "return TRUE;" instead.
+			return TRUE;
 		}
 
 		case WM_SETFOCUS:
