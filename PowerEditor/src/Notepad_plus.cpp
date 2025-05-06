@@ -386,6 +386,10 @@ LRESULT Notepad_plus::init(HWND hwnd)
 	_mainEditView.execute(SCI_STYLESETCHECKMONOSPACED, STYLE_DEFAULT, true);
 	_subEditView.execute(SCI_STYLESETCHECKMONOSPACED, STYLE_DEFAULT, true);
 
+	// Restore also the possible previous selection for each undo/redo op (memory cost min 150B for each op)
+	_mainEditView.execute(SCI_SETUNDOSELECTIONHISTORY, SC_UNDO_SELECTION_HISTORY_ENABLED);
+	_subEditView.execute(SCI_SETUNDOSELECTIONHISTORY, SC_UNDO_SELECTION_HISTORY_ENABLED);
+
 	const auto& hf = _mainDocTab.getFont(nppGUI._tabStatus & TAB_REDUCE);
 	if (hf)
 	{
@@ -3876,6 +3880,9 @@ void Notepad_plus::setLanguage(LangType langType)
 	{
 		(_pEditView->getCurrentBuffer())->setLangType(langType);
 	}
+
+
+	_pEditView->restoreHiddenLines();
 }
 
 LangType Notepad_plus::menuID2LangType(int cmdID)
@@ -4064,6 +4071,8 @@ LangType Notepad_plus::menuID2LangType(int cmdID)
             return L_TOML;
         case IDM_LANG_SAS:
             return L_SAS;
+        case IDM_LANG_ERRORLIST:
+            return L_ERRORLIST;
         case IDM_LANG_USER:
             return L_USER;
 		default:

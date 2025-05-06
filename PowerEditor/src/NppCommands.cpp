@@ -35,6 +35,7 @@
 #include "sha-256.h"
 #include "calc_sha1.h"
 #include "sha512.h"
+#include "SortLocale.h"
 
 using namespace std;
 
@@ -849,6 +850,21 @@ void Notepad_plus::command(int id)
 				_pEditView->execute(SCI_SETSELECTIONSTART, posStart);
 				_pEditView->execute(SCI_SETSELECTIONEND, posEnd);
 			}
+		}
+		break;
+
+		case IDM_EDIT_SORTLINES_LOCALE_ASCENDING:
+		case IDM_EDIT_SORTLINES_LOCALE_DESCENDING:
+		{
+			std::lock_guard<std::mutex> lock(command_mutex);
+			SortLocale sortLocale;
+			auto result = sortLocale.sort(_pEditView, id == IDM_EDIT_SORTLINES_LOCALE_DESCENDING);
+			if (result.status)
+				_nativeLangSpeaker.messageBox(result.tagName.data(),
+					_pPublicInterface->getHSelf(),
+					result.message.data(),
+					result.status == MB_ICONERROR ? L"Sort Failed" : L"Sort not performed",
+					result.status | MB_OK | MB_APPLMODAL, 0, result.message.data());
 		}
 		break;
 
@@ -2414,6 +2430,18 @@ void Notepad_plus::command(int id)
 			checkMenuItem(IDM_VIEW_ALL_CHARACTERS, allChecked);
 			_toolBar.setCheck(IDM_VIEW_ALL_CHARACTERS, allChecked);
 
+			// inform the relevant lexers about the update
+			std::vector<ScintillaEditView*> pViews{ &_mainEditView, &_subEditView };
+			for (auto pView : pViews)
+			{
+				Buffer* pBuf = pView->getCurrentBuffer();
+				if (pBuf->getLangType() == L_ERRORLIST)
+				{
+					pView->execute(SCI_STYLESETVISIBLE, static_cast<WPARAM>(SCE_ERR_ESCSEQ), static_cast<LPARAM>(isChecked));
+					pView->execute(SCI_STYLESETVISIBLE, static_cast<WPARAM>(SCE_ERR_ESCSEQ_UNKNOWN), static_cast<LPARAM>(isChecked));
+				}
+			}
+
 			break;
 		}
 
@@ -2438,6 +2466,18 @@ void Notepad_plus::command(int id)
 			_subEditView.showInvisibleChars(isChecked);
 
 			_findReplaceDlg.updateFinderScintillaForNpc();
+
+			// inform the relevant lexers about the update
+			std::vector<ScintillaEditView*> pViews{ &_mainEditView, &_subEditView };
+			for (auto pView : pViews)
+			{
+				Buffer* pBuf = pView->getCurrentBuffer();
+				if (pBuf->getLangType() == L_ERRORLIST)
+				{
+					pView->execute(SCI_STYLESETVISIBLE, static_cast<WPARAM>(SCE_ERR_ESCSEQ), static_cast<LPARAM>(isChecked));
+					pView->execute(SCI_STYLESETVISIBLE, static_cast<WPARAM>(SCE_ERR_ESCSEQ_UNKNOWN), static_cast<LPARAM>(isChecked));
+				}
+			}
 
 			break;
 		}
@@ -3714,6 +3754,7 @@ void Notepad_plus::command(int id)
 		case IDM_LANG_RAKU:
 		case IDM_LANG_TOML:
 		case IDM_LANG_SAS:
+		case IDM_LANG_ERRORLIST:
 		case IDM_LANG_USER :
 		{
 			LangType lang = menuID2LangType(id);
@@ -4248,6 +4289,8 @@ void Notepad_plus::command(int id)
 			case IDM_EDIT_MULTISELECTNEXTMATCHCASEWHOLEWORD:
 			case IDM_EDIT_MULTISELECTUNDO:
 			case IDM_EDIT_MULTISELECTSSKIP:
+			case IDM_EDIT_SORTLINES_LOCALE_ASCENDING:
+			case IDM_EDIT_SORTLINES_LOCALE_DESCENDING:
 				_macro.push_back(recordedMacroStep(id));
 				break;
 

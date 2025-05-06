@@ -131,6 +131,8 @@ static const WinMenuKeyDefinition winKeyDefs[] =
 	{ VK_NULL,    IDM_EDIT_SORTLINES_LEXICOGRAPHIC_DESCENDING,  false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_SORTLINES_LEXICO_CASE_INSENS_ASCENDING,   false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_SORTLINES_LEXICO_CASE_INSENS_DESCENDING,  false, false, false, nullptr },
+	{ VK_NULL,    IDM_EDIT_SORTLINES_LOCALE_ASCENDING,          false, false, false, nullptr },
+	{ VK_NULL,    IDM_EDIT_SORTLINES_LOCALE_DESCENDING,         false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_SORTLINES_INTEGER_ASCENDING,         false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_SORTLINES_INTEGER_DESCENDING,        false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_SORTLINES_DECIMALCOMMA_ASCENDING,    false, false, false, nullptr },
@@ -8437,6 +8439,9 @@ int NppParameters::langTypeToCommandID(LangType lt) const
 		case L_SAS:
 			id = IDM_LANG_SAS; break;
 			
+		case L_ERRORLIST:
+			id = IDM_LANG_ERRORLIST; break;
+			
 		case L_SEARCHRESULT :
 			id = -1;	break;
 
@@ -8610,6 +8615,26 @@ bool NppParameters::insertTabInfo(const wchar_t* langName, int tabInfo, bool bac
 			return true;
 		}
 	}
+
+	for (size_t x = 0; x < _pXmlExternalLexerDoc.size(); ++x)
+	{
+		TiXmlNode* langRoot = (_pXmlExternalLexerDoc[x]->FirstChild(L"NotepadPlus"))->FirstChildElement(L"Languages");
+		for (TiXmlNode* childNode = langRoot->FirstChildElement(L"Language");
+			childNode;
+			childNode = childNode->NextSibling(L"Language"))
+		{
+			TiXmlElement* element = childNode->ToElement();
+			const wchar_t* nm = element->Attribute(L"name");
+			if (nm && lstrcmp(langName, nm) == 0)
+			{
+				childNode->ToElement()->SetAttribute(L"tabSettings", tabInfo);
+				childNode->ToElement()->SetAttribute(L"backspaceUnindent", backspaceUnindent ? L"yes" : L"no");
+				_pXmlExternalLexerDoc[x]->SaveFile();
+				return true;
+			}
+		}
+	}
+
 	return false;
 }
 
