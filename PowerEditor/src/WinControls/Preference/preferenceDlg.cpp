@@ -759,7 +759,7 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 
 				case IDC_RELOAD_BUTTON:
 				{
-					MessageBox(NULL, L"test", L"", MB_OK);
+					// MessageBox(NULL, L"test", L"", MB_OK);
 					LocalizationSwitcher& localizationSwitcher = nppParam.getLocalizationSwitcher();
 					auto index = ::SendDlgItemMessage(_hSelf, IDC_COMBO_LOCALIZATION, CB_GETCURSEL, 0, 0);
 					wchar_t langName[MAX_PATH] = { '\0' };
