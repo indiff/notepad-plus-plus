@@ -528,3 +528,4 @@
 #define IDC_RADIO_AUTOINDENT_NONE                      7162
 #define IDC_RADIO_AUTOINDENT_BASIC                     7163
 #define IDC_RADIO_AUTOINDENT_ADVANCED                  7164
+#define IDC_RELOAD_BUTTON		                           9999

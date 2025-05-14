@@ -757,6 +757,35 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 				}
 				return TRUE;
 
+				case IDC_RELOAD_BUTTON:
+				{
+					MessageBox(NULL, L"test", L"", MB_OK);
+					LocalizationSwitcher& localizationSwitcher = nppParam.getLocalizationSwitcher();
+					auto index = ::SendDlgItemMessage(_hSelf, IDC_COMBO_LOCALIZATION, CB_GETCURSEL, 0, 0);
+					wchar_t langName[MAX_PATH] = { '\0' };
+					auto cbTextLen = ::SendDlgItemMessage(_hSelf, IDC_COMBO_LOCALIZATION, CB_GETLBTEXTLEN, index, 0);
+					if (cbTextLen > MAX_PATH - 1)
+						return TRUE;
+
+					::SendDlgItemMessage(_hSelf, IDC_COMBO_LOCALIZATION, CB_GETLBTEXT, index, reinterpret_cast<LPARAM>(langName));
+					if (langName[0])
+					{
+						// Make English as basic language, but if we switch from another language to English, we can skip it
+						if ((lstrcmpW(langName, L"English") != 0) && localizationSwitcher.switchToLang(L"English"))
+						{
+							::SendMessage(::GetParent(_hParent), NPPM_INTERNAL_RELOADNATIVELANG, FALSE, 0);
+						}
+
+						// Change the language 
+						if (localizationSwitcher.switchToLang(langName))
+						{
+							::SendMessage(::GetParent(_hParent), NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
+							::InvalidateRect(_hParent, NULL, TRUE);
+						}
+					}
+					return TRUE;
+				}
+
 				default:
 					switch (HIWORD(wParam))
 					{
