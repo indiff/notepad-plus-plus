@@ -53,7 +53,7 @@
 class NativeLangSpeaker;
 
 const bool POS_VERTICAL = true;
-const bool POS_HORIZOTAL = false;
+const bool POS_HORIZONTAL = false;
 
 const int UDD_SHOW   = 1; // 0000 0001
 const int UDD_DOCKED = 2; // 0000 0010
@@ -88,7 +88,7 @@ enum class EolType: std::uint8_t
 	unix,
 
 	// special values
-	unknown, // can not be the first value for legacy code
+	unknown, // cannot be the first value for legacy code
 	osdefault = windows,
 };
 
@@ -105,12 +105,12 @@ EolType convertIntToFormatType(int value, EolType defvalue = EolType::osdefault)
 enum UniMode {
 	uni8Bit       = 0,  // ANSI
 	uniUTF8       = 1,  // UTF-8 with BOM
-	uni16BE       = 2,  // UTF-16 Big Ending with BOM
-	uni16LE       = 3,  // UTF-16 Little Ending with BOM
+	uni16BE       = 2,  // UTF-16 Big Endian with BOM
+	uni16LE       = 3,  // UTF-16 Little Endian with BOM
 	uniCookie     = 4,  // UTF-8 without BOM
 	uni7Bit       = 5,  // 
-	uni16BE_NoBOM = 6,  // UTF-16 Big Ending without BOM
-	uni16LE_NoBOM = 7,  // UTF-16 Little Ending without BOM
+	uni16BE_NoBOM = 6,  // UTF-16 Big Endian without BOM
+	uni16LE_NoBOM = 7,  // UTF-16 Little Endian without BOM
 	uniEnd};
 
 enum ChangeDetect { cdDisabled = 0x0, cdEnabledOld = 0x01, cdEnabledNew = 0x02, cdAutoUpdate = 0x04, cdGo2end = 0x08 };
@@ -1053,7 +1053,7 @@ struct ScintillaViewParams
 	unsigned char _paddingLeft = 0;  // 0-9 pixel
 	unsigned char _paddingRight = 0; // 0-9 pixel
 
-	// distractionFreeDivPart is used for divising the fullscreen pixel width.
+	// distractionFreeDivPart is used for dividing the fullscreen pixel width.
 	// the result of division will be the left & right padding in Distraction Free mode
 	unsigned char _distractionFreeDivPart = 4;     // 3-9 parts
 
@@ -1268,7 +1268,7 @@ public:
 struct FindHistory final
 {
 	enum searchMode{normal, extended, regExpr};
-	enum transparencyMode{none, onLossingFocus, persistant};
+	enum transparencyMode{none, onLosingFocus, persistent};
 
 	bool _isSearch2ButtonsMode = false;
 
@@ -1288,14 +1288,14 @@ struct FindHistory final
 	bool _isDirectionDown = true;
 	bool _dotMatchesNewline = false;
 
-	bool _isFifRecuisive = true;
+	bool _isFifRecursive = true;
 	bool _isFifInHiddenFolder = false;
     bool _isFifProjectPanel_1 = false;
     bool _isFifProjectPanel_2 = false;
     bool _isFifProjectPanel_3 = false;
 
 	searchMode _searchMode = normal;
-	transparencyMode _transparencyMode = onLossingFocus;
+	transparencyMode _transparencyMode = onLosingFocus;
 	int _transparency = 150;
 
 	bool _isFilterFollowDoc = false;
@@ -1617,7 +1617,7 @@ public:
 	bool writeColumnEditorSettings() const;
 	bool writeFileBrowserSettings(const std::vector<std::wstring> & rootPath, const std::wstring & latestSelectedItemPath) const;
 
-	TiXmlNode* getChildElementByAttribut(TiXmlNode *pere, const wchar_t *childName, const wchar_t *attributName, const wchar_t *attributVal) const;
+	TiXmlNode* getChildElementByAttribute(TiXmlNode *pere, const wchar_t *childName, const wchar_t *attributeName, const wchar_t *attributeVal) const;
 
 	bool writeScintillaParams();
 	void createXmlTreeFromGUIParams();
@@ -1746,7 +1746,7 @@ public:
 	const wchar_t * getWorkingDir() const {return _currentDirectory.c_str();};
 	const wchar_t * getWorkSpaceFilePath(int i) const {
 		if (i < 0 || i > 2) return nullptr;
-		return _workSpaceFilePathes[i].c_str();
+		return _workSpaceFilePaths[i].c_str();
 	};
 
 	const std::vector<std::wstring> getFileBrowserRoots() const { return _fileBrowserRoot; };
@@ -1786,7 +1786,7 @@ public:
 
 	int langTypeToCommandID(LangType lt) const;
 
-	struct FindDlgTabTitiles final {
+	struct FindDlgTabTitles final {
 		std::wstring _find;
 		std::wstring _replace;
 		std::wstring _findInFiles;
@@ -1794,7 +1794,7 @@ public:
 		std::wstring _mark;
 	};
 
-	FindDlgTabTitiles & getFindDlgTabTitiles() { return _findDlgTabTitiles;};
+	FindDlgTabTitles & getFindDlgTabTitles() { return _findDlgTabTitles;};
 
 	bool asNotepadStyle() const {return _asNotepadStyle;};
 
@@ -1802,8 +1802,8 @@ public:
 		return getPluginCmdsFromXmlTree();
 	}
 
-	bool getContextMenuFromXmlTree(HMENU mainMenuHadle, HMENU pluginsMenu, bool isEditCM = true);
-	bool reloadContextMenuFromXmlTree(HMENU mainMenuHadle, HMENU pluginsMenu);
+	bool getContextMenuFromXmlTree(HMENU mainMenuHandle, HMENU pluginsMenu, bool isEditCM = true);
+	bool reloadContextMenuFromXmlTree(HMENU mainMenuHandle, HMENU pluginsMenu);
 	winVer getWinVersion() const {return _winVersion;};
 	std::wstring getWinVersionStr() const;
 	std::wstring getWinVerBitStr() const;
@@ -1995,7 +1995,7 @@ public:
 
 private:
 	bool _isAnyShortcutModified = false;
-	std::vector<CommandShortcut> _shortcuts;			//main menu shortuts. Static size
+	std::vector<CommandShortcut> _shortcuts;			//main menu shortcuts. Static size
 	std::vector<size_t> _customizedShortcuts;			//altered main menu shortcuts. Indices static. Needed when saving alterations
 	std::vector<MacroShortcut> _macros;				//macro shortcuts, dynamic size, defined on loading macros and adding/deleting them
 	std::vector<UserCommand> _userCommands;			//run shortcuts, dynamic size, defined on loading run commands and adding/deleting them
@@ -2030,7 +2030,7 @@ private:
 	std::wstring _pluginConfDir; // plugins config dir where the plugin list is installed
 	std::wstring _userPluginConfDir; // plugins config dir for per user where the plugin parameters are saved / loaded
 	std::wstring _currentDirectory;
-	std::wstring _workSpaceFilePathes[3];
+	std::wstring _workSpaceFilePaths[3];
 
 	std::vector<std::wstring> _fileBrowserRoot;
 	std::wstring _fileBrowserSelectedItemPath;
@@ -2038,7 +2038,7 @@ private:
 	Accelerator* _pAccelerator = nullptr;
 	ScintillaAccelerator* _pScintAccelerator = nullptr;
 
-	FindDlgTabTitiles _findDlgTabTitiles;
+	FindDlgTabTitles _findDlgTabTitles;
 	bool _asNotepadStyle = false;
 
 	winVer _winVersion = WV_UNKNOWN;
@@ -2151,7 +2151,7 @@ private:
 	void writePrintSetting(TiXmlElement *element);
 	void initMenuKeys();		//initialise menu keys and scintilla keys. Other keys are initialized on their own
 	void initScintillaKeys();	//these functions have to be called first before any modifications are loaded
-	int getCmdIdFromMenuEntryItemName(HMENU mainMenuHadle, const std::wstring& menuEntryName, const std::wstring& menuItemName); // return -1 if not found
+	int getCmdIdFromMenuEntryItemName(HMENU mainMenuHandle, const std::wstring& menuEntryName, const std::wstring& menuItemName); // return -1 if not found
 	int getPluginCmdIdFromMenuEntryItemName(HMENU pluginsMenu, const std::wstring& pluginName, const std::wstring& pluginCmdName); // return -1 if not found
 	winVer getWindowsVersion();
 	unsigned long _sintillaModEventMask = SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT | SC_PERFORMED_UNDO | SC_PERFORMED_REDO | SC_MOD_CHANGEINDICATOR;

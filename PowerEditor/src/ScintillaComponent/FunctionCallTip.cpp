@@ -155,7 +155,7 @@ bool FunctionCallTip::getCursorFunction()
 	std::vector< Token > tokenVector;
 	int tokenLen = 0;
 
-	for (int i = 0; i < offset; ++i) 	//we dont care about stuff after the offset
+	for (int i = 0; i < offset; ++i) 	//we don't care about stuff after the offset
     {
 		//tokenVector.push_back(pair(lineData+i, len));
 		wchar_t ch = lineData[i];
@@ -206,7 +206,7 @@ bool FunctionCallTip::getCursorFunction()
 			{
 				++scopeLevel;
 				newValue = curValue;
-				valueVec.push_back(newValue);	//store the current settings, so when this new function doesnt happen to be the 'real' one, we can restore everything
+				valueVec.push_back(newValue);	//store the current settings, so when this new function doesn't happen to be the 'real' one, we can restore everything
 				
 				curValue.scopeLevel = scopeLevel;
 				if (i > 0 && curValue.lastIdentifier == static_cast<int32_t>(i) - 1)
@@ -250,7 +250,7 @@ bool FunctionCallTip::getCursorFunction()
 	bool res = false;
 
 	if (curValue.lastFunctionIdentifier == -1)
-	{	//not in direct function. Start popping the stack untill we empty it, or a func IS found
+	{	//not in direct function. Start popping the stack until we empty it, or a func IS found
 		while (curValue.lastFunctionIdentifier == -1 && valueVec.size() > 0)
 		{
 			curValue = valueVec.back();
@@ -295,7 +295,7 @@ Find function in XML structure and parse it
 bool FunctionCallTip::loadFunction()
 {
 	reset();	//set everything back to 0
-	//The functions should be ordered, but linear search because we cant access like array
+	//The functions should be ordered, but linear search because we can't access like array
 	_curFunction = NULL;
 	//Iterate through all keywords and find the correct function keyword
 	TiXmlElement *funcNode = _pXmlKeyword;
@@ -308,7 +308,7 @@ bool FunctionCallTip::loadFunction()
 			continue;
 		int compVal = 0;
 		if (_ignoreCase)
-			compVal = testNameNoCase(name, _funcName);	//lstrcmpi doesnt work in this case
+			compVal = testNameNoCase(name, _funcName);	//lstrcmpi doesn't work in this case
 		else
 			compVal = lstrcmp(name, _funcName);
 		if (!compVal) 	//found it!

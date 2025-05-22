@@ -57,7 +57,7 @@ void Splitter::init( HINSTANCE hInst, HWND hPere, int splitterSize, double iSpli
 	{
 		if (iSplitRatio >= 100)
 		{
-			//cant be 100 % or more
+			//can't be 100 % or more
 			throw std::runtime_error("Splitter::init : Parameter iSplitRatio shoulds be 0 < ratio < 100");
 		}
 	}
@@ -198,7 +198,7 @@ void Splitter::destroy()
 
 int Splitter::getClickZone(WH which)
 {
-	// determinated by (_dwFlags & SV_VERTICAL) && _splitterSize
+	// determined by (_dwFlags & SV_VERTICAL) && _splitterSize
 	if (_splitterSize <= 8)
 	{
 		return isVertical()
