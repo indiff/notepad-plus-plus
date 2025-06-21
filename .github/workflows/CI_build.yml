@@ -4,6 +4,12 @@ name: CI_build
 on:
   push:
     branches: [ dev_sync ]
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'PowerEditor/installer/nativeLang/*.xml'
+      - '*.txt'
+
 env:
   PYTHON_ALLOW_CACHE: true
   PYTHON_DIR_CACHE: D:\.cache\python
