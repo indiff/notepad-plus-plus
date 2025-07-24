@@ -109,8 +109,22 @@ bool PreferenceDlg::goToSection(size_t iPage, intptr_t ctrlID)
 	if (ctrlID != -1)
 	{
 		::SetFocus(::GetDlgItem(_wVector[iPage]._dlg->getHSelf(), int(ctrlID)));
-	}
+		if (_gotoTip.isValid())
+		{
+			_gotoTip.hide();
+		}
 
+		NativeLangSpeaker* pNativeSpeaker = (NppParameters::getInstance()).getNativeLangSpeaker();
+		static wstring hereTip = pNativeSpeaker->getLocalizedStrFromID("goto-setting-tip", L"Find your setting here");
+		bool isSuccessful = _gotoTip.init(_hInst, ::GetDlgItem(_wVector[iPage]._dlg->getHSelf(), int(ctrlID)), _hSelf, hereTip.c_str(), pNativeSpeaker->isRTL(), 2000);
+
+		if (!isSuccessful)
+			return false;
+
+		NppDarkMode::setDarkTooltips(_gotoTip.getTipHandle(), NppDarkMode::ToolTipsType::tooltip);
+		
+		_gotoTip.show();
+	}
 	return true;
 }
 
@@ -224,6 +238,29 @@ intptr_t CALLBACK PreferenceDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 			NppDarkMode::autoSubclassAndThemeChildControls(_hSelf);
 
 			return TRUE;
+		}
+
+		case WM_NCLBUTTONDOWN:
+		{
+			if (_gotoTip.isValid())
+			{
+				_gotoTip.hide();
+			}
+			return FALSE;
+		}
+
+		case WM_TIMER:
+		{
+			if (wParam == IDT_HIDE_TOOLTIP)
+			{
+				if (_gotoTip.isValid())
+				{
+					_gotoTip.hide();
+					KillTimer(_hSelf, IDT_HIDE_TOOLTIP);
+					return TRUE;
+				}
+			}
+			break;
 		}
 
 		case WM_CTLCOLORLISTBOX:
@@ -1259,6 +1296,12 @@ intptr_t CALLBACK TabbarSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM 
 					::EnableWindow(::GetDlgItem(_hSelf, IDC_CHECK_TAB_ALTICONS), !toBeHidden);
 
 					::SendMessage(::GetParent(_hParent), WM_SIZE, 0, 0);
+
+					// At startup, if "-notabbar" or "asNotepad.xml" is used, and tab bar was not hidden in the previous session,
+					// we force tab bar visible in the next session by setting _forceTabbarVisible to true.
+					// However, if "Hide tab bar" option is changed manually by user, then we don't force tab bar visible for the next session,
+					// and apply user's choice instead.
+					nppGUI._forceTabbarVisible = false;
 
 					return TRUE;
 				}
