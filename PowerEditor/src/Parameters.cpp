@@ -1077,9 +1077,12 @@ bool NppParameters::reloadStylers(const wchar_t* stylePath)
 	getUserStylersFromXmlTree();
 
 	//  Reload plugin styles.
-	for ( size_t i = 0; i < getExternalLexerDoc()->size(); ++i)
+	for (size_t i = 0; i < getExternalLexerDoc()->size(); ++i)
 	{
-		getExternalLexerFromXmlTree( getExternalLexerDoc()->at(i) );
+		TiXmlDocument* externalLexerDoc = getExternalLexerDoc()->at(i);
+		TiXmlNode* root = externalLexerDoc->FirstChild(L"NotepadPlus");
+		if (root)
+			feedStylerArray(root);
 	}
 	return true;
 }
@@ -1929,7 +1932,7 @@ int NppParameters::addExternalLangToEnd(ExternalLangContainer * externalLang)
 bool NppParameters::getUserStylersFromXmlTree()
 {
 	TiXmlNode *root = _pXmlUserStylerDoc->FirstChild(L"NotepadPlus");
-		if (!root) return false;
+	if (!root) return false;
 	return feedStylerArray(root);
 }
 
@@ -7361,7 +7364,14 @@ void NppParameters::createXmlTreeFromGUIParams()
 		pStr = (_nppGUI._tabStatus & TAB_MULTILINE) ? L"yes" : L"no";
 		GUIConfigElement->SetAttribute(L"multiLine", pStr);
 
-		pStr = (_nppGUI._tabStatus & TAB_HIDE) ? L"yes" : L"no";
+		if (_nppGUI._forceTabbarVisible)
+		{
+			pStr = L"no";
+		}
+		else
+		{
+			pStr = (_nppGUI._tabStatus & TAB_HIDE) ? L"yes" : L"no";
+		}
 		GUIConfigElement->SetAttribute(L"hide", pStr);
 
 		pStr = (_nppGUI._tabStatus & TAB_QUITONEMPTY) ? L"yes" : L"no";

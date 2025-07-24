@@ -29,7 +29,8 @@
 
 #define FIND_INVALID_REGULAR_EXPRESSION -2
 
-#define FINDREPLACE_MAXLENGTH 2048
+#define FINDREPLACE_MAXLENGTH 16384      // the maximum length of the string (decrease 1 for '\0') to search in the editor
+#define FINDREPLACE_MAXLENGTH2SAVE 2048  // the maximum length of the string (decrease 1 for '\0') to save in the config.xml file
 
 #define FINDTEMPSTRING_MAXSIZE 1024*1024
 
@@ -483,6 +484,8 @@ private:
 	std::vector<int> _reduce2hide_fif = { IDD_FINDINFILES_FILTERS_STATIC, IDD_FINDINFILES_FILTERS_COMBO, IDCANCEL };
 	std::vector<int> _reduce2hide_fip = { IDD_FINDINFILES_FILTERS_STATIC, IDD_FINDINFILES_FILTERS_COMBO, IDCANCEL };
 	std::vector<int> _reduce2hide_mark = { IDC_MARKLINE_CHECK, IDC_PURGE_CHECK, IDC_IN_SELECTION_CHECK, IDC_REPLACEINSELECTION, IDC_COPY_MARKED_TEXT, IDCANCEL };
+
+	ControlInfoTip _maxLenOnSearchTip;
 
 	void enableFindDlgItem(int dlgItemID, bool isEnable = true);
 	void showFindDlgItem(int dlgItemID, bool isShow = true);
