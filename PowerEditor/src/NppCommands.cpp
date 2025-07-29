@@ -146,10 +146,15 @@ void Notepad_plus::command(int id)
 
 		case IDM_FILE_CONTAININGFOLDERASWORKSPACE:
 		{
-			wchar_t currentFile[CURRENTWORD_MAXLENGTH] = { '\0' };
-			wchar_t currentDir[CURRENTWORD_MAXLENGTH] = { '\0' };
-			::SendMessage(_pPublicInterface->getHSelf(), NPPM_GETFULLCURRENTPATH, CURRENTWORD_MAXLENGTH, reinterpret_cast<LPARAM>(currentFile));
-			::SendMessage(_pPublicInterface->getHSelf(), NPPM_GETCURRENTDIRECTORY, CURRENTWORD_MAXLENGTH, reinterpret_cast<LPARAM>(currentDir));
+			const int strSize = CURRENTWORD_MAXLENGTH;
+			auto currentFile = std::make_unique<wchar_t[]>(strSize);
+			std::fill_n(currentFile.get(), strSize, L'\0');
+
+			auto currentDir = std::make_unique<wchar_t[]>(strSize);
+			std::fill_n(currentDir.get(), strSize, L'\0');
+
+			::SendMessage(_pPublicInterface->getHSelf(), NPPM_GETFULLCURRENTPATH, CURRENTWORD_MAXLENGTH, reinterpret_cast<LPARAM>(currentFile.get()));
+			::SendMessage(_pPublicInterface->getHSelf(), NPPM_GETCURRENTDIRECTORY, CURRENTWORD_MAXLENGTH, reinterpret_cast<LPARAM>(currentDir.get()));
 	
 			if (!_pFileBrowser)
 			{
@@ -157,9 +162,9 @@ void Notepad_plus::command(int id)
 			}
 
 			vector<wstring> folders;
-			folders.push_back(currentDir);
+			folders.push_back(currentDir.get());
 			
-			launchFileBrowser(folders, currentFile);
+			launchFileBrowser(folders, currentFile.get());
 		}
 		break;
 
@@ -430,8 +435,11 @@ void Notepad_plus::command(int id)
 			if (!textLen)
 				return;
 
-			char *pBinText = new char[textLen + 1];
-			_pEditView->getSelectedText(pBinText, textLen + 1);
+			const size_t strSize = textLen + 1;
+			auto pBinText = std::make_unique<char[]>(strSize);
+			std::fill_n(pBinText.get(), strSize, '\0');
+
+			_pEditView->getSelectedText(pBinText.get(), textLen + 1);
 
 			// Open the clipboard and empty it.
 			if (!::OpenClipboard(NULL))
@@ -458,10 +466,8 @@ void Notepad_plus::command(int id)
 				::CloseClipboard();
 				return;
 			}
-			memcpy(lpucharCopy, pBinText, textLen * sizeof(unsigned char));
+			memcpy(lpucharCopy, pBinText.get(), textLen * sizeof(unsigned char));
 			lpucharCopy[textLen] = 0;    // null character
-
-			delete[] pBinText;
 
 			::GlobalUnlock(hglbCopy);
 
@@ -581,8 +587,12 @@ void Notepad_plus::command(int id)
 				return;
 
 			HWND hwnd = _pPublicInterface->getHSelf();
-			wchar_t currentWord[CURRENTWORD_MAXLENGTH] = { '\0' };
-			::SendMessage(hwnd, NPPM_GETFILENAMEATCURSOR, CURRENTWORD_MAXLENGTH, reinterpret_cast<LPARAM>(currentWord));
+
+			const int strSize = CURRENTWORD_MAXLENGTH;
+			auto currentWord = std::make_unique<wchar_t[]>(strSize);
+			std::fill_n(currentWord.get(), strSize, L'\0');
+
+			::SendMessage(hwnd, NPPM_GETFILENAMEATCURSOR, CURRENTWORD_MAXLENGTH, reinterpret_cast<LPARAM>(currentWord.get()));
 			
 			wchar_t cmd2Exec[CURRENTWORD_MAXLENGTH] = { '\0' };
 			if (id == IDM_EDIT_OPENINFOLDER)
@@ -595,27 +605,29 @@ void Notepad_plus::command(int id)
 			}
 
 			// Full file path: could be a folder or a file
-			if (doesPathExist(currentWord))
+			if (doesPathExist(currentWord.get()))
 			{
 				wstring fullFilePath = id == IDM_EDIT_OPENINFOLDER ? L"/select," : L"";
 				fullFilePath += L"\"";
-				fullFilePath += currentWord;
+				fullFilePath += currentWord.get();
 				fullFilePath += L"\"";
 
 				if (id == IDM_EDIT_OPENINFOLDER ||
-					(id == IDM_EDIT_OPENASFILE && !doesDirectoryExist(currentWord)))
+					(id == IDM_EDIT_OPENASFILE && !doesDirectoryExist(currentWord.get())))
 					::ShellExecute(hwnd, L"open", cmd2Exec, fullFilePath.c_str(), L".", SW_SHOW);
 			}
 			else // Relative file path - need concatenate with current full file path
 			{
-				wchar_t currentDir[CURRENTWORD_MAXLENGTH] = { '\0' };
-				::SendMessage(hwnd, NPPM_GETCURRENTDIRECTORY, CURRENTWORD_MAXLENGTH, reinterpret_cast<LPARAM>(currentDir));
+				auto currentDir = std::make_unique<wchar_t[]>(strSize);
+				std::fill_n(currentDir.get(), strSize, L'\0');
+
+				::SendMessage(hwnd, NPPM_GETCURRENTDIRECTORY, CURRENTWORD_MAXLENGTH, reinterpret_cast<LPARAM>(currentDir.get()));
 
 				wstring fullFilePath = id == IDM_EDIT_OPENINFOLDER ? L"/select," : L"";
 				fullFilePath += L"\"";
-				fullFilePath += currentDir;
+				fullFilePath += currentDir.get();
 				fullFilePath += L"\\";
-				fullFilePath += currentWord;
+				fullFilePath += currentWord.get();
 
 				if ((id == IDM_EDIT_OPENASFILE && 
 					(!doesFileExist(fullFilePath.c_str() + 1)))) // + 1 for skipping the 1st char '"'
@@ -1343,12 +1355,13 @@ void Notepad_plus::command(int id)
 		case IDM_SEARCH_MARK :
 		{
 			const int strSize = FINDREPLACE_MAXLENGTH;
-			wchar_t str[strSize] = { '\0' };
+			auto str = std::make_unique<wchar_t[]>(strSize);
+			std::fill_n(str.get(), strSize, L'\0');
 
 			const NppGUI& nppGui = (NppParameters::getInstance()).getNppGUI();
 			if (nppGui._fillFindFieldWithSelected)
 			{
-				_pEditView->getGenericSelectedText(str, strSize, nppGui._fillFindFieldSelectCaret);
+				_pEditView->getGenericSelectedText(str.get(), strSize, nppGui._fillFindFieldSelectCaret);
 			}
 
 			bool isFirstTime = !_findReplaceDlg.isCreated();
@@ -1362,9 +1375,9 @@ void Notepad_plus::command(int id)
 
 			if (nppGui._fillFindFieldWithSelected)
 			{
-				if (lstrlen(str) <= FINDREPLACE_INSELECTION_THRESHOLD_DEFAULT)
+				if (lstrlen(str.get()) <= FINDREPLACE_INSELECTION_THRESHOLD_DEFAULT)
 				{
-					_findReplaceDlg.setSearchText(str);
+					_findReplaceDlg.setSearchText(str.get());
 				}
 			}
 
@@ -1384,7 +1397,8 @@ void Notepad_plus::command(int id)
 		case IDM_SEARCH_FINDINCREMENT :
 		{
 			const int strSize = FINDREPLACE_MAXLENGTH;
-			wchar_t str[strSize] = { '\0' };
+			auto str = std::make_unique<wchar_t[]>(strSize);
+			std::fill_n(str.get(), strSize, L'\0');
 
 			static bool isFirstTime = true;
 			if (isFirstTime)
@@ -1393,9 +1407,9 @@ void Notepad_plus::command(int id)
 				isFirstTime = false;
 			}
 
-			_pEditView->getGenericSelectedText(str, strSize, false);
+			_pEditView->getGenericSelectedText(str.get(), strSize, false);
 			if (0 != str[0])         // the selected text is not empty, then use it
-				_incrementFindDlg.setSearchText(str, _pEditView->getCurrentBuffer()->getUnicodeMode() != uni8Bit);
+				_incrementFindDlg.setSearchText(str.get(), _pEditView->getCurrentBuffer()->getUnicodeMode() != uni8Bit);
 
 			_incrementFindDlg.display();
 		}
@@ -1444,10 +1458,12 @@ void Notepad_plus::command(int id)
 				_findReplaceDlg.doDialog(FIND_DLG, _nativeLangSpeaker.isRTL(), false);
 
 			const int strSize = FINDREPLACE_MAXLENGTH;
-			wchar_t str[strSize] = { '\0' };
-			_pEditView->getGenericSelectedText(str, strSize);
-			_findReplaceDlg.setSearchText(str);
-			_findReplaceDlg._env->_str2Search = str;
+			auto str = std::make_unique<wchar_t[]>(strSize);
+			std::fill_n(str.get(), strSize, L'\0');
+
+			_pEditView->getGenericSelectedText(str.get(), strSize);
+			_findReplaceDlg.setSearchText(str.get());
+			_findReplaceDlg._env->_str2Search = str.get();
 			setFindReplaceFolderFilter(NULL, NULL);
 			if (isFirstTime)
 				_nativeLangSpeaker.changeFindReplaceDlgLang(_findReplaceDlg);
@@ -1457,7 +1473,7 @@ void Notepad_plus::command(int id)
 			op._whichDirection = (id == IDM_SEARCH_SETANDFINDNEXT?DIR_DOWN:DIR_UP);
 
 			FindStatus status = FSNoMessage;
-			_findReplaceDlg.processFindNext(str, &op, &status);
+			_findReplaceDlg.processFindNext(str.get(), &op, &status);
 			if (status == FSEndReached)
 			{
 				wstring msg = _nativeLangSpeaker.getLocalizedStrFromID("find-status-end-reached", FIND_STATUS_END_REACHED_TEXT);
@@ -1497,8 +1513,9 @@ void Notepad_plus::command(int id)
 		case IDM_SEARCH_VOLATILE_FINDPREV :
 		{
 			const int strSize = FINDREPLACE_MAXLENGTH;
-			wchar_t str[strSize] = { '\0' };
-			_pEditView->getGenericSelectedText(str, strSize);
+			auto str = std::make_unique<wchar_t[]>(strSize);
+			std::fill_n(str.get(), strSize, L'\0');
+			_pEditView->getGenericSelectedText(str.get(), strSize);
 
 			FindOption op;
 			op._isMatchCase = false;
@@ -1508,7 +1525,7 @@ void Notepad_plus::command(int id)
 			op._whichDirection = (id == IDM_SEARCH_VOLATILE_FINDNEXT ? DIR_DOWN : DIR_UP);
 
 			FindStatus status = FSNoMessage;
-			_findReplaceDlg.processFindNext(str, &op, &status);
+			_findReplaceDlg.processFindNext(str.get(), &op, &status);
 			if (status == FSEndReached)
 			{
 				wstring msg = _nativeLangSpeaker.getLocalizedStrFromID("find-status-end-reached", FIND_STATUS_END_REACHED_TEXT);
@@ -1541,22 +1558,25 @@ void Notepad_plus::command(int id)
 				styleID = SCE_UNIVERSAL_FOUND_STYLE_EXT5;
 
 			const int strSize = FINDREPLACE_MAXLENGTH;
-			wchar_t selectedText[strSize] = { '\0' };
-			wchar_t wordOnCaret[strSize] = { '\0' };
+			auto selectedText = std::make_unique<wchar_t[]>(strSize);
+			std::fill_n(selectedText.get(), strSize, L'\0');
 
-			_pEditView->getGenericSelectedText(selectedText, strSize, false);
-			_pEditView->getGenericWordOnCaretPos(wordOnCaret, strSize);
+			auto wordOnCaret = std::make_unique<wchar_t[]>(strSize);
+			std::fill_n(wordOnCaret.get(), strSize, L'\0');
+
+			_pEditView->getGenericSelectedText(selectedText.get(), strSize, false);
+			_pEditView->getGenericWordOnCaretPos(wordOnCaret.get(), strSize);
 
 			if (selectedText[0] == '\0')
 			{
-				if (lstrlen(wordOnCaret) > 0)
+				if (lstrlen(wordOnCaret.get()) > 0)
 				{
-					_findReplaceDlg.markAll(wordOnCaret, styleID);
+					_findReplaceDlg.markAll(wordOnCaret.get(), styleID);
 				}
 			}
 			else
 			{
-				_findReplaceDlg.markAll(selectedText, styleID);
+				_findReplaceDlg.markAll(selectedText.get(), styleID);
 			}
 		}
 		break;
