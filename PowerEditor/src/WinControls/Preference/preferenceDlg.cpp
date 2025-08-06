@@ -682,24 +682,24 @@ intptr_t CALLBACK GeneralSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM
 				::SendDlgItemMessage(_hSelf, IDC_COMBO_LOCALIZATION, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(localizationInfo.first.c_str()));
 			}
 			wstring lang = L"English"; // Set default language as English
-			/*wstring lang = L"ÖĞÎÄ¼òÌå"; // Set default language as ÖĞÎÄ¼òÌå
-			// ¸ù¾İ²Ù×÷ÏµÍ³ÇøÓòÓïÑÔ£¬Ä¬ÈÏ¼ÓÔØÄ¬ÈÏÓïÑÔ indiff
+			/*wstring lang = L"ä¸­æ–‡ç®€ä½“"; // Set default language as ä¸­æ–‡ç®€ä½“
+			// æ ¹æ®æ“ä½œç³»ç»ŸåŒºåŸŸè¯­è¨€ï¼Œé»˜è®¤åŠ è½½é»˜è®¤è¯­è¨€ indiff
 			// PowerEditor\src\localizationString.h
 			
 			wchar_t localeName[LOCALE_NAME_MAX_LENGTH] = {0};
 			if (GetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH))
 			{
 				if (wstring(localeName).find(L"zh-CN") != wstring::npos) {
-					lang = L"ÖĞÎÄ¼òÌå"; 
+					lang = L"ä¸­æ–‡ç®€ä½“"; 
 				}
 				else if (wstring(localeName).find(L"zh-HK") != wstring::npos) {
-					lang = L"Ïã¸Û·±ów"; 
+					lang = L"é¦™æ¸¯ç¹é«”"; 
 				}
 				else if (wstring(localeName).find(L"zh-TW") != wstring::npos) {
-					lang = L"Ì¨³·±ów"; 
+					lang = L"å°ç£ç¹é«”"; 
 				}
 				else if (wstring(localeName).find(L"ja-JP") != wstring::npos) {
-					lang = L"ÈÕ±¾ÕZ"; 
+					lang = L"æ—¥æœ¬èª"; 
 				}				
 				else if (wstring(localeName).find(L"ko-KR") != wstring::npos) {
 					lang = L"???"; 
