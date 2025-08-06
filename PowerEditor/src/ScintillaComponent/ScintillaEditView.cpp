@@ -67,7 +67,10 @@ const int ScintillaEditView::_markersArray[][NB_FOLDER_STATE] = {
 // The order of lang type (enum LangType) must be respected
 LanguageNameInfo ScintillaEditView::_langNameInfoArray[L_EXTERNAL + 1] = {
 	//
-	//_langName           _shortName                 _longName                                             _langID            _lexerID
+	// _langName:         _shortName                 _longName                                             _langID            _lexerID
+	//
+	// link to lang.xml
+	// don't change
 	//
 	{L"normal",           L"Normal text",            L"Normal text file",                                  L_TEXT,            "null"},
 	{L"php",              L"PHP",                    L"PHP Hypertext Preprocessor file",                   L_PHP,             "phpscript"},
@@ -88,7 +91,7 @@ LanguageNameInfo ScintillaEditView::_langNameInfoArray[L_EXTERNAL + 1] = {
 	{L"asp",              L"ASP",                    L"Active Server Pages script file",                   L_ASP,             "hypertext"},
 	{L"sql",              L"SQL",                    L"Structured Query Language file",                    L_SQL,             "sql"},
 	{L"vb",               L"Visual Basic",           L"Visual Basic file",                                 L_VB,              "vb"},
-	{L"javascript",       L"JavaScript",             L"JavaScript file",                                   L_JS,              "cpp"},
+	{L"javascript",       L"Embedded JS",            L"Embedded JavaScript",                               L_JS_EMBEDDED,     "cpp"},
 	{L"css",              L"CSS",                    L"Cascade Style Sheets File",                         L_CSS,             "css"},
 	{L"perl",             L"Perl",                   L"Perl source file",                                  L_PERL,            "perl"},
 	{L"python",           L"Python",                 L"Python file",                                       L_PYTHON,          "python"},
@@ -349,13 +352,16 @@ void ScintillaEditView::init(HINSTANCE hInst, HWND hPere)
 	if (_defaultCharList.empty())
 	{
 		auto defaultCharListLen = execute(SCI_GETWORDCHARS);
-		char *defaultCharList = new char[defaultCharListLen + 1];
-		if(defaultCharList)
+		if(defaultCharListLen > 0)
 		{
-			execute(SCI_GETWORDCHARS, 0, reinterpret_cast<LPARAM>(defaultCharList));
-			defaultCharList[defaultCharListLen] = '\0';
-			_defaultCharList = defaultCharList;
-			delete[] defaultCharList;
+			char *defaultCharList = new char[defaultCharListLen + 1];
+			if(defaultCharList)
+			{
+				execute(SCI_GETWORDCHARS, 0, reinterpret_cast<LPARAM>(defaultCharList));
+				defaultCharList[defaultCharListLen] = '\0';
+				_defaultCharList = defaultCharList;
+				delete[] defaultCharList;
+			}
 		}
 	}
 	unsigned long MODEVENTMASK_ON = nppParams.getScintillaModEventMask();
@@ -882,7 +888,7 @@ void ScintillaEditView::setHTMLLexer()
 void ScintillaEditView::setEmbeddedJSLexer()
 {
 	const wchar_t *pKwArray[NB_LIST] = {NULL};
-	makeStyle(L_JS, pKwArray);
+	makeStyle(L_JS_EMBEDDED, pKwArray);
 
 	basic_string<char> keywordList("");
 	if (pKwArray[LANG_INDEX_INSTR])
@@ -891,8 +897,8 @@ void ScintillaEditView::setEmbeddedJSLexer()
 		keywordList = wstring2string(kwlW, CP_ACP);
 	}
 
-	execute(SCI_SETKEYWORDS, 1, reinterpret_cast<LPARAM>(getCompleteKeywordList(keywordList, L_JS, LANG_INDEX_INSTR)));
-	populateSubStyleKeywords(L_JS, SCE_HJ_WORD, 8, LANG_INDEX_SUBSTYLE1, pKwArray);
+	execute(SCI_SETKEYWORDS, 1, reinterpret_cast<LPARAM>(getCompleteKeywordList(keywordList, L_JS_EMBEDDED, LANG_INDEX_INSTR)));
+	populateSubStyleKeywords(L_JS_EMBEDDED, SCE_HJ_WORD, 8, LANG_INDEX_SUBSTYLE1, pKwArray);
 	execute(SCI_STYLESETEOLFILLED, SCE_HJ_DEFAULT, true);
 	execute(SCI_STYLESETEOLFILLED, SCE_HJ_COMMENT, true);
 	execute(SCI_STYLESETEOLFILLED, SCE_HJ_COMMENTDOC, true);
@@ -1266,7 +1272,7 @@ void ScintillaEditView::setJsLexer()
 	}
 	else // New js styler is not available, we use the old styling for the sake of retro-compatibility
 	{
-		const wchar_t *lexerName = ScintillaEditView::_langNameInfoArray[L_JS]._langName;
+		const wchar_t *lexerName = ScintillaEditView::_langNameInfoArray[L_JS_EMBEDDED]._langName;
 		LexerStyler *pOldStyler = (NppParameters::getInstance().getLStylerArray()).getLexerStylerByName(lexerName);
 
 		if (pOldStyler)
@@ -1298,7 +1304,7 @@ void ScintillaEditView::setJsLexer()
 		execute(SCI_STYLESETEOLFILLED, SCE_C_COMMENT, true);
 		execute(SCI_STYLESETEOLFILLED, SCE_C_COMMENTDOC, true);
 
-		makeStyle(L_JS, pKwArray);
+		makeStyle(L_JS_EMBEDDED, pKwArray);
 
 		basic_string<char> keywordListInstruction("");
 		if (pKwArray[LANG_INDEX_INSTR])
@@ -1306,7 +1312,7 @@ void ScintillaEditView::setJsLexer()
 			basic_string<wchar_t> kwlW = pKwArray[LANG_INDEX_INSTR];
 			keywordListInstruction = wstring2string(kwlW, CP_ACP);
 		}
-		const char *jsEmbeddedInstrs = getCompleteKeywordList(keywordListInstruction, L_JS, LANG_INDEX_INSTR);
+		const char *jsEmbeddedInstrs = getCompleteKeywordList(keywordListInstruction, L_JS_EMBEDDED, LANG_INDEX_INSTR);
 		execute(SCI_SETKEYWORDS, 0, reinterpret_cast<LPARAM>(jsEmbeddedInstrs));
 	}
 
@@ -1819,7 +1825,7 @@ void ScintillaEditView::defineDocType(LangType typeDoc)
 		case L_GOLANG:
 			setCppLexer(typeDoc); break;
 
-		case L_JS:
+		case L_JS_EMBEDDED:
 		case L_JAVASCRIPT:
 			setJsLexer(); break;
 
@@ -1868,6 +1874,8 @@ void ScintillaEditView::defineDocType(LangType typeDoc)
 
 			Style nfoStyle;
 			nfoStyle._styleID = STYLE_DEFAULT;
+
+			// Use Lucida Console as default font for ASCII Art, to have the best display effect
 			nfoStyle._fontName = L"Lucida Console";
 			nfoStyle._fontSize = 10;
 
@@ -1878,6 +1886,19 @@ void ScintillaEditView::defineDocType(LangType typeDoc)
 				{
 					nfoStyle._bgColor = pDefStyle->_bgColor;
 					nfoStyle._fgColor = pDefStyle->_fgColor;
+
+					// But if user changes it in stylers.xml or in theme's stylers XML file manually,
+					// let it be overrided.
+					if (!pDefStyle->_fontName.empty())
+					{
+						nfoStyle._fontName = pDefStyle->_fontName;
+
+						if (pDefStyle->_fontSize != STYLE_NOT_USED)
+							nfoStyle._fontSize = pDefStyle->_fontSize;
+
+						if (pDefStyle->_fontStyle != STYLE_NOT_USED)
+							nfoStyle._fontStyle = pDefStyle->_fontStyle;
+					}
 					nfoStyle._colorStyle = pDefStyle->_colorStyle;
 				}
 			}
@@ -3505,11 +3526,13 @@ void ScintillaEditView::updateLineNumberWidth()
 const char * ScintillaEditView::getCompleteKeywordList(std::basic_string<char> & kwl, LangType langType, int keywordIndex)
 {
 	kwl += " ";
-	const wchar_t *defKwl_generic = NppParameters::getInstance().getWordList(langType, keywordIndex);
-
-	WcharMbcsConvertor& wmc = WcharMbcsConvertor::getInstance();
-	const char * defKwl = wmc.wchar2char(defKwl_generic, CP_ACP);
-	kwl += defKwl?defKwl:"";
+	const wchar_t* defKwl_generic = NppParameters::getInstance().getWordList(langType, keywordIndex);
+	if (defKwl_generic)
+	{
+		WcharMbcsConvertor& wmc = WcharMbcsConvertor::getInstance();
+		const char* defKwl = wmc.wchar2char(defKwl_generic, CP_ACP);
+		kwl += defKwl ? defKwl : "";
+	}
 
 	return kwl.c_str();
 }
@@ -4327,19 +4350,9 @@ void ScintillaEditView::setTabSettings(Lang* lang)
 {
 	if (lang && lang->_tabSize != -1 && lang->_tabSize != 0)
 	{
-		if (lang->_langID == L_JAVASCRIPT)
-		{
-			Lang* ljs = NppParameters::getInstance().getLangFromID(L_JS);
-			execute(SCI_SETTABWIDTH, ljs->_tabSize > 0 ? ljs->_tabSize : lang->_tabSize);
-			execute(SCI_SETUSETABS, !ljs->_isTabReplacedBySpace);
-			execute(SCI_SETBACKSPACEUNINDENTS, ljs->_isBackspaceUnindent);
-		}
-		else
-		{
-			execute(SCI_SETTABWIDTH, lang->_tabSize);
-			execute(SCI_SETUSETABS, !lang->_isTabReplacedBySpace);
-			execute(SCI_SETBACKSPACEUNINDENTS, lang->_isBackspaceUnindent);
-		}
+		execute(SCI_SETTABWIDTH, lang->_tabSize);
+		execute(SCI_SETUSETABS, !lang->_isTabReplacedBySpace);
+		execute(SCI_SETBACKSPACEUNINDENTS, lang->_isBackspaceUnindent);
 	}
 	else
 	{

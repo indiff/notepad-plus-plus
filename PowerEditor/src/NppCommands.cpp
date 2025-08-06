@@ -471,6 +471,8 @@ void Notepad_plus::command(int id)
 
 			::GlobalUnlock(hglbCopy);
 
+			pBinText.reset(nullptr); // free possible big membuf ASAP
+
 			// Place the handle on the clipboard.
 			if (!::SetClipboardData(CF_TEXT, hglbCopy))
 			{
@@ -3477,6 +3479,7 @@ void Notepad_plus::command(int id)
 						break;
 
 						default:
+							delete[] selectedStr;
 							return;
 					}
 					for (int i = 0; i < hashLen; i++)
@@ -3911,15 +3914,6 @@ void Notepad_plus::command(int id)
 		{
 			WindowsDlg _windowsDlg;
 			_windowsDlg.init(_pPublicInterface->getHinst(), _pPublicInterface->getHSelf(), _pDocTab);
-
-            const TiXmlNodeA *nativeLangA = _nativeLangSpeaker.getNativeLangA();
-			TiXmlNodeA *dlgNode = NULL;
-			if (nativeLangA)
-			{
-				dlgNode = nativeLangA->FirstChild("Dialog");
-				if (dlgNode)
-					dlgNode = _nativeLangSpeaker.searchDlgNode(dlgNode, "Window");
-			}
 			_windowsDlg.doDialog();
 		}
 		break;

@@ -623,6 +623,7 @@ int hexStrVal(const wchar_t *str)
 
 int getKwClassFromName(const wchar_t *str)
 {
+	if(!str) return -1;
 	if (!lstrcmp(L"instre1", str)) return LANG_INDEX_INSTR;
 	if (!lstrcmp(L"instre2", str)) return LANG_INDEX_INSTR2;
 	if (!lstrcmp(L"type1", str)) return LANG_INDEX_TYPE;
@@ -8201,7 +8202,7 @@ int NppParameters::langTypeToCommandID(LangType lt) const
 			id = IDM_LANG_HTML;	break;
 		case L_XML :
 			id = IDM_LANG_XML; break;
-		case L_JS :
+		case L_JS_EMBEDDED :
 		case L_JAVASCRIPT:
 			id = IDM_LANG_JS; break;
 		case L_JSON:
@@ -9146,4 +9147,15 @@ COLORREF NppParameters::getFindDlgStatusMsgColor(int colourIndex)
 	if (colourIndex < 0 || colourIndex > 2) return black;
 
 	return findDlgStatusMessageColor[colourIndex];
+}
+
+LanguageNameInfo NppParameters::getLangNameInfoFromNameID(const wstring& langNameID)
+{
+	LanguageNameInfo res;
+	for (LanguageNameInfo lnf : ScintillaEditView::_langNameInfoArray)
+	{
+		if (lnf._langName == langNameID)
+			return lnf;
+	}
+	return res;
 }
