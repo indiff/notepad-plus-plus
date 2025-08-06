@@ -20,6 +20,8 @@
 #include "EncodingMapper.h"
 #include "localization.h"
 #include <algorithm>
+#include "ScintillaEditView.h"
+
 
 #define MyGetGValue(rgb)      (LOBYTE((rgb)>>8))
 
@@ -3438,7 +3440,7 @@ intptr_t CALLBACK NewDocumentSubDlg::run_dlgProc(UINT message, WPARAM wParam, LP
 			{
 				LangType lt = static_cast<LangType>(i);
 				str.clear();
-				if (lt != L_USER && lt != L_JS)
+				if (lt != L_USER && lt != L_JS_EMBEDDED)
 				{
 					int cmdID = nppParam.langTypeToCommandID(lt);
 					if ((cmdID != -1))
@@ -3446,7 +3448,7 @@ intptr_t CALLBACK NewDocumentSubDlg::run_dlgProc(UINT message, WPARAM wParam, LP
 						getNameStrFromCmd(cmdID, str);
 						if (str.length() > 0)
 						{
-							size_t index = ::SendDlgItemMessage(_hSelf, IDC_COMBO_DEFAULTLANG, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(str.c_str()));
+							auto index = ::SendDlgItemMessage(_hSelf, IDC_COMBO_DEFAULTLANG, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(str.c_str()));
 							::SendDlgItemMessage(_hSelf, IDC_COMBO_DEFAULTLANG, CB_SETITEMDATA, index, lt);
 						}
 					}
@@ -3990,7 +3992,15 @@ intptr_t CALLBACK IndentationSubDlg::run_dlgProc(UINT message, WPARAM wParam, LP
 			const int nbLang = nppParam.getNbLang();
 			for (int i = 0; i < nbLang; ++i)
 			{
-				::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(nppParam.getLangFromIndex(i)->_langName.c_str()));
+				Lang* lang = nppParam.getLangFromIndex(i);
+				if (!lang) continue;
+
+				LanguageNameInfo lni = nppParam.getLangNameInfoFromNameID(lang->_langName);
+				if (!lni._shortName || lni._langID == L_JS_EMBEDDED) continue;
+				
+				auto j = ::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(lni._shortName));
+				if (j != LB_ERR)
+					::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_SETITEMDATA, j, reinterpret_cast<LPARAM>(lang));
 			}
 			const int index2Begin = 0;
 			::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_SETCURSEL, index2Begin, 0);
@@ -4045,10 +4055,10 @@ intptr_t CALLBACK IndentationSubDlg::run_dlgProc(UINT message, WPARAM wParam, LP
 			const int dlgCtrlID = ::GetDlgCtrlID(reinterpret_cast<HWND>(lParam));
 			const auto& hdcStatic = reinterpret_cast<HDC>(wParam);
 			// handle blurry text with disabled states for the affected static controls
-			const size_t index = ::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_GETCURSEL, 0, 0);
+			const auto index = ::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_GETCURSEL, 0, 0);
 			if ((index > 0) && (dlgCtrlID == IDC_TABSIZE_STATIC || dlgCtrlID == IDC_INDENTUSING_STATIC))
 			{
-				const Lang* lang = nppParam.getLangFromIndex(index - 1);
+				const Lang* lang = reinterpret_cast<Lang *>(::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_GETITEMDATA, index, 0));
 				if (lang == nullptr)
 				{
 					return NppDarkMode::onCtlColorDlg(hdcStatic);
@@ -4084,7 +4094,7 @@ intptr_t CALLBACK IndentationSubDlg::run_dlgProc(UINT message, WPARAM wParam, LP
 
 						if (index > 0)
 						{
-							Lang* lang = nppParam.getLangFromIndex(index - 1);
+							const Lang* lang = reinterpret_cast<Lang*>(::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_GETITEMDATA, index, 0));
 							if (!lang) return FALSE;
 
 							bool useDefaultTab = (lang->_tabSize == -1 || lang->_tabSize == 0);
@@ -4140,25 +4150,11 @@ intptr_t CALLBACK IndentationSubDlg::run_dlgProc(UINT message, WPARAM wParam, LP
 							}
 
 							const bool useDefaultTab = isCheckedOrNot(IDC_CHECK_DEFAULTTABVALUE);
-							const size_t index = ::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_GETCURSEL, 0, 0);
+							const auto index = ::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_GETCURSEL, 0, 0);
 							if (!useDefaultTab && index > 0)
 							{
-								Lang* lang = nppParam.getLangFromIndex(index - 1);
-								if (lang == nullptr)
-								{
-									return FALSE;
-								}
-
-								if (lang->_langID == L_JS)
-								{
-									Lang* ljs = nppParam.getLangFromID(L_JAVASCRIPT);
-									ljs->_tabSize = tabSize;
-								}
-								else if (lang->_langID == L_JAVASCRIPT)
-								{
-									Lang* ljavascript = nppParam.getLangFromID(L_JS);
-									ljavascript->_tabSize = tabSize;
-								}
+								Lang* lang = reinterpret_cast<Lang*>(::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_GETITEMDATA, index, 0));
+								if (lang == nullptr) return FALSE;
 
 								lang->_tabSize = tabSize;
 
@@ -4193,11 +4189,11 @@ intptr_t CALLBACK IndentationSubDlg::run_dlgProc(UINT message, WPARAM wParam, LP
 							if (tabSize < 1)
 							{
 								const bool useDefaultTab = isCheckedOrNot(IDC_CHECK_DEFAULTTABVALUE);
-								const size_t index = ::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_GETCURSEL, 0, 0);
+								const auto index = ::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_GETCURSEL, 0, 0);
 								auto prevSize = nppGUI._tabSize;
 								if (!useDefaultTab && index > 0)
 								{
-									Lang* lang = nppParam.getLangFromIndex(index - 1);
+									const Lang* lang = reinterpret_cast<Lang*>(::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_GETITEMDATA, index, 0));
 									if (lang != nullptr && lang->_tabSize > 0)
 									{
 										prevSize = lang->_tabSize;
@@ -4237,21 +4233,10 @@ intptr_t CALLBACK IndentationSubDlg::run_dlgProc(UINT message, WPARAM wParam, LP
 
 					if (index != 0)
 					{
-						Lang *lang = nppParam.getLangFromIndex(index - 1);
+						Lang* lang = reinterpret_cast<Lang*>(::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_GETITEMDATA, index, 0));
 						if (!lang) return FALSE;
 						if (!lang->_tabSize || lang->_tabSize == -1)
 							lang->_tabSize = nppGUI._tabSize;
-
-						if (lang->_langID == L_JS)
-						{
-							Lang *ljs = nppParam.getLangFromID(L_JAVASCRIPT);
-							ljs->_isTabReplacedBySpace = isTabReplacedBySpace;
-						}
-						else if (lang->_langID == L_JAVASCRIPT)
-						{
-							Lang *ljavascript = nppParam.getLangFromID(L_JS);
-							ljavascript->_isTabReplacedBySpace = isTabReplacedBySpace;
-						}
 
 						lang->_isTabReplacedBySpace = isTabReplacedBySpace;
 
@@ -4277,21 +4262,10 @@ intptr_t CALLBACK IndentationSubDlg::run_dlgProc(UINT message, WPARAM wParam, LP
 
 					if (index != 0)
 					{
-						Lang* lang = nppParam.getLangFromIndex(index - 1);
+						Lang* lang = reinterpret_cast<Lang*>(::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_GETITEMDATA, index, 0));
 						if (!lang) return FALSE;
 						if (!lang->_tabSize || lang->_tabSize == -1)
 							lang->_tabSize = nppGUI._tabSize;
-
-						if (lang->_langID == L_JS)
-						{
-							Lang* ljs = nppParam.getLangFromID(L_JAVASCRIPT);
-							ljs->_isBackspaceUnindent = isBackspaceUnindent;
-						}
-						else if (lang->_langID == L_JAVASCRIPT)
-						{
-							Lang* ljavascript = nppParam.getLangFromID(L_JS);
-							ljavascript->_isBackspaceUnindent = isBackspaceUnindent;
-						}
 
 						lang->_isBackspaceUnindent = isBackspaceUnindent;
 
@@ -4315,7 +4289,7 @@ intptr_t CALLBACK IndentationSubDlg::run_dlgProc(UINT message, WPARAM wParam, LP
 					if (index == LB_ERR || index == 0) // index == 0 shouldn't happen
 						return FALSE;
 
-					Lang *lang = nppParam.getLangFromIndex(index - 1);
+					Lang* lang = reinterpret_cast<Lang*>(::SendDlgItemMessage(_hSelf, IDC_LIST_TABSETTNG, LB_GETITEMDATA, index, 0));
 					if (!lang)
 						return FALSE;
 
@@ -4391,7 +4365,7 @@ intptr_t CALLBACK LanguageSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 			//
 			for (int i = L_TEXT ; i < nppParam.L_END ; ++i)
 			{
-				if (static_cast<LangType>(i) != L_USER)
+				if (static_cast<LangType>(i) != L_USER && static_cast<LangType>(i) != L_JS_EMBEDDED)
 				{
 					int cmdID = nppParam.langTypeToCommandID(static_cast<LangType>(i));
 					if ((cmdID != -1))
