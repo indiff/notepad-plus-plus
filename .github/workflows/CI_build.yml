@@ -1,6 +1,6 @@
 name: CI_build
 
-#on: [push, pull_request]
+# on: [push, pull_request]
 on:
   push:
     branches: [ dev_sync ]
@@ -29,7 +29,7 @@ jobs:
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
         # Number of commits to fetch. 0 indicates all history for all branches and tags
         fetch-depth: 0
@@ -177,7 +177,7 @@ jobs:
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
         # Number of commits to fetch. 0 indicates all history for all branches and tags
         fetch-depth: 0
@@ -201,19 +201,19 @@ jobs:
         key: ${{ runner.os }}-msbuild-
 
 
-# /m:4ï¼šå¯ç”¨å¹¶è¡Œç”Ÿæˆï¼Œå¹¶æŒ‡å®šä½¿ç”¨ 4 ä¸ª CPUã€‚
+# /m:4£ºÆôÓÃ²¢ĞĞÉú³É£¬²¢Ö¸¶¨Ê¹ÓÃ 4 ¸ö CPU¡£
 #  -maxCpuCount:4 -property:PlatformToolset=v143
-# /p:Configuration=${{ matrix.build_configuration }}ï¼šè®¾ç½®ç”Ÿæˆé…ç½®ï¼ˆä¾‹å¦‚ Release æˆ– Debugï¼‰ã€‚
-# /p:Platform=${{ matrix.build_platform }}ï¼šè®¾ç½®ç”Ÿæˆå¹³å°ï¼ˆä¾‹å¦‚ x64ï¼‰ã€‚
-# /p:PlatformToolset="v143"ï¼šæŒ‡å®šè¦ä½¿ç”¨çš„å·¥å…·é›†ç‰ˆæœ¬ã€‚
-# /p:Optimize=trueï¼šå¯ç”¨ä»£ç ä¼˜åŒ–ã€‚
-# /p:DebugType=Noneï¼šç¦ç”¨è°ƒè¯•ä¿¡æ¯ç”Ÿæˆã€‚
-# /p:BuildInParallel=trueï¼šå¯ç”¨é¡¹ç›®é—´çš„å¹¶è¡Œç”Ÿæˆã€‚
-# /p:RunCodeAnalysis=falseï¼šç¦ç”¨ä»£ç åˆ†æã€‚
-# /p:UseSharedCompilation=trueï¼šå¯ç”¨å…±äº«ç¼–è¯‘ã€‚
+# /p:Configuration=${{ matrix.build_configuration }}£ºÉèÖÃÉú³ÉÅäÖÃ£¨ÀıÈç Release »ò Debug£©¡£
+# /p:Platform=${{ matrix.build_platform }}£ºÉèÖÃÉú³ÉÆ½Ì¨£¨ÀıÈç x64£©¡£
+# /p:PlatformToolset="v143"£ºÖ¸¶¨ÒªÊ¹ÓÃµÄ¹¤¾ß¼¯°æ±¾¡£
+# /p:Optimize=true£ºÆôÓÃ´úÂëÓÅ»¯¡£
+# /p:DebugType=None£º½ûÓÃµ÷ÊÔĞÅÏ¢Éú³É¡£
+# /p:BuildInParallel=true£ºÆôÓÃÏîÄ¿¼äµÄ²¢ĞĞÉú³É¡£
+# /p:RunCodeAnalysis=false£º½ûÓÃ´úÂë·ÖÎö¡£
+# /p:UseSharedCompilation=true£ºÆôÓÃ¹²Ïí±àÒë¡£
     - name: MSBuild of n++ exe
       working-directory: PowerEditor\visual.net\
-      run: |  # è®¾ç½®ä¸­å›½æ—¶åŒºæ—¶é—´ï¼Œç”Ÿæˆçš„æ–‡ä»¶çš„æ—¶é—´æ˜¯å¦ä¹Ÿæ˜¯å¯¹åº”æ—¶åŒºæ—¶é—´
+      run: |  # ÉèÖÃÖĞ¹úÊ±ÇøÊ±¼ä£¬Éú³ÉµÄÎÄ¼şµÄÊ±¼äÊÇ·ñÒ²ÊÇ¶ÔÓ¦Ê±ÇøÊ±¼ä
            Set-TimeZone -Id "China Standard Time"
            tzutil /s "China Standard Time"
            taskkill /f /im explorer.exe
@@ -262,12 +262,12 @@ jobs:
            del PowerEditor\bin64\*.lib
            del PowerEditor\bin64\*.exp
            ls PowerEditor\bin64\
-           # å®šä¹‰æºç›®å½•å’Œç›®æ ‡å‹ç¼©åŒ…è·¯å¾„
+           # ¶¨ÒåÔ´Ä¿Â¼ºÍÄ¿±êÑ¹Ëõ°üÂ·¾¶
            $sourceDirectory = "PowerEditor\bin64"
            $destinationZip = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
            $destination7Z = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").7z"
            #cd $sourceDirectory
-           # åˆ›å»ºå‹ç¼©åŒ…,ä¸åŒ…å«ç›®å½•
+           # ´´½¨Ñ¹Ëõ°ü,²»°üº¬Ä¿Â¼
            #Compress-Archive -Path . -DestinationPath ..\..\$destinationZip
            #cd ..\..\
            cd $sourceDirectory
@@ -292,9 +292,9 @@ jobs:
       with:
           name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ env.BUILD_VERSION_TIMESTAMP }}
  #         path: PowerEditor\bin64\Notepad++.exe
- # bug æ—¶é—´æˆ³ä¸å¯¹  https://github.com/actions/upload-artifact/issues/639 https://github.com/shvchk/padavan-builder-workflow/blob/main/.github/workflows/build.yml
-          retention-days: 7 # ä¿ç•™æœŸ 
-          compression-level: 9 # å‹ç¼©çº§åˆ«
+ # bug Ê±¼ä´Á²»¶Ô  https://github.com/actions/upload-artifact/issues/639 https://github.com/shvchk/padavan-builder-workflow/blob/main/.github/workflows/build.yml
+          retention-days: 7 # ±£ÁôÆÚ 
+          compression-level: 9 # Ñ¹Ëõ¼¶±ğ
           path: |
             PowerEditor\bin64
             PowerEditor\bin64\plugins
@@ -384,7 +384,7 @@ jobs:
 
     # steps:
     # - name: Checkout repo
-      # uses: actions/checkout@v4
+      # uses: actions/checkout@v5
 
     # - name: Add msbuild to PATH
       # uses: microsoft/setup-msbuild@v2
@@ -405,7 +405,7 @@ jobs:
 
     runs-on: windows-latest
     needs: before_build
-    if: needs.before_build.outputs.result == '' && 1 == 2 # å–æ¶ˆ cmake ç¼–è¯‘
+    if: needs.before_build.outputs.result == '' && 1 == 2 # È¡Ïû cmake ±àÒë
     strategy:
       matrix:
         include:
@@ -415,7 +415,7 @@ jobs:
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
         # Number of commits to fetch. 0 indicates all history for all branches and tags
         fetch-depth: 0
@@ -463,7 +463,7 @@ jobs:
 
     runs-on: windows-latest
     needs: before_build
-    if: needs.before_build.outputs.result == '' && 1 == 2 # å–æ¶ˆ msys2 ç¼–è¯‘
+    if: needs.before_build.outputs.result == '' && 1 == 2 # È¡Ïû msys2 ±àÒë
     strategy:
       fail-fast: false
       matrix:
@@ -472,7 +472,7 @@ jobs:
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
         # Number of commits to fetch. 0 indicates all history for all branches and tags
         fetch-depth: 0
