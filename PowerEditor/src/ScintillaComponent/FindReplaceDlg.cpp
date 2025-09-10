@@ -53,7 +53,7 @@ wstring getTextFromCombo(HWND hCombo)
 	auto str = std::make_unique<wchar_t[]>(strSize);
 	std::fill_n(str.get(), strSize, L'\0');
 
-	::SendMessage(hCombo, WM_GETTEXT, FINDREPLACE_MAXLENGTH - 1, reinterpret_cast<LPARAM>(str.get()));
+	::SendMessage(hCombo, WM_GETTEXT, FINDREPLACE_MAXLENGTH, reinterpret_cast<LPARAM>(str.get()));
 	return wstring(str.get());
 }
 
@@ -63,7 +63,7 @@ void delLeftWordInEdit(HWND hEdit)
 	auto str = std::make_unique<wchar_t[]>(strSize);
 	std::fill_n(str.get(), strSize, L'\0');
 
-	::SendMessage(hEdit, WM_GETTEXT, FINDREPLACE_MAXLENGTH - 1, reinterpret_cast<LPARAM>(str.get()));
+	::SendMessage(hEdit, WM_GETTEXT, FINDREPLACE_MAXLENGTH, reinterpret_cast<LPARAM>(str.get()));
 	WORD cursor = 0;
 	::SendMessage(hEdit, EM_GETSEL, (WPARAM)&cursor, 0);
 	WORD wordstart = cursor;
@@ -4050,8 +4050,12 @@ void FindReplaceDlg::setSearchText(wchar_t * txt2find)
 	if (txt2find && txt2find[0])
 	{
 		// We got a valid search string
-		::SendMessage(hCombo, CB_SETCURSEL, static_cast<WPARAM>(-1), 0); // remove selection - to allow using down arrow to get to last searched word
-		::SetDlgItemText(_hSelf, IDFINDWHAT, txt2find);
+		HWND hEdit = GetWindow(hCombo, GW_CHILD);
+		if (hEdit)
+		{
+			::SendMessage(hEdit, EM_SETSEL, 0, static_cast<WPARAM>(-1));
+			::SendMessage(hEdit, EM_REPLACESEL, TRUE, (LPARAM)txt2find);
+		}
 	}
 	::SendMessage(hCombo, CB_SETEDITSEL, 0, MAKELPARAM(0, -1)); // select all text - fast edit
 }
@@ -4919,7 +4923,7 @@ LRESULT FAR PASCAL FindReplaceDlg::comboEditProc(HWND hwnd, UINT message, WPARAM
 	else if ((message == WM_KEYDOWN) && (wParam == VK_DOWN) && (::SendMessage(hwndCombo, CB_GETCURSEL, 0, 0) == CB_ERR))
 	{
 		// down key on unselected combobox item -> store current edit text as draft
-		::SendMessage(hwndCombo, WM_GETTEXT, FINDREPLACE_MAXLENGTH - 1, reinterpret_cast<LPARAM>(draftString.get()));
+		::SendMessage(hwndCombo, WM_GETTEXT, FINDREPLACE_MAXLENGTH, reinterpret_cast<LPARAM>(draftString.get()));
 	}
 	else if ((message == WM_KEYDOWN) && (wParam == VK_UP) && (::SendMessage(hwndCombo, CB_GETCURSEL, 0, 0) == CB_ERR))
 	{
@@ -4931,10 +4935,37 @@ LRESULT FAR PASCAL FindReplaceDlg::comboEditProc(HWND hwnd, UINT message, WPARAM
 	{
 		// up key on top selected combobox item -> restore draft to edit text
 		::SendMessage(hwndCombo, CB_SETCURSEL, WPARAM(-1), 0);
-		::SendMessage(hwndCombo, WM_SETTEXT, FINDREPLACE_MAXLENGTH - 1, reinterpret_cast<LPARAM>(draftString.get()));
+		::SendMessage(hwndCombo, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(draftString.get()));
 		::SendMessage(hwndCombo, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
 		return 0;
 
+	}
+	else if (message == WM_PASTE)
+	{
+		// needed to allow CR (i.e., multiline) into combobox text;
+		// (the default functionality terminates the paste at the first CR character)
+
+		HWND hParent = ::GetParent(hwndCombo);
+		HWND hFindWhatCombo = ::GetDlgItem(hParent, IDFINDWHAT);
+		HWND hReplaceWithCombo = ::GetDlgItem(hParent, IDREPLACEWITH);
+		if ((hwndCombo == hFindWhatCombo) || (hwndCombo == hReplaceWithCombo))
+		{
+			CLIPFORMAT cfColumnSelect = static_cast<CLIPFORMAT>(::RegisterClipboardFormat(L"MSDEVColumnSelect"));
+			if (!::IsClipboardFormatAvailable(cfColumnSelect))
+			{
+				wstring clipboardText = strFromClipboard();
+				if (!clipboardText.empty())
+				{
+					HWND hEdit = GetWindow(hwndCombo, GW_CHILD);
+					if (hEdit)
+					{
+						::SendMessage(hEdit, EM_REPLACESEL, TRUE, (LPARAM)clipboardText.c_str());
+					}
+				}
+			}
+
+			return 0;
+		}
 	}
 	return CallWindowProc(originalComboEditProc, hwnd, message, wParam, lParam);
 }
