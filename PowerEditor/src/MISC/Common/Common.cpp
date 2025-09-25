@@ -955,6 +955,29 @@ bool str2Clipboard(const wstring &str2cpy, HWND hwnd)
 	return true;
 }
 
+std::wstring strFromClipboard()
+{
+	std::wstring clipboardText;
+	if (::OpenClipboard(NULL))
+	{
+		if (::IsClipboardFormatAvailable(CF_UNICODETEXT))
+		{
+			HANDLE hClipboardData = ::GetClipboardData(CF_UNICODETEXT);
+			if (hClipboardData)
+			{
+				wchar_t* pWc = static_cast<wchar_t*>(::GlobalLock(hClipboardData));
+				if (pWc)
+				{
+					clipboardText = pWc;
+					::GlobalUnlock(hClipboardData);
+				}
+			}
+		}
+		::CloseClipboard();
+	}
+	return clipboardText;
+}
+
 bool buf2Clipboard(const std::vector<Buffer*>& buffers, bool isFullPath, HWND hwnd)
 {
 	const wstring crlf = L"\r\n";
@@ -1537,7 +1560,25 @@ bool toggleReadOnlyFlagFromFileAttributes(const wchar_t* fileFullPath, bool& isC
 	}
 	else
 	{
-		// probably the ERROR_ACCESS_DENIED (5) (TODO: UAC-prompt candidate)
+		if (::GetLastError() == ERROR_ACCESS_DENIED)
+		{
+			// try to set elevated
+			// (notepad++.exe #UAC-SETFILEATTRIBUTES# attrib_flags_number_str dest_file_path)
+			wstring strCmdLineParams = NPP_UAC_SETFILEATTRIBUTES_SIGN;
+			strCmdLineParams += L" \"" + to_wstring(dwFileAttribs) + L"\" \"";
+			strCmdLineParams += fileFullPath;
+			strCmdLineParams += L"\"";
+			DWORD dwNppUacOpError = invokeNppUacOp(strCmdLineParams);
+			if (dwNppUacOpError == NO_ERROR)
+			{
+				isChangedToReadOnly = (dwFileAttribs & FILE_ATTRIBUTE_READONLY) != 0;
+				return true;
+			}
+			else
+			{
+				::SetLastError(dwNppUacOpError); // set that as our current thread one for a possible reporting later
+			}
+		}
 		return false;
 	}
 }
@@ -2095,7 +2136,7 @@ bool isCoreWindows()
 	return isCoreWindows;
 }
 
-bool ControlInfoTip::init(HINSTANCE hInst, HWND ctrl2attached, HWND ctrl2attachedParent, const wstring& tipStr, bool isRTL, unsigned int remainTimeMillisecond /* = 0 */)
+bool ControlInfoTip::init(HINSTANCE hInst, HWND ctrl2attached, HWND ctrl2attachedParent, const wstring& tipStr, bool isRTL, unsigned int remainTimeMillisecond /* = 0 */, int maxWidth /* = 200 */)
 {
 	_hWndInfoTip = CreateWindowEx(isRTL ? WS_EX_LAYOUTRTL : 0, TOOLTIPS_CLASS, NULL,
 		WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON,
@@ -2120,7 +2161,7 @@ bool ControlInfoTip::init(HINSTANCE hInst, HWND ctrl2attached, HWND ctrl2attache
 		return false;
 	}
 
-	SendMessage(_hWndInfoTip, TTM_SETMAXTIPWIDTH, 0, 200);
+	SendMessage(_hWndInfoTip, TTM_SETMAXTIPWIDTH, 0, maxWidth);
 	SendMessage(_hWndInfoTip, TTM_ACTIVATE, TRUE, 0);
 
 	if (remainTimeMillisecond)
@@ -2129,14 +2170,22 @@ bool ControlInfoTip::init(HINSTANCE hInst, HWND ctrl2attached, HWND ctrl2attache
 	return true;
 }
 
-void ControlInfoTip::show() const
+void ControlInfoTip::show(showPosition pos) const
 {
 	if (!isValid())	return;
 
 	RECT rcComboBox;
 	GetWindowRect(reinterpret_cast<HWND>(_toolInfo.uId), &rcComboBox);
 
-	int xPos = rcComboBox.left + (rcComboBox.right - rcComboBox.left) / 2;
+	int xPos = 0;
+
+	if (pos == beginning)
+		xPos = rcComboBox.left + 15;
+	else if (pos == middle)
+		xPos = rcComboBox.left + (rcComboBox.right - rcComboBox.left) / 2;
+	else // (pos == end)
+		xPos = rcComboBox.left + (rcComboBox.right - rcComboBox.left) - 15;
+
 	int yPos = rcComboBox.top + 25;
 
 	SendMessage(_hWndInfoTip, TTM_TRACKPOSITION, 0, MAKELPARAM(xPos, yPos));
@@ -2154,3 +2203,40 @@ void ControlInfoTip::hide()
 }
 
 #pragma warning(default:4996)
+
+DWORD invokeNppUacOp(std::wstring& strCmdLineParams)
+{
+	if ((strCmdLineParams.length() == 0) || (strCmdLineParams.length() > (USHRT_MAX / sizeof(WCHAR))))
+	{
+		// no cmdline or it exceeds the current max WinOS 32767 WCHARs
+		return ERROR_INVALID_PARAMETER;
+	}
+
+	wchar_t wszNppFullPath[MAX_PATH]{};
+	::SetLastError(NO_ERROR);
+	if (!::GetModuleFileName(NULL, wszNppFullPath, MAX_PATH) || (::GetLastError() == ERROR_INSUFFICIENT_BUFFER))
+	{
+		return ::GetLastError();
+	}
+
+	SHELLEXECUTEINFOW sei{};
+	sei.cbSize = sizeof(SHELLEXECUTEINFOW);
+	sei.lpVerb = L"runas"; // UAC prompt
+	sei.nShow = SW_SHOWNORMAL;
+	sei.fMask = SEE_MASK_NOCLOSEPROCESS; // sei.hProcess member receives the launched process handle
+	sei.lpFile = wszNppFullPath;
+	sei.lpParameters = strCmdLineParams.c_str();
+	if (!::ShellExecuteExW(&sei))
+		return ::GetLastError();
+
+	// wait for the elevated Notepad++ process to finish
+	DWORD dwError = NO_ERROR;
+	if (sei.hProcess) // beware - do not check here for the INVALID_HANDLE_VALUE (valid GetCurrentProcess() pseudohandle)
+	{
+		::WaitForSingleObject(sei.hProcess, INFINITE);
+		::GetExitCodeProcess(sei.hProcess, &dwError);
+		::CloseHandle(sei.hProcess);
+	}
+
+	return dwError;
+}

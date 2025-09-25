@@ -109,12 +109,7 @@ enum TextCase : UCHAR
 	RANDOMCASE
 };
 
-const UCHAR MASK_FORMAT = 0x03;
-const UCHAR BASE_10 = 0x00; // Dec
-const UCHAR BASE_16 = 0x01; // Hex
-const UCHAR BASE_08 = 0x02; // Oct
-const UCHAR BASE_02 = 0x03; // Bin
-
+enum : UCHAR { BASE_10 = 0, BASE_16 = 1, BASE_08 = 2, BASE_02 = 3, BASE_16_UPPERCASE = 4 };
 
 const int MARK_BOOKMARK = 20;
 const int MARK_HIDELINESBEGIN = 19;
@@ -252,7 +247,7 @@ const std::vector<std::vector<const char*>> g_nonPrintingChars =
 size_t getNbDigits(size_t aNum, size_t base);
 
 template<typename T>
-T* variedFormatNumber2String(T* str, size_t strLen, size_t number, size_t base, size_t nbDigits, ColumnEditorParam::leadingChoice lead)
+T* variedFormatNumber2String(T* str, size_t strLen, size_t number, size_t base, bool useUpper, size_t nbDigits, ColumnEditorParam::leadingChoice lead)
 {
 	if (nbDigits == 0 || nbDigits >= strLen) return NULL;
 
@@ -293,6 +288,8 @@ T* variedFormatNumber2String(T* str, size_t strLen, size_t number, size_t base, 
 	else if (base == 16)
 	{
 		std::stringstream stream;
+		if (useUpper)
+			stream << std::uppercase;
 		stream << std::hex << number;
 		numberStr = stream.str();
 	}
@@ -467,10 +464,10 @@ public:
 
 	void getVisibleStartAndEndPosition(intptr_t* startPos, intptr_t* endPos);
     char * getWordFromRange(char * txt, size_t size, size_t pos1, size_t pos2);
-	char * getSelectedText(char * txt, size_t size, bool expand = true);
+	char * getSelectedTextToMultiChar(char * txt, size_t size, bool expand = true);
+	const wchar_t* getSelectedTextToWChar(bool expand = true, Sci_Position* selCharNumber = nullptr);
     char * getWordOnCaretPos(char * txt, size_t size);
-    wchar_t * getGenericWordOnCaretPos(wchar_t * txt, int size);
-	wchar_t * getGenericSelectedText(wchar_t * txt, int size, bool expand = true);
+
 	intptr_t searchInTarget(const wchar_t * Text2Find, size_t lenOfText2Find, size_t fromPos, size_t toPos) const;
 	void appendGenericText(const wchar_t * text2Append) const;
 	void addGenericText(const wchar_t * text2Append) const;

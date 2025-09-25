@@ -169,6 +169,7 @@ std::wstring stringTakeWhileAdmissable(const std::wstring& input, const std::wst
 double stodLocale(const std::wstring& str, _locale_t loc, size_t* idx = NULL);
 
 bool str2Clipboard(const std::wstring &str2cpy, HWND hwnd);
+std::wstring strFromClipboard();
 class Buffer;
 bool buf2Clipboard(const std::vector<Buffer*>& buffers, bool isFullPath, HWND hwnd);
 
@@ -310,7 +311,7 @@ public:
 			hide();
 		}
 	};
-	bool init(HINSTANCE hInst, HWND ctrl2attached, HWND ctrl2attachedParent, const std::wstring& tipStr, bool isRTL, unsigned int remainTimeMillisecond = 0); // remainTimeMillisecond = 0: no timeout
+	bool init(HINSTANCE hInst, HWND ctrl2attached, HWND ctrl2attachedParent, const std::wstring& tipStr, bool isRTL, unsigned int remainTimeMillisecond = 0, int maxWidth = 200); // remainTimeMillisecond = 0: no timeout
 
 	bool isValid() const {
 		return _hWndInfoTip != nullptr;
@@ -320,7 +321,8 @@ public:
 		return _hWndInfoTip;
 	};
 
-	void show() const;
+	enum showPosition {beginning, middle, end};
+	void show(showPosition pos = middle) const;
 	
 	void hide();
 
@@ -331,3 +333,10 @@ private:
 	ControlInfoTip(const ControlInfoTip&) = delete;
 	ControlInfoTip& operator=(const ControlInfoTip&) = delete;
 };
+
+
+#define NPP_UAC_SAVE_SIGN L"#UAC-SAVE#"
+#define NPP_UAC_SETFILEATTRIBUTES_SIGN L"#UAC-SETFILEATTRIBUTES#"
+#define NPP_UAC_MOVEFILE_SIGN L"#UAC-MOVEFILE#"
+#define NPP_UAC_CREATEEMPTYFILE_SIGN L"#UAC-CREATEEMPTYFILE#"
+DWORD invokeNppUacOp(std::wstring& strCmdLineParams);

@@ -2649,13 +2649,15 @@ void NppParameters::feedColumnEditorParameters(TiXmlNode *node)
 	if (strVal)
 	{
 		if (lstrcmp(strVal, L"hex") == 0)
-			_columnEditParam._formatChoice = 1;
+			_columnEditParam._formatChoice = BASE_16;
+		else if (lstrcmp(strVal, L"hexuc") == 0)
+			_columnEditParam._formatChoice = BASE_16_UPPERCASE;
 		else if (lstrcmp(strVal, L"oct") == 0)
-			_columnEditParam._formatChoice = 2;
+			_columnEditParam._formatChoice = BASE_08;
 		else if (lstrcmp(strVal, L"bin") == 0)
-			_columnEditParam._formatChoice = 3;
+			_columnEditParam._formatChoice = BASE_02;
 		else // "dec"
-			_columnEditParam._formatChoice = 0;
+			_columnEditParam._formatChoice = BASE_10;
 	}
 
 	strVal = (childNode->ToElement())->Attribute(L"leadingChoice");
@@ -4370,11 +4372,13 @@ bool NppParameters::writeColumnEditorSettings() const
 	(numberNode.ToElement())->SetAttribute(L"increase", _columnEditParam._increaseNum);
 	(numberNode.ToElement())->SetAttribute(L"repeat", _columnEditParam._repeatNum);
 	wstring format = L"dec";
-	if (_columnEditParam._formatChoice == 1)
+	if (_columnEditParam._formatChoice == BASE_16)
 		format = L"hex";
-	else if (_columnEditParam._formatChoice == 2)
+	else if (_columnEditParam._formatChoice == BASE_16_UPPERCASE)
+		format = L"hexuc";
+	else if (_columnEditParam._formatChoice == BASE_08)
 		format = L"oct";
-	else if (_columnEditParam._formatChoice == 3)
+	else if (_columnEditParam._formatChoice == BASE_02)
 		format = L"bin";
 	(numberNode.ToElement())->SetAttribute(L"formatChoice", format);
 	wstring leading = L"none";
@@ -6181,6 +6185,17 @@ void NppParameters::feedGUIParameters(TiXmlNode *node)
 				_nppGUI._inSelectionAutocheckThreshold = FINDREPLACE_INSELECTION_THRESHOLD_DEFAULT;
 			}
 
+			int fillFindWhatThresh;
+			if (element->Attribute(L"fillFindWhatThreshold", &fillFindWhatThresh) &&
+				(fillFindWhatThresh >= 1 && fillFindWhatThresh <= FINDREPLACE_MAXLENGTH - 1))
+			{
+				_nppGUI._fillFindWhatThreshold = fillFindWhatThresh;
+			}
+			else
+			{
+				_nppGUI._fillFindWhatThreshold = FILL_FINDWHAT_THRESHOLD_DEFAULT;
+			}
+
 			const wchar_t* optFillDirFieldFromActiveDoc = element->Attribute(L"fillDirFieldFromActiveDoc");
 			if (optFillDirFieldFromActiveDoc)
 			{
@@ -7823,6 +7838,7 @@ void NppParameters::createXmlTreeFromGUIParams()
 		GUIConfigElement->SetAttribute(L"confirmReplaceInAllOpenDocs", _nppGUI._confirmReplaceInAllOpenDocs ? L"yes" : L"no");
 		GUIConfigElement->SetAttribute(L"replaceStopsWithoutFindingNext", _nppGUI._replaceStopsWithoutFindingNext ? L"yes" : L"no");
 		GUIConfigElement->SetAttribute(L"inSelectionAutocheckThreshold", _nppGUI._inSelectionAutocheckThreshold);
+		GUIConfigElement->SetAttribute(L"fillFindWhatThreshold", _nppGUI._fillFindWhatThreshold);
 		GUIConfigElement->SetAttribute(L"fillDirFieldFromActiveDoc", _nppGUI._fillDirFieldFromActiveDoc ? L"yes" : L"no");
 	}
 

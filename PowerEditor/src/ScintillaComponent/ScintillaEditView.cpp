@@ -838,11 +838,17 @@ void ScintillaEditView::setXmlLexer(LangType type)
 		const wchar_t *pKwArray[NB_LIST] = {NULL};
 		
 		setLexerFromLangID(L_XML);
-		
-		for (int i = 0 ; i < 4 ; ++i)
-			execute(SCI_SETKEYWORDS, i, reinterpret_cast<LPARAM>(""));
+		makeStyle(type, pKwArray);
 
-        makeStyle(type, pKwArray);
+		// DOCTYPE command keywords
+		basic_string<char> keywordList("");
+		if (pKwArray[LANG_INDEX_INSTR])
+		{
+			basic_string<wchar_t> kwlW = pKwArray[LANG_INDEX_INSTR];
+			keywordList = wstring2string(kwlW, CP_ACP);
+		}
+
+		execute(SCI_SETKEYWORDS, 5, reinterpret_cast<LPARAM>(getCompleteKeywordList(keywordList, L_XML, LANG_INDEX_INSTR)));
 
 		// the XML portion of the lexer only allows substyles for attributes, not for tags (since it treats all tags the same),
 		//	so allocate all 8 substyles to attributes
@@ -871,6 +877,7 @@ void ScintillaEditView::setHTMLLexer()
 	const wchar_t *pKwArray[NB_LIST] = {NULL};
 	makeStyle(L_HTML, pKwArray);
 
+	// Tag keywords
 	basic_string<char> keywordList("");
 	if (pKwArray[LANG_INDEX_INSTR])
 	{
@@ -879,7 +886,17 @@ void ScintillaEditView::setHTMLLexer()
 	}
 
 	execute(SCI_SETKEYWORDS, 0, reinterpret_cast<LPARAM>(getCompleteKeywordList(keywordList, L_HTML, LANG_INDEX_INSTR)));
-	
+
+	// DOCTYPE command keywords
+	basic_string<char> keywordList2("");
+	if (pKwArray[LANG_INDEX_INSTR2])
+	{
+		basic_string<wchar_t> kwlW = pKwArray[LANG_INDEX_INSTR2];
+		keywordList2 = wstring2string(kwlW, CP_ACP);
+	}
+
+	execute(SCI_SETKEYWORDS, 5, reinterpret_cast<LPARAM>(getCompleteKeywordList(keywordList, L_HTML, LANG_INDEX_INSTR2)));
+
 	// HTML allows substyle lists for both tags and attributes, so allocate four of each
 	populateSubStyleKeywords(L_HTML, SCE_H_TAG, 4, LANG_INDEX_SUBSTYLE1, pKwArray);
 	populateSubStyleKeywords(L_HTML, SCE_H_ATTRIBUTE, 4, LANG_INDEX_SUBSTYLE5, pKwArray);
@@ -2793,48 +2810,61 @@ char * ScintillaEditView::getWordOnCaretPos(char * txt, size_t size)
     return getWordFromRange(txt, size, range.first, range.second);
 }
 
-wchar_t * ScintillaEditView::getGenericWordOnCaretPos(wchar_t * txt, int size)
-{
-	WcharMbcsConvertor& wmc = WcharMbcsConvertor::getInstance();
-	size_t cp = execute(SCI_GETCODEPAGE);
-	char *txtA = new char[size + 1];
-	getWordOnCaretPos(txtA, size);
 
-	const wchar_t * txtW = wmc.char2wchar(txtA, cp);
-	wcscpy_s(txt, size, txtW);
-	delete [] txtA;
-	return txt;
-}
-
-char * ScintillaEditView::getSelectedText(char * txt, size_t size, bool expand)
+char * ScintillaEditView::getSelectedTextToMultiChar(char * txt, size_t size, bool expand)
 {
 	if (!size)
 		return NULL;
+
 	Sci_CharacterRangeFull range = getSelection();
 	if (range.cpMax == range.cpMin && expand)
 	{
 		expandWordSelection();
 		range = getSelection();
 	}
+
 	if (!(static_cast<Sci_Position>(size) > (range.cpMax - range.cpMin)))	//there must be atleast 1 byte left for zero terminator
 	{
 		range.cpMax = range.cpMin + size -1;	//keep room for zero terminator
 	}
-	//getText(txt, range.cpMin, range.cpMax);
+
 	return getWordFromRange(txt, size, range.cpMin, range.cpMax);
 }
 
-wchar_t * ScintillaEditView::getGenericSelectedText(wchar_t * txt, int size, bool expand)
+// get the selected text & selected text character number (not the multi-chars lenghth for the allocation, if selCharNumber is not nul).
+// This function returns the pointer of wide char string (wchar_t *) that we don't need to and should not deallocate.  
+const wchar_t * ScintillaEditView::getSelectedTextToWChar(bool expand, Sci_Position* selCharNumber)
 {
 	WcharMbcsConvertor& wmc = WcharMbcsConvertor::getInstance();
 	size_t cp = execute(SCI_GETCODEPAGE);
-	char *txtA = new char[size + 1];
-	getSelectedText(txtA, size, expand);
+	char *txtA = nullptr;
+
+	Sci_CharacterRangeFull range = getSelection();
+	if (range.cpMax == range.cpMin && expand)
+	{
+		expandWordSelection();
+		range = getSelection();
+	}
+
+	auto selNum = execute(SCI_COUNTCHARACTERS, range.cpMin, range.cpMax);
+
+	// return the selected string's character number
+	if (selCharNumber)
+		*selCharNumber = selNum;
+
+	if (selNum == 0)
+		return nullptr;
+
+	// then get the selected string's total bytes (without counting the last NULL char) 
+	auto neededByte = execute(SCI_GETSELTEXT, 0, NULL);
+
+	txtA = new char[neededByte + 1];
+	execute(SCI_GETSELTEXT, 0, reinterpret_cast<LPARAM>(txtA));
 
 	const wchar_t * txtW = wmc.char2wchar(txtA, cp);
-	wcscpy_s(txt, size, txtW);
 	delete [] txtA;
-	return txt;
+
+	return txtW;
 }
 
 intptr_t ScintillaEditView::searchInTarget(const wchar_t * text2Find, size_t lenOfText2Find, size_t fromPos, size_t toPos) const
@@ -3919,15 +3949,19 @@ void ScintillaEditView::columnReplace(ColumnModeInfos & cmi, size_t initial, siz
 	//Defined in ScintillaEditView.h :
 	//const UCHAR MASK_FORMAT = 0x03;
 
-	UCHAR f = format & MASK_FORMAT;
-
+	bool useUppercase = false;
 	int base = 10;
-	if (f == BASE_16)
+	if (format == BASE_16)
 		base = 16;
-	else if (f == BASE_08)
+	else if (format == BASE_08)
 		base = 8;
-	else if (f == BASE_02)
+	else if (format == BASE_02)
 		base = 2;
+	else if (format == BASE_16_UPPERCASE)
+	{
+		base = 16;
+		useUppercase = true;
+	}
 
 	const int stringSize = 512;
 	char str[stringSize];
@@ -3966,7 +4000,7 @@ void ScintillaEditView::columnReplace(ColumnModeInfos & cmi, size_t initial, siz
 			cmi[i]._selLpos += totalDiff;
 			cmi[i]._selRpos += totalDiff;
 
-			variedFormatNumber2String<char>(str, stringSize, numbers.at(i), base, kib, lead);
+			variedFormatNumber2String<char>(str, stringSize, numbers.at(i), base, useUppercase, kib, lead);
 
 			const bool hasVirtualSpc = cmi[i]._nbVirtualAnchorSpc > 0;
 			if (hasVirtualSpc) // if virtual space is present, then insert space
@@ -4828,7 +4862,18 @@ bool ScintillaEditView::pasteToMultiSelection() const
 	::CloseClipboard();
 
 	vector<wstring> clipboardStrings;
-	stringSplit(clipboardStr, getEOLString(), clipboardStrings);
+
+	wstring eol;
+	if (clipboardStr.find(L"\r\n") != std::wstring::npos)
+		eol = L"\r\n";
+	else if (clipboardStr.find(L"\n") != std::wstring::npos)
+		eol = L"\n";
+	else if (clipboardStr.find(L"\r") != std::wstring::npos)
+		eol = L"\r";
+	else
+		eol = getEOLString();
+
+	stringSplit(clipboardStr, eol, clipboardStrings);
 	clipboardStrings.erase(clipboardStrings.cend() - 1); // remove the last empty string
 	size_t nbClipboardStr = clipboardStrings.size();
 

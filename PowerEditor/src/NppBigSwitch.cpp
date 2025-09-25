@@ -503,20 +503,11 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 		case NPPM_LAUNCHFINDINFILESDLG:
 		{
 			// Find in files function code should be here due to the number of parameters (2) cannot be passed via WM_COMMAND
-			constexpr int strSize = FINDREPLACE_MAXLENGTH;
 
 			bool isFirstTime = !_findReplaceDlg.isCreated();
 			_findReplaceDlg.doDialog(FIND_DLG, _nativeLangSpeaker.isRTL());
 
-			const NppGUI& nppGui = nppParam.getNppGUI();
-			if (nppGui._fillFindFieldWithSelected)
-			{
-				auto str = std::make_unique<wchar_t[]>(strSize);
-				std::fill_n(str.get(), strSize, L'\0');
-
-				_pEditView->getGenericSelectedText(str.get(), strSize, nppGui._fillFindFieldSelectCaret);
-				_findReplaceDlg.setSearchText(str.get());
-			}
+			_findReplaceDlg.setSearchTextWithSettings();
 
 			if (isFirstTime)
 				_nativeLangSpeaker.changeFindReplaceDlgLang(_findReplaceDlg);
@@ -528,17 +519,14 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
 		case NPPM_INTERNAL_FINDINPROJECTS:
 		{
-			constexpr int strSize = FINDREPLACE_MAXLENGTH;
-			auto str = std::make_unique<wchar_t[]>(strSize);
-			std::fill_n(str.get(), strSize, L'\0');
-
 			bool isFirstTime = not _findReplaceDlg.isCreated();
 			_findReplaceDlg.doDialog(FIND_DLG, _nativeLangSpeaker.isRTL());
 
-			_pEditView->getGenericSelectedText(str.get(), strSize);
-			_findReplaceDlg.setSearchText(str.get());
+			_findReplaceDlg.setSearchTextWithSettings();
+
 			if (isFirstTime)
 				_nativeLangSpeaker.changeDlgLang(_findReplaceDlg.getHSelf(), "Find");
+
 			_findReplaceDlg.launchFindInProjectsDlg();
 			_findReplaceDlg.setProjectCheckmarks(NULL, (int) wParam);
 			return TRUE;
@@ -546,18 +534,13 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
 		case NPPM_INTERNAL_FINDINFINDERDLG:
 		{
-			constexpr int strSize = FINDREPLACE_MAXLENGTH;
-			auto str = std::make_unique<wchar_t[]>(strSize);
-			std::fill_n(str.get(), strSize, L'\0');
-
 			Finder *launcher = reinterpret_cast<Finder *>(wParam);
 
 			bool isFirstTime = !_findInFinderDlg.isCreated();
 
 			_findInFinderDlg.doDialog(launcher, _nativeLangSpeaker.isRTL());
 
-			_pEditView->getGenericSelectedText(str.get(), strSize);
-			_findReplaceDlg.setSearchText(str.get());
+			_findReplaceDlg.setSearchTextWithSettings();
 			setFindReplaceFolderFilter(NULL, NULL);
 
 			if (isFirstTime)
@@ -1028,9 +1011,15 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 			wchar_t *pTchar = reinterpret_cast<wchar_t *>(lParam);
 
 			if (message == NPPM_GETCURRENTWORD)
-				_pEditView->getGenericSelectedText(str.get(), strSize);
+			{
+				auto txtW = _pEditView->getSelectedTextToWChar();
+				if (txtW)
+					wcscpy_s(str.get(), strSize, txtW);
+			}
 			else if (message == NPPM_GETCURRENTLINESTR)
+			{
 				_pEditView->getLine(_pEditView->getCurrentLineNumber(), str.get(), strSize);
+			}
 
 			// For the compatibility reason, if wParam is 0, then we assume the size of wstring buffer (lParam) is large enough.
 			// otherwise we check if the wstring buffer size is enough for the wstring to copy.
@@ -1060,7 +1049,10 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
 			int hasSlash = 0;
 
-			_pEditView->getGenericSelectedText(str.get(), strSize); // this is either the selected text, or the word under the cursor if there is no selection
+			auto txtW = _pEditView->getSelectedTextToWChar(); // this is either the selected text, or the word under the cursor if there is no selection
+			if (txtW)
+				wcscpy_s(str.get(), strSize, txtW);
+
 			hasSlash = FALSE;
 			for (int i = 0; str[i] != 0; i++)
 				if (CharacterIs(str[i], L"\\/"))
@@ -3021,7 +3013,9 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
 		case WM_LBUTTONDBLCLK:
 		{
-			::SendMessage(hwnd, WM_COMMAND, IDM_FILE_NEW, 0);
+			DocTabView* curTabView = (currentView() == MAIN_VIEW) ? &_mainDocTab : &_subDocTab;
+			::SendMessage(curTabView->getHSelf(), WM_LBUTTONDBLCLK, wParam, lParam);
+
 			return TRUE;
 		}
 
@@ -3216,6 +3210,23 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 				lstrcpy(reinterpret_cast<wchar_t *>(lParam), settingsOnCloudPath.c_str());
 			}
 			return settingsOnCloudPath.length();
+		}
+
+		case NPPM_GETNPPSETTINGSDIRPATH:
+		{
+			// get the path (-settingsDir, Cloud directory, AppData or NppDir selection handled by _userPath, returned by .getUserPath())
+			wstring settingsDirPath = nppParam.getUserPath();
+
+			// if the LPARAM is a big enough non-null pointer, populate that memory with the path string
+			if (lParam != 0)
+			{
+				if (settingsDirPath.length() >= static_cast<size_t>(wParam))
+					return 0;
+				lstrcpy(reinterpret_cast<wchar_t*>(lParam), settingsDirPath.c_str());
+			}
+
+			// the message returns the string length
+			return settingsDirPath.length();
 		}
 
 		case NPPM_SETLINENUMBERWIDTHMODE:

@@ -53,7 +53,7 @@ wstring getTextFromCombo(HWND hCombo)
 	auto str = std::make_unique<wchar_t[]>(strSize);
 	std::fill_n(str.get(), strSize, L'\0');
 
-	::SendMessage(hCombo, WM_GETTEXT, FINDREPLACE_MAXLENGTH - 1, reinterpret_cast<LPARAM>(str.get()));
+	::SendMessage(hCombo, WM_GETTEXT, FINDREPLACE_MAXLENGTH, reinterpret_cast<LPARAM>(str.get()));
 	return wstring(str.get());
 }
 
@@ -63,7 +63,7 @@ void delLeftWordInEdit(HWND hEdit)
 	auto str = std::make_unique<wchar_t[]>(strSize);
 	std::fill_n(str.get(), strSize, L'\0');
 
-	::SendMessage(hEdit, WM_GETTEXT, FINDREPLACE_MAXLENGTH - 1, reinterpret_cast<LPARAM>(str.get()));
+	::SendMessage(hEdit, WM_GETTEXT, FINDREPLACE_MAXLENGTH, reinterpret_cast<LPARAM>(str.get()));
 	WORD cursor = 0;
 	::SendMessage(hEdit, EM_GETSEL, (WPARAM)&cursor, 0);
 	WORD wordstart = cursor;
@@ -1579,8 +1579,8 @@ intptr_t CALLBACK FindReplaceDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 			HWND hFindCombo = ::GetDlgItem(_hSelf, IDFINDWHAT);
 			HWND hReplaceCombo = ::GetDlgItem(_hSelf, IDREPLACEWITH);
 
-			::SendMessage(hFindCombo, CB_LIMITTEXT, FINDREPLACE_MAXLENGTH - 1, 0);
-			::SendMessage(hReplaceCombo, CB_LIMITTEXT, FINDREPLACE_MAXLENGTH - 1, 0);
+			::SendMessage(hFindCombo, CB_LIMITTEXT, FINDREPLACE_MAXLENGTH * 2 - 1, 0);
+			::SendMessage(hReplaceCombo, CB_LIMITTEXT, FINDREPLACE_MAXLENGTH * 2 - 1, 0);
 
 			HWND hFiltersCombo = ::GetDlgItem(_hSelf, IDD_FINDINFILES_FILTERS_COMBO);
 			HWND hDirCombo = ::GetDlgItem(_hSelf, IDD_FINDINFILES_DIR_COMBO);
@@ -1971,21 +1971,24 @@ intptr_t CALLBACK FindReplaceDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 				{
 					if (HIWORD(wParam) == CBN_EDITUPDATE)
 					{
-						HWND hComboBox = ::GetDlgItem(_hSelf, LOWORD(wParam));	
-						LRESULT length = ::GetWindowTextLength(hComboBox);
+						HWND hComboBox = ::GetDlgItem(_hSelf, LOWORD(wParam));
+						HWND hEdit = GetWindow(hComboBox, GW_CHILD);
+						if (!hEdit)
+							return FALSE;
 
+						static int maxLength = (int)SendMessage(hEdit, EM_GETLIMITTEXT, 0, 0);
+						LRESULT length = ::GetWindowTextLength(hEdit);
 
-						if (length >= FINDREPLACE_MAXLENGTH - 1)
+						if (length >= maxLength) // should be (FINDREPLACE_MAXLENGTH * 2 - 1)
 						{
 							if (!_maxLenOnSearchTip.isValid()) // Create the tooltip and add the tool ONLY ONCE
 							{
 								NativeLangSpeaker* pNativeSpeaker = nppParamInst.getNativeLangSpeaker();
-								wstring tip = pNativeSpeaker->getLocalizedStrFromID("max-len-on-search-tip", L"Only $INT_REPLACE$ characters are allowed for the find/replace text length - your input could be truncated, and it won't be saved for the next session.");
-								tip = stringReplace(tip, L"$INT_REPLACE$", std::to_wstring(FINDREPLACE_MAXLENGTH - 1));
+								wstring tip = pNativeSpeaker->getLocalizedStrFromID("len-limit-exceeded-tip", L"Length limit exceeded: Your input may exceed the limit allowed and could have been truncated, and it won't be saved for the next session.");
 
 								static wstring maxLenOnSearchTip = tip;
 
-								bool isSuccessful = _maxLenOnSearchTip.init(_hInst, hComboBox, _hSelf, maxLenOnSearchTip.c_str(), _isRTL);
+								bool isSuccessful = _maxLenOnSearchTip.init(_hInst, hComboBox, _hSelf, maxLenOnSearchTip.c_str(), _isRTL, 0, 170);
 
 								if (!isSuccessful)
 								{
@@ -1994,19 +1997,39 @@ intptr_t CALLBACK FindReplaceDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 
 								NppDarkMode::setDarkTooltips(_maxLenOnSearchTip.getTipHandle(), NppDarkMode::ToolTipsType::tooltip);
 							}
-							_maxLenOnSearchTip.show();
+							_maxLenOnSearchTip.show(ControlInfoTip::showPosition::beginning);
+							
+						}
+						else if (length > FINDREPLACE_MAXLENGTH - 1)
+						{
+							if (!_maxLenOnSearchTip.isValid()) // Create the tooltip and add the tool ONLY ONCE
+							{
+								NativeLangSpeaker* pNativeSpeaker = nppParamInst.getNativeLangSpeaker();
+								wstring tip = pNativeSpeaker->getLocalizedStrFromID("max-len-on-search-tip", L"Your input may exceed the limit allowed and could have been truncated, and it won't be saved for the next session.");
+
+								static wstring maxLenOnSearchTip = tip;
+
+								bool isSuccessful = _maxLenOnSearchTip.init(_hInst, hComboBox, _hSelf, maxLenOnSearchTip.c_str(), _isRTL, 0, 170);
+
+								if (!isSuccessful)
+								{
+									return FALSE;
+								}
+
+								NppDarkMode::setDarkTooltips(_maxLenOnSearchTip.getTipHandle(), NppDarkMode::ToolTipsType::tooltip);
+							}
+							_maxLenOnSearchTip.show(ControlInfoTip::showPosition::beginning);
 						}
 						else if (length >= FINDREPLACE_MAXLENGTH2SAVE - 1) // FINDREPLACE_MAXLENGTH2SAVE < length < FINDREPLACE_MAXLENGTH
 						{
 							if (!_maxLenOnSearchTip.isValid()) // Create the tooltip and add the tool ONLY ONCE
 							{
 								NativeLangSpeaker* pNativeSpeaker = nppParamInst.getNativeLangSpeaker();
-								wstring tip = pNativeSpeaker->getLocalizedStrFromID("max-len-on-save-tip", L"This search input (> $INT_REPLACE$ characters) won't be saved for the next session");
-								tip = stringReplace(tip, L"$INT_REPLACE$", std::to_wstring(FINDREPLACE_MAXLENGTH2SAVE - 1));
+								wstring tip = pNativeSpeaker->getLocalizedStrFromID("max-len-on-save-tip", L"The length of your input is very long and may not be saved for your next session.");
 
 								static wstring maxLenOnSaveTip = tip;
 
-								bool isSuccessful = _maxLenOnSearchTip.init(_hInst, hComboBox, _hSelf, maxLenOnSaveTip.c_str(), _isRTL);
+								bool isSuccessful = _maxLenOnSearchTip.init(_hInst, hComboBox, _hSelf, maxLenOnSaveTip.c_str(), _isRTL, 0, 170);
 
 								if (!isSuccessful)
 								{
@@ -2015,7 +2038,7 @@ intptr_t CALLBACK FindReplaceDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 
 								NppDarkMode::setDarkTooltips(_maxLenOnSearchTip.getTipHandle(), NppDarkMode::ToolTipsType::tooltip);
 							}
-							_maxLenOnSearchTip.show();
+							_maxLenOnSearchTip.show(ControlInfoTip::showPosition::beginning);
 						}
 						else
 						{
@@ -4044,14 +4067,18 @@ int FindReplaceDlg::regexBackwardMsgBox()
 	return msgboxID;
 }
 
-void FindReplaceDlg::setSearchText(wchar_t * txt2find)
+void FindReplaceDlg::setSearchText(const wchar_t * txt2find)
 {
 	HWND hCombo = ::GetDlgItem(_hSelf, IDFINDWHAT);
 	if (txt2find && txt2find[0])
 	{
 		// We got a valid search string
-		::SendMessage(hCombo, CB_SETCURSEL, static_cast<WPARAM>(-1), 0); // remove selection - to allow using down arrow to get to last searched word
-		::SetDlgItemText(_hSelf, IDFINDWHAT, txt2find);
+		HWND hEdit = GetWindow(hCombo, GW_CHILD);
+		if (hEdit)
+		{
+			::SendMessage(hEdit, EM_SETSEL, 0, static_cast<WPARAM>(-1)); // Select all text
+			::SendMessage(hEdit, EM_REPLACESEL, TRUE, (LPARAM)txt2find);
+		}
 	}
 	::SendMessage(hCombo, CB_SETEDITSEL, 0, MAKELPARAM(0, -1)); // select all text - fast edit
 }
@@ -4919,7 +4946,7 @@ LRESULT FAR PASCAL FindReplaceDlg::comboEditProc(HWND hwnd, UINT message, WPARAM
 	else if ((message == WM_KEYDOWN) && (wParam == VK_DOWN) && (::SendMessage(hwndCombo, CB_GETCURSEL, 0, 0) == CB_ERR))
 	{
 		// down key on unselected combobox item -> store current edit text as draft
-		::SendMessage(hwndCombo, WM_GETTEXT, FINDREPLACE_MAXLENGTH - 1, reinterpret_cast<LPARAM>(draftString.get()));
+		::SendMessage(hwndCombo, WM_GETTEXT, FINDREPLACE_MAXLENGTH, reinterpret_cast<LPARAM>(draftString.get()));
 	}
 	else if ((message == WM_KEYDOWN) && (wParam == VK_UP) && (::SendMessage(hwndCombo, CB_GETCURSEL, 0, 0) == CB_ERR))
 	{
@@ -4931,10 +4958,37 @@ LRESULT FAR PASCAL FindReplaceDlg::comboEditProc(HWND hwnd, UINT message, WPARAM
 	{
 		// up key on top selected combobox item -> restore draft to edit text
 		::SendMessage(hwndCombo, CB_SETCURSEL, WPARAM(-1), 0);
-		::SendMessage(hwndCombo, WM_SETTEXT, FINDREPLACE_MAXLENGTH - 1, reinterpret_cast<LPARAM>(draftString.get()));
+		::SendMessage(hwndCombo, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(draftString.get()));
 		::SendMessage(hwndCombo, CB_SETEDITSEL, 0, MAKELPARAM(0, -1));
 		return 0;
 
+	}
+	else if (message == WM_PASTE)
+	{
+		// needed to allow CR (i.e., multiline) into combobox text;
+		// (the default functionality terminates the paste at the first CR character)
+
+		HWND hParent = ::GetParent(hwndCombo);
+		HWND hFindWhatCombo = ::GetDlgItem(hParent, IDFINDWHAT);
+		HWND hReplaceWithCombo = ::GetDlgItem(hParent, IDREPLACEWITH);
+		if ((hwndCombo == hFindWhatCombo) || (hwndCombo == hReplaceWithCombo))
+		{
+			CLIPFORMAT cfColumnSelect = static_cast<CLIPFORMAT>(::RegisterClipboardFormat(L"MSDEVColumnSelect"));
+			if (!::IsClipboardFormatAvailable(cfColumnSelect))
+			{
+				wstring clipboardText = strFromClipboard();
+				if (!clipboardText.empty())
+				{
+					HWND hEdit = GetWindow(hwndCombo, GW_CHILD);
+					if (hEdit)
+					{
+						::SendMessage(hEdit, EM_REPLACESEL, TRUE, (LPARAM)clipboardText.c_str());
+					}
+				}
+			}
+
+			return 0;
+		}
 	}
 	return CallWindowProc(originalComboEditProc, hwnd, message, wParam, lParam);
 }
@@ -5326,7 +5380,7 @@ bool FindReplaceDlg::replaceInProjectsConfirmCheck()
 	return confirmed;
 }
 
-bool FindReplaceDlg::replaceInOpenDocsConfirmCheck(void)
+bool FindReplaceDlg::replaceInOpenDocsConfirmCheck()
 {
 	bool confirmed = false;
 
@@ -5342,6 +5396,26 @@ bool FindReplaceDlg::replaceInOpenDocsConfirmCheck(void)
 	}
 
 	return confirmed;
+}
+
+// return NULL if nothing to set in find field.
+// Otherwise return string pointer (wchar_t *) in which the selected text was copied.
+// Note that the string pointer don't need to and should not be deallocated.
+const wchar_t* FindReplaceDlg::setSearchTextWithSettings()
+{
+	const NppGUI& nppGui = NppParameters::getInstance().getNppGUI();
+	if (nppGui._fillFindFieldWithSelected)
+	{
+		Sci_Position selStrCharNum = 0;
+		const wchar_t* selStr = (*_ppEditView)->getSelectedTextToWChar(nppGui._fillFindFieldSelectCaret, &selStrCharNum);
+
+		if (selStr && selStrCharNum <= nppGui._fillFindWhatThreshold)
+		{
+			setSearchText(selStr);
+			return selStr;
+		}
+	}
+	return nullptr;
 }
 
 wstring Finder::getHitsString(int count) const
@@ -6253,12 +6327,11 @@ void FindIncrementDlg::markSelectedTextInc(bool enable, FindOption *opt)
 	if (range.cpMin == range.cpMax)
 		return;
 
-	const int strSize = FINDREPLACE_MAXLENGTH;
-	auto text2Find = std::make_unique<wchar_t[]>(strSize);
-	std::fill_n(text2Find.get(), strSize, L'\0');
+	auto text2Find = (*(_pFRDlg->_ppEditView))->getSelectedTextToWChar(false);	//do not expand selection (false)
+	if (!text2Find)
+		return;
 
-	(*(_pFRDlg->_ppEditView))->getGenericSelectedText(text2Find.get(), FINDREPLACE_MAXLENGTH, false);	//do not expand selection (false)
-	opt->_str2Search = text2Find.get();
+	opt->_str2Search = text2Find;
 	_pFRDlg->markAllInc(opt);
 }
 
