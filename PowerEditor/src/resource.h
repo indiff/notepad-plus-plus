@@ -19,14 +19,14 @@
 
 //************ Notepad++ version **************************
 
-#define NOTEPAD_PLUS_VERSION L"Notepad++ v8.8.5"
+#define NOTEPAD_PLUS_VERSION L"Notepad++ v8.8.6"
 
 // should be X.Y : ie. if VERSION_DIGITALVALUE == 4, 7, 1, 0 , then X = 4, Y = 71
 // ex : #define VERSION_VALUE L"5.63\0"
-#define VERSION_INTERNAL_VALUE L"8.85\0"
+#define VERSION_INTERNAL_VALUE L"8.86\0"
 
-#define VERSION_PRODUCT_VALUE L"8.8.5\0"
-#define VERSION_DIGITALVALUE 8, 8, 5, 0
+#define VERSION_PRODUCT_VALUE L"8.8.6\0"
+#define VERSION_DIGITALVALUE 8, 8, 6, 0
 
 //**********************************************************
 
@@ -552,6 +552,9 @@
 #define IDD_DEBUGINFOBOX 1750
 #define IDC_DEBUGINFO_EDIT 1751
 #define IDC_DEBUGINFO_COPYLINK 1752
+
+#define IDD_COMMANDLINEARGSBOX 1755
+#define IDC_COMMANDLINEARGS_EDIT 1756
 
 #define IDD_DOSAVEORNOTBOX  1760
 #define IDC_DOSAVEORNOTTEXT 1761
