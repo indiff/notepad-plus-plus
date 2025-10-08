@@ -276,6 +276,8 @@ public:
 
 	void refreshInternalPanelIcons();
 
+	void changeReadOnlyUserModeForAllOpenedTabs(const bool ro);
+
 private:
 	Notepad_plus_Window* _pPublicInterface = nullptr;
     Window* _pMainWindow = nullptr;
@@ -319,6 +321,7 @@ private:
 	FindIncrementDlg _incrementFindDlg;
     AboutDlg _aboutDlg;
 	DebugInfoDlg _debugInfoDlg;
+	CmdLineArgsDlg _cmdLineArgsDlg;
 	RunDlg _runDlg;
 	HashFromFilesDlg _md5FromFilesDlg;
 	HashFromTextDlg _md5FromTextDlg;
