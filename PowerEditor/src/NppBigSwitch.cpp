@@ -3113,12 +3113,12 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 				std::vector<tTbData *> tbData = dockContainer[i]->getDataOfAllTb();
 				for (size_t j = 0, len2 = tbData.size() ; j < len2 ; ++j)
 				{
-					if (wcsicmp(moduleName, tbData[j]->pszModuleName) == 0)
+					if (_wcsicmp(moduleName, tbData[j]->pszModuleName) == 0)
 					{
 						if (!windowName)
 							return (LRESULT)tbData[j]->hClient;
 
-						if (wcsicmp(windowName, tbData[j]->pszName) == 0)
+						if (_wcsicmp(windowName, tbData[j]->pszName) == 0)
 							return (LRESULT)tbData[j]->hClient;
 					}
 				}
@@ -3806,6 +3806,26 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 		{
 			_lastRecentFileList.switchMode();
 			_lastRecentFileList.updateMenu();
+			break;
+		}
+
+		case NPPM_INTERNAL_SETTING_TABCOMPACTLABELLEN:
+		{
+			// reflect current tab-label length setting change in both views
+			const std::vector<DocTabView*> tabViews = { &_mainDocTab, &_subDocTab };
+			for (auto& pTabView : tabViews)
+			{
+				for (size_t i = 0; i < pTabView->nbItem(); ++i)
+				{
+					BufferID id = pTabView->getBufferByIndex(i);
+					if (id != BUFFER_INVALID)
+					{
+						Buffer* buf = MainFileManager.getBufferByID(id);
+						if (buf != nullptr)
+							buf->refreshCompactFileName();
+					}
+				}
+			}
 			break;
 		}
 

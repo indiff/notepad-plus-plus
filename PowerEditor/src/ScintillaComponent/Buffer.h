@@ -64,7 +64,7 @@ struct BufferViewInfo {
 	int _iView = 0;
 
 	BufferViewInfo() = delete;
-	BufferViewInfo(BufferID buf, int view) : _bufID(buf), _iView(view) {};
+	BufferViewInfo(BufferID buf, int view) : _bufID(buf), _iView(view) {}
 };
 
 const wchar_t UNTITLED_STR[] = L"new ";
@@ -76,7 +76,7 @@ public:
 
 	void checkFilesystemChanges(bool bCheckOnlyCurrentBuffer);
 
-	size_t getNbBuffers() const { return _nbBufs; };
+	size_t getNbBuffers() const { return _nbBufs; }
 	size_t getNbDirtyBuffers() const;
 	int getBufferIndexByID(BufferID id);
 	Buffer * getBufferByIndex(size_t index);
@@ -111,16 +111,16 @@ public:
 	static FileManager& getInstance() {
 		static FileManager instance;
 		return instance;
-	};
+	}
 	int getFileNameFromBuffer(BufferID id, wchar_t * fn2copy);
 	size_t docLength(Buffer * buffer) const;
 	void removeHotSpot(Buffer * buffer) const;
 	size_t nextUntitledNewNumber() const;
 
-	void enableAutoDetectEncoding4Loading() { isAutoDetectEncodingDisabled4Loading = false; };
-	void disableAutoDetectEncoding4Loading() { isAutoDetectEncodingDisabled4Loading = true; }; // Disable the encoding auto-detection on loading file while switching among the different encoding.
-	                                                                                           // The value of isAutoDetectEncodingDisabled4Loading will be restored to false after each file loading 
-	                                                                                           // to restore the encoding auto-detection ability for other file loading operations. 
+	void enableAutoDetectEncoding4Loading() { isAutoDetectEncodingDisabled4Loading = false; }
+	void disableAutoDetectEncoding4Loading() { isAutoDetectEncodingDisabled4Loading = true; } // Disable the encoding auto-detection on loading file while switching among the different encoding.
+	                                                                                          // The value of isAutoDetectEncodingDisabled4Loading will be restored to false after each file loading 
+	                                                                                          // to restore the encoding auto-detection ability for other file loading operations. 
 
 private:
 	struct LoadedFileFormat {
@@ -177,6 +177,10 @@ public:
 	const wchar_t * getFullPathName() const { return _fullPathName.c_str(); }
 
 	const wchar_t * getFileName() const { return _fileName; }
+
+	const wchar_t* getCompactFileName() const { return _compactFileName.c_str(); }
+
+	void refreshCompactFileName();
 
 	void normalizeTabName(std::wstring& tabName);
 
@@ -353,23 +357,23 @@ public:
 	void startMonitoring() {
 		_isMonitoringOn = true;
 		_eventHandle = ::CreateEvent(nullptr, TRUE, FALSE, nullptr);
-	};
+	}
 
-	HANDLE getMonitoringEvent() const { return _eventHandle; };
+	HANDLE getMonitoringEvent() const { return _eventHandle; }
 
 	void stopMonitoring() {
 		_isMonitoringOn = false;
 		::SetEvent(_eventHandle);
 		::CloseHandle(_eventHandle);
-	};
+	}
 
-	bool isMonitoringOn() const { return _isMonitoringOn; };
+	bool isMonitoringOn() const { return _isMonitoringOn; }
 	void updateTimeStamp();
 	void reload();
-	void setMapPosition(const MapPosition & mapPosition) { _mapPosition = mapPosition; };
-	MapPosition getMapPosition() const { return _mapPosition; };
+	void setMapPosition(const MapPosition& mapPosition) { _mapPosition = mapPosition; }
+	MapPosition getMapPosition() const { return _mapPosition; }
 
-	void langHasBeenSetFromMenu() { _hasLangBeenSetFromMenu = true; };
+	void langHasBeenSetFromMenu() { _hasLangBeenSetFromMenu = true; }
 
 	bool allowBraceMach() const;
 	bool allowAutoCompletion() const;
@@ -378,17 +382,17 @@ public:
 
 	void setDocColorId(int idx) {
 		_docColorId = idx;
-	};
+	}
 
 	int getDocColorId() {
 		return _docColorId;
-	};
+	}
 
-	bool isRTL() const { return _isRTL; };
-	void setRTL(bool isRTL) { _isRTL = isRTL; };
+	bool isRTL() const { return _isRTL; }
+	void setRTL(bool isRTL) { _isRTL = isRTL; }
 
-	bool isPinned() const { return _isPinned; };
-	void setPinned(bool isPinned) { _isPinned = isPinned; };
+	bool isPinned() const { return _isPinned; }
+	void setPinned(bool isPinned) { _isPinned = isPinned; }
 
 private:
 	int indexOfReference(const ScintillaEditView * identifier) const;
@@ -441,6 +445,7 @@ private:
 	bool _isFileReadOnly = false;
 	std::wstring _fullPathName;
 	wchar_t * _fileName = nullptr; // points to filename part in _fullPathName
+	std::wstring _compactFileName; // shortened filename form of the _fileName with possible ellipsis (...) at the end
 	bool _needReloading = false; // True if Buffer needs to be reloaded on activation
 
 	std::wstring _tabCreatedTimeString;

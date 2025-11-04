@@ -73,7 +73,7 @@ void DocTabView::addBuffer(BufferID buffer)
 	if (_hasImgLst)
 		index = 0;
 	tie.iImage = index;
-	tie.pszText = const_cast<wchar_t *>(buf->getFileName());
+	tie.pszText = const_cast<wchar_t*>(buf->getCompactFileName());
 	tie.lParam = reinterpret_cast<LPARAM>(buffer);
 	::SendMessage(_hSelf, TCM_INSERTITEM, _nbItem++, reinterpret_cast<LPARAM>(&tie));
 	bufferUpdated(buf, BufferChangeMask);
@@ -130,7 +130,7 @@ BufferID DocTabView::findBufferByName(const wchar_t * fullfilename) //-1 if not 
 		::SendMessage(_hSelf, TCM_GETITEM, i, reinterpret_cast<LPARAM>(&tie));
 		BufferID id = reinterpret_cast<BufferID>(tie.lParam);
 		const Buffer* buf = MainFileManager.getBufferByID(id);
-		if (wcsicmp(fullfilename, buf->getFullPathName()) == 0)
+		if (_wcsicmp(fullfilename, buf->getFullPathName()) == 0)
 		{
 			return id;
 		}
@@ -202,7 +202,7 @@ void DocTabView::bufferUpdated(Buffer * buffer, int mask)
 		tie.pszText = encodedLabel;
 
 		{
-			const wchar_t* in = buffer->getFileName();
+			const wchar_t* in = buffer->getCompactFileName();
 			wchar_t* out = encodedLabel;
 
 			//This code will read in one character at a time and duplicate every first ampersand(&).
