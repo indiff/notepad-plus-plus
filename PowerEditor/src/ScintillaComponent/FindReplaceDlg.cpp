@@ -90,22 +90,6 @@ void delLeftWordInEdit(HWND hEdit)
 	}
 }
 
-LRESULT run_swapButtonProc(WNDPROC oldEditProc, HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	switch (message)
-	{
-		case WM_RBUTTONUP:
-		{
-			::SendMessage(GetParent(hwnd), message, wParam, lParam);
-			break;
-		}
-
-		default:
-			break;
-	}
-	return ::CallWindowProc(oldEditProc, hwnd, message, wParam, lParam);
-}
-
 int Searching::convertExtendedToString(const wchar_t * query, wchar_t * result, int length)
 {	//query may equal to result, since it always gets smaller
 	int i = 0, j = 0;
@@ -1609,8 +1593,7 @@ intptr_t CALLBACK FindReplaceDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 			const bool isMonospaced = NppParameters::getInstance().getNppGUI()._monospacedFontFindDlg;
 			if (isMonospaced)
 			{
-				static const UINT fontSize = DPIManagerV2::scaleFontForFactor(8);
-				hFont = createFont(L"Courier New", fontSize, false, _hSelf);
+				hFont = createFont(L"Courier New", 8, false, _hSelf);
 			}
 			else
 			{
@@ -1624,8 +1607,9 @@ intptr_t CALLBACK FindReplaceDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 
 			LOGFONT lf{};
 			::GetObject(hFont, sizeof(lf), &lf);
-			static const UINT fontSize = DPIManagerV2::scaleFontForFactor(16) - 5;
-			lf.lfHeight = -(_dpiManager.scale(fontSize));
+			static const int fontSize = DPIManagerV2::scaleFontForFactor(16);
+			static const int fontSizeCorrection = DPIManagerV2::scaleFontForFactor(5);
+			lf.lfHeight = -(_dpiManager.scale(fontSize) - fontSizeCorrection);
 			_hComboBoxFont = ::CreateFontIndirect(&lf);
 
 			for (const auto& hComboBox : { hFindCombo, hReplaceCombo, hFiltersCombo, hDirCombo })
@@ -1654,8 +1638,6 @@ intptr_t CALLBACK FindReplaceDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 			::SetWindowTextW(::GetDlgItem(_hSelf, IDC_FINDNEXT), L"▼ Find Next");
 
 			_hSwapButton = ::GetDlgItem(_hSelf, IDD_FINDREPLACE_SWAP_BUTTON);
-			::SetWindowLongPtr(_hSwapButton, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
-			_oldSwapButtonProc = reinterpret_cast<WNDPROC>(::SetWindowLongPtr(_hSwapButton, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(swapButtonProc)));
 			::SetWindowTextW(_hSwapButton, L"⇅");
 
 			::SetWindowTextW(::GetDlgItem(_hSelf, IDD_RESIZE_TOGGLE_BUTTON), L"˄");
@@ -1870,7 +1852,7 @@ intptr_t CALLBACK FindReplaceDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 
 			const auto style = static_cast<DWORD>(::GetWindowLongPtr(_hSelf, GWL_STYLE));
 			const auto exStyle = static_cast<DWORD>(::GetWindowLongPtr(_hSelf, GWL_EXSTYLE));
-			if (_dpiManager.adjustWindowRectExForDpi(&rcClient, style, FALSE, exStyle, newDpi) == FALSE)
+			if (!_dpiManager.adjustWindowRectExForDpi(&rcClient, style, FALSE, exStyle, newDpi))
 			{
 				const LONG padding = _dpiManager.getSystemMetricsForDpi(SM_CXPADDEDBORDER, newDpi);
 				xBorder = (_dpiManager.getSystemMetricsForDpi(SM_CXFRAME, newDpi) + padding) * 2;
@@ -1913,7 +1895,9 @@ intptr_t CALLBACK FindReplaceDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 			LOGFONT lf{};
 			HFONT font = reinterpret_cast<HFONT>(::SendDlgItemMessage(_hSelf, IDFINDWHAT, WM_GETFONT, 0, 0));
 			::GetObject(font, sizeof(lf), &lf);
-			lf.lfHeight = -(_dpiManager.scale(16) - 5);
+			static const int fontSize = DPIManagerV2::scaleFontForFactor(16);
+			static const int fontSizeCorrection = DPIManagerV2::scaleFontForFactor(5);
+			lf.lfHeight = -(_dpiManager.scale(fontSize) - fontSizeCorrection);
 			_hComboBoxFont = ::CreateFontIndirect(&lf);
 
 			for (auto idComboBox : { IDFINDWHAT, IDREPLACEWITH, IDD_FINDINFILES_FILTERS_COMBO, IDD_FINDINFILES_DIR_COMBO })
@@ -6672,7 +6656,7 @@ RECT Progress::getDpiScaledWindowRect(UINT dpi) const
 
 	const DWORD style = WS_POPUP | WS_CAPTION;
 	const DWORD exStyle = WS_EX_APPWINDOW | WS_EX_TOOLWINDOW | WS_EX_OVERLAPPEDWINDOW | (pNativeSpeaker->isRTL() ? WS_EX_LAYOUTRTL : 0);
-	if (_dpiManager.adjustWindowRectExForDpi(&rc, style, FALSE, exStyle, dpi) == FALSE)
+	if (!_dpiManager.adjustWindowRectExForDpi(&rc, style, FALSE, exStyle, dpi))
 	{
 		rc.right = xClient + xBorderPadding;
 		rc.bottom = yClient + yBorderPadding;
