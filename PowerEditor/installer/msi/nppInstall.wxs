@@ -1,7 +1,7 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package
       Name="Notepad++"
-      Manufacturer="Notepad++"
+      Manufacturer="Notepad++ team"
       Version="8.8.8"
       UpgradeCode="{CDB13460-04DF-4708-A7FD-4CB4A0684605}">
 
@@ -103,7 +103,7 @@
         <File Source="..\..\bin64\updater\GUP.exe" KeyPath="yes" />
       </Component>
       <Component Id="libcurl_dll">
-        <File Source="..\..\bin64\updater\\libcurl.dll" KeyPath="yes" />
+        <File Source="..\..\bin64\updater\libcurl.dll" KeyPath="yes" />
       </Component>
       <Component Id="updater_ico">
         <File Source="..\..\bin64\updater\updater.ico" KeyPath="yes" />
