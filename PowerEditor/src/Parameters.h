@@ -25,9 +25,8 @@
 #include "colors.h"
 #include "shortcut.h"
 #include "ContextMenu.h"
-#include "dpiManager.h"
 #include "NppDarkMode.h"
-#include <assert.h>
+#include <cassert>
 #include <map>
 #include <array>
 #include <shlwapi.h>
@@ -1926,8 +1925,6 @@ public:
 	const std::wstring& getTitleBarAdd() const {
 		return _titleBarAdditional;
 	}
-
-	DPIManager _dpiManager;
 
 	std::wstring static getSpecialFolderLocation(int folderKind);
 
