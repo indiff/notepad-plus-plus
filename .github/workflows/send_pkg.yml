@@ -20,12 +20,12 @@ jobs:
     runs-on: ubuntu-latest # https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
         # Number of commits to fetch. 0 indicates all history for all branches and tags
           fetch-depth: 1
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12" # 3.8 3.12
           cache: 'pip' # caching pip dependencies      - name: Checkout repo
