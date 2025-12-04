@@ -25,7 +25,6 @@
 #include "UserDefineDialog.h"
 #include "Notepad_plus_Window.h"
 #include "NppConstants.h"
-#include "md5.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4996) // for GetVersionEx()
@@ -128,6 +127,8 @@ static const WinMenuKeyDefinition winKeyDefs[] =
 	{ VK_NULL,    IDM_EDIT_REMOVEEMPTYLINESWITHBLANK,           false, false, false, nullptr },
 	{ VK_RETURN,  IDM_EDIT_BLANKLINEABOVECURRENT,               true,  true,  false, nullptr },
 	{ VK_RETURN,  IDM_EDIT_BLANKLINEBELOWCURRENT,               true,  true,  true,  nullptr },
+	{ VK_NULL,    IDM_EDIT_SORTLINES_LENGTH_ASCENDING,          false, false, false, nullptr },
+	{ VK_NULL,    IDM_EDIT_SORTLINES_LENGTH_DESCENDING,         false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_SORTLINES_LEXICOGRAPHIC_ASCENDING,   false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_SORTLINES_LEXICOGRAPHIC_DESCENDING,  false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_SORTLINES_LEXICO_CASE_INSENS_ASCENDING,   false, false, false, nullptr },
@@ -1238,10 +1239,14 @@ bool NppParameters::load()
 	if (_isCloud)
 	{
 		// Read cloud choice
-		std::string cloudChoiceStr = getFileContent(cloudChoicePath.c_str());
-		WcharMbcsConvertor& wmc = WcharMbcsConvertor::getInstance();
-		std::wstring cloudChoiceStrW = wmc.char2wchar(cloudChoiceStr.c_str(), SC_CP_UTF8);
-
+		std::wstring cloudChoiceStrW = L"";
+		bool bLoadingFailed = false;
+		std::string cloudChoiceStr = getFileContent(cloudChoicePath.c_str(), &bLoadingFailed);
+		if (!bLoadingFailed)
+		{
+			WcharMbcsConvertor& wmc = WcharMbcsConvertor::getInstance();
+			cloudChoiceStrW = wmc.char2wchar(cloudChoiceStr.c_str(), SC_CP_UTF8);
+		}
 		if (!cloudChoiceStrW.empty() && doesDirectoryExist(cloudChoiceStrW.c_str()))
 		{
 			_userPath = cloudChoiceStrW;
@@ -1997,31 +2002,34 @@ void NppParameters::updateFromModelXml(TiXmlNode* rootUser, ConfXml whichConf)
 		return;
 	}
 
-	// now that the model is reasonable, it's reasonable to do the MD5-checking
-	MD5 md5;
-	std::string md5digest_model = md5.digestFile(sModelPath.c_str());
-	std::wstring wsDigest = string2wstring(md5digest_model, CP_UTF8);
-
-	std::string sUserText;
-	pXmlDocument->Print(sUserText);
-	std::string md5digest_user_text_before = md5.digestString(sUserText.c_str());
-
-	// if modelMD5 is the same as the one seen in the XML, don't need to merge in the model...
+	// compare the *.model.xml's modelDate to that of the active XML
+	const wchar_t* wc_model_modelDate = rootModel->Attribute(L"modelDate");
 	TiXmlElement* peRootUser = rootUser->ToElement();
-	const wchar_t* pwct_modelMD5 = peRootUser->Attribute(L"modelMD5");
-	std::string s_modelMD5_from_xml = wstring2string(pwct_modelMD5 ? pwct_modelMD5 : L"\n", CP_UTF8);
-	s_modelMD5_from_xml.pop_back();	// remove the NULL-terminator
-	if (md5digest_model == s_modelMD5_from_xml)
+	const wchar_t* wc_user_modelDate = peRootUser->Attribute(L"modelDate");
+
+	// if both attributes exist, compare the integers to decide to exit if integer(user) >= integer(model),
+	//	because then the user file is at least as new as the model, and doesn't need to be updated;
+	//	if they don't both exist, need to do the update, because there aren't any dates to compare
+	if (wc_model_modelDate && wc_user_modelDate)
 	{
-		delete pXmlModel;
-		return;
+		int v_model = decStrVal(wc_model_modelDate);
+		int v_user = decStrVal(wc_user_modelDate);
+		if (v_user >= v_model)
+		{
+			delete pXmlModel;
+			return;
+		}
 	}
 
-	// update (or add) the MD5 stored in the XML
-	peRootUser->SetAttribute(L"modelMD5", wsDigest.c_str());
+	// get the current version of the text of the user file (used later to see if user file needs to be saved because of changes)
+	std::string sUserTextBefore;
+	pXmlDocument->Print(sUserTextBefore);
+
+	// update (or add) the modelDate stored in the active XML (unless it's missing)
+	if (wc_model_modelDate)
+		peRootUser->SetAttribute(L"modelDate", wc_model_modelDate);
 
 	// get the main internal <Languages> element from both user and model
-
 	TiXmlElement* mainElemUser = rootUser->FirstChildElement(mainElementName);
 	TiXmlElement* mainElemModel = rootModel->FirstChildElement(mainElementName);
 	if (!mainElemUser || !mainElemModel)
@@ -2045,10 +2053,9 @@ void NppParameters::updateFromModelXml(TiXmlNode* rootUser, ConfXml whichConf)
 	}
 
 	// check the user-langs document for changes
-	sUserText = "";
-	pXmlDocument->Print(sUserText);
-	std::string md5digest_user_text_after = md5.digestString(sUserText.c_str());
-	if (md5digest_user_text_before != md5digest_user_text_after)
+	std::string sUserTextAfter;
+	pXmlDocument->Print(sUserTextAfter);
+	if (sUserTextBefore != sUserTextAfter)
 	{
 		switch (whichConf)
 		{
