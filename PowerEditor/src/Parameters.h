@@ -16,23 +16,27 @@
 
 #pragma once
 
-#include "tinyxmlA.h"
-#include "tinyxml.h"
-#include "Scintilla.h"
+#include <shlwapi.h>
+
+#include <array>
+#include <cassert>
+#include <map>
+
+#include <ILexer.h>
+#include <Lexilla.h>
+#include <Scintilla.h>
+
+#include <tinyxml.h>
+
+#include "NppXml.h"
+
 #include "ToolBar.h"
 #include "UserDefineLangReference.h"
 #include "colors.h"
 #include "shortcut.h"
 #include "ContextMenu.h"
 #include "NppDarkMode.h"
-#include <cassert>
-#include <map>
-#include <array>
-#include <shlwapi.h>
-#include "ILexer.h"
-#include "Lexilla.h"
 #include "DockingCont.h"
-
 #include "NppConstants.h"
 
 #ifdef _WIN64
@@ -1696,9 +1700,9 @@ public:
 
 	int addExternalLangToEnd(ExternalLangContainer * externalLang);
 
-	TiXmlDocumentA* getNativeLangA() const { return _pXmlNativeLangDocA; }
+	NppXml::Document getNativeLang() const { return _pXmlNativeLangDoc; }
 
-	TiXmlDocument* getCustomizedToolButtons() const { return _pXmlToolButtonsConfDoc; }
+	NppXml::Document getCustomizedToolButtons() const { return _pXmlToolButtonsConfDoc; }
 
 	bool isTransparentAvailable() const {
 		return (_winVersion >= WV_VISTA);
@@ -1962,13 +1966,13 @@ private:
 	TiXmlDocument *_pXmlUserStylerDoc = nullptr; // stylers.xml
 	TiXmlDocument *_pXmlUserLangDoc = nullptr; // userDefineLang.xml
 	std::vector<UdlXmlFileState> _pXmlUserLangsDoc; // userDefineLang customized XMLs
-	TiXmlDocument * _pXmlToolButtonsConfDoc = nullptr; // toolbarButtonsConf.xml
+	NppXml::Document _pXmlToolButtonsConfDoc = nullptr; // toolbarButtonsConf.xml
 
-	TiXmlDocumentA *_pXmlShortcutDocA = nullptr; // shortcuts.xml
+	NppXml::Document _pXmlShortcutDoc = nullptr; // shortcuts.xml
 
-	TiXmlDocumentA *_pXmlNativeLangDocA = nullptr; // nativeLang.xml
-	TiXmlDocumentA *_pXmlContextMenuDocA = nullptr; // contextMenu.xml
-	TiXmlDocumentA *_pXmlTabContextMenuDocA = nullptr; // tabContextMenu.xml
+	NppXml::Document _pXmlNativeLangDoc = nullptr; // nativeLang.xml
+	NppXml::Document _pXmlContextMenuDoc = nullptr; // contextMenu.xml
+	NppXml::Document _pXmlTabContextMenuDoc = nullptr; // tabContextMenu.xml
 
 	std::vector<TiXmlDocument *> _pXmlExternalLexerDoc; // External lexer plugins' XMLs
 
@@ -2019,7 +2023,7 @@ private:
 	std::array<HLSColour, 5> individualTabHuesFor_Dark{ { HLSColour{37, 60, 60}, HLSColour{70, 60, 60}, HLSColour{144, 70, 60}, HLSColour{255, 60, 60}, HLSColour{195, 60, 60} } };
 	std::array<HLSColour, 5> individualTabHues{ { HLSColour{37, 210, 150}, HLSColour{70, 210, 150}, HLSColour{144, 210, 150}, HLSColour{255, 210, 150}, HLSColour{195, 210, 150}} };
 
-	std::array<COLORREF, 3> findDlgStatusMessageColor{ red, blue, darkGreen};
+	std::array<COLORREF, 4> findDlgStatusMessageColor{ red, blue, darkGreen, orange };
 
 public:
 	void setShortcutDirty() { _isAnyShortcutModified = true; }
@@ -2142,9 +2146,16 @@ private:
 	std::pair<unsigned char, unsigned char> addUserDefineLangsFromXmlTree(TiXmlDocument *tixmldoc);
 
 	enum ConfXml { lang, styles };
-	void updateFromModelXml(TiXmlNode* rootUser, ConfXml whichConf);
+	bool updateFromModelXml(TiXmlNode* rootUser, ConfXml whichConf);
 	void updateLangXml(TiXmlElement* mainElemUser, TiXmlElement* mainElemModel);
 	void updateStylesXml(TiXmlElement* rootUser, TiXmlElement* rootModel, TiXmlElement* mainElemUser, TiXmlElement* mainElemModel);
+	void addDefaultStyles(TiXmlNode* node);
+	int addStyleDefaultColors(TiXmlNode* globalStyleRoot,
+		const std::wstring& name,
+		const std::wstring& fgColor = L"",
+		const std::wstring& bgColor = L"",
+		const std::wstring& fromStyle = L"",
+		const std::wstring& styleID = L"0");
 
 	bool getShortcutsFromXmlTree();
 
@@ -2169,23 +2180,23 @@ private:
 	void feedUserStyles(TiXmlNode *node);
 	void feedUserKeywordList(TiXmlNode *node);
 	void feedUserSettings(TiXmlNode *node);
-	void feedShortcut(TiXmlNodeA *node);
-	void feedMacros(TiXmlNodeA *node);
-	void feedUserCmds(TiXmlNodeA *node);
-	void feedPluginCustomizedCmds(TiXmlNodeA *node);
-	void feedScintKeys(TiXmlNodeA *node);
+	void feedShortcut(NppXml::Node node);
+	void feedMacros(NppXml::Node node);
+	void feedUserCmds(NppXml::Node node);
+	void feedPluginCustomizedCmds(NppXml::Node node);
+	void feedScintKeys(NppXml::Node node);
 
-	void getActions(TiXmlNodeA *node, Macro & macro);
-	bool getShortcuts(TiXmlNodeA *node, Shortcut & sc, std::string* folderName = nullptr);
-	bool getInternalCommandShortcuts(TiXmlNodeA* node, CommandShortcut& cs, std::string* folderName = nullptr);
+	void getActions(NppXml::Node node, Macro& macro);
+	bool getShortcuts(NppXml::Node node, Shortcut& sc, std::string* folderName = nullptr);
+	bool getInternalCommandShortcuts(NppXml::Node node, CommandShortcut& cs, std::string* folderName = nullptr);
 
 	void writeStyle2Element(const Style & style2Write, Style & style2Sync, TiXmlElement *element);
 	void insertUserLang2Tree(TiXmlNode *node, UserLangContainer *userLang);
-	void insertCmd(TiXmlNodeA *cmdRoot, const CommandShortcut & cmd);
-	void insertMacro(TiXmlNodeA *macrosRoot, const MacroShortcut & macro, const std::string& folderName);
-	void insertUserCmd(TiXmlNodeA *userCmdRoot, const UserCommand & userCmd, const std::string& folderName);
-	void insertScintKey(TiXmlNodeA *scintKeyRoot, const ScintillaKeyMap & scintKeyMap);
-	void insertPluginCmd(TiXmlNodeA *pluginCmdRoot, const PluginCmdShortcut & pluginCmd);
+	void insertCmd(NppXml::Node cmdRoot, const CommandShortcut& cmd);
+	void insertMacro(NppXml::Node macrosRoot, const MacroShortcut& macro, const std::string& folderName);
+	void insertUserCmd(NppXml::Node userCmdRoot, const UserCommand& userCmd, const std::string& folderName);
+	void insertScintKey(NppXml::Node scintKeyRoot, const ScintillaKeyMap& scintKeyMap);
+	void insertPluginCmd(NppXml::Node pluginCmdRoot, const PluginCmdShortcut& pluginCmd);
 	TiXmlElement * insertGUIConfigBoolNode(TiXmlNode *r2w, const wchar_t *name, bool bVal);
 	void insertDockingParamNode(TiXmlNode *GUIRoot);
 	void writeExcludedLangList(TiXmlElement *element);

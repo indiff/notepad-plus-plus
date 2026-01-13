@@ -63,7 +63,7 @@ SectionGroup "Function List Files" functionListComponent
 		File ".\functionList\php.xml"
 	${MementoSectionEnd}
 
-	${MementoSection} "COBOL section free" COBOL-section-free
+	${MementoSection} "COBOL section free" COBOL-section-free_FL
 		SetOutPath "$INSTDIR\functionList"
 		File ".\functionList\cobol-free.xml"
 	${MementoSectionEnd}
@@ -236,6 +236,16 @@ SectionGroup "Function List Files" functionListComponent
 	${MementoSection} "SAS" SAS_FL
 		SetOutPath "$INSTDIR\functionList"
 		File ".\functionList\sas.xml"
+	${MementoSectionEnd}
+
+	${MementoSection} "makefile" MAKEFILE_FL
+		SetOutPath "$INSTDIR\functionList"
+		File ".\functionList\makefile.xml"
+	${MementoSectionEnd}
+
+	${MementoSection} "Nim" NIM_FL
+		SetOutPath "$INSTDIR\functionList"
+		File ".\functionList\nim.xml"
 	${MementoSectionEnd}
 
 	SetOverwrite off
@@ -426,6 +436,14 @@ SectionGroup un.functionListComponent
 
 	Section un.SAS_FL
 		Delete "$INSTDIR\functionList\sas.xml"
+	SectionEnd
+
+	Section un.MAKEFILE_FL
+		Delete "$INSTDIR\functionList\makefile.xml"
+	SectionEnd
+
+	Section un.NIM_FL
+		Delete "$INSTDIR\functionList\nim.xml"
 	SectionEnd
 
 SectionGroupEnd
