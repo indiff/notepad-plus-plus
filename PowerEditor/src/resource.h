@@ -19,14 +19,14 @@
 
 //************ Notepad++ version **************************
 
-#define NOTEPAD_PLUS_VERSION L"Notepad++ v8.8.8"
+#define NOTEPAD_PLUS_VERSION L"Notepad++ v8.9"
 
 // should be X.Y : ie. if VERSION_DIGITALVALUE == 4, 7, 1, 0 , then X = 4, Y = 71
 // ex : #define VERSION_VALUE L"5.63\0"
-#define VERSION_INTERNAL_VALUE L"8.88\0"
+#define VERSION_INTERNAL_VALUE L"8.9\0"
 
-#define VERSION_PRODUCT_VALUE L"8.8.8\0"
-#define VERSION_DIGITALVALUE 8, 8, 8, 0
+#define VERSION_PRODUCT_VALUE L"8.9\0"
+#define VERSION_DIGITALVALUE 8, 9, 0, 0
 
 //**********************************************************
 
@@ -757,6 +757,7 @@
 	#define NPPM_INTERNAL_SQLBACKSLASHESCAPE            (NOTEPADPLUS_USER_INTERNAL + 109)
 	#define NPPM_INTERNAL_TOOLBARICONSCHANGED           (NOTEPADPLUS_USER_INTERNAL + 110)
 	#define NPPM_INTERNAL_SETTING_TABCOMPACTLABELLEN    (NOTEPADPLUS_USER_INTERNAL + 111)
+	#define NPPM_INTERNAL_INVISIBLECHARSINFINDWHAT      (NOTEPADPLUS_USER_INTERNAL + 112)
 
 // See Notepad_plus_msgs.h
 //#define NPPMSG   (WM_USER + 1000)

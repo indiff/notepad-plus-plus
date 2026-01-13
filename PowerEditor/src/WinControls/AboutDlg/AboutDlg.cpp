@@ -19,6 +19,7 @@
 #include "AboutDlg.h"
 #include "Parameters.h"
 #include "localization.h"
+#include "json.hpp"
 #if defined __has_include
 #if __has_include ("NppLibsVersion.h")
 #include "NppLibsVersion.h"
@@ -286,6 +287,18 @@ intptr_t CALLBACK DebugInfoDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM 
 			// Boost Regex version
 			_debugInfoStr += L"Boost Regex included: ";
 			_debugInfoStr += wmc.char2wchar(NPP_BOOST_REGEX_VERSION, CP_ACP);
+			_debugInfoStr += L"\r\n";
+
+#if defined(PUGIXML_VERSION)
+			// pugixml version
+			_debugInfoStr += L"pugixml included: ";
+			_debugInfoStr += std::to_wstring(PUGIXML_VERSION / 1000) + L"." + std::to_wstring((PUGIXML_VERSION % 1000) / 10);
+			_debugInfoStr += L"\r\n";
+#endif
+
+			// JSON version
+			_debugInfoStr += L"nlohmann JSON included: ";
+			_debugInfoStr += to_wstring(NLOHMANN_JSON_VERSION_MAJOR) + L"." + to_wstring(NLOHMANN_JSON_VERSION_MINOR) + L"." + to_wstring(NLOHMANN_JSON_VERSION_PATCH);
 			_debugInfoStr += L"\r\n";
 
 			// Binary path

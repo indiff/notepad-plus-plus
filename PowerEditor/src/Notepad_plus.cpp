@@ -14,10 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <ctime>
+#include "Notepad_plus.h"
+
 #include <shlwapi.h>
 #include <wininet.h>
-#include "Notepad_plus.h"
+
+#include <ctime>
+
+#include "NppXml.h"
 #include "Notepad_plus_Window.h"
 #include "CustomFileDialog.h"
 #include "Printer.h"
@@ -38,6 +42,7 @@
 #include "Common.h"
 #include "NppDarkMode.h"
 #include "dpiManagerV2.h"
+#include "ImageListSet.h"
 
 using namespace std;
 
@@ -47,9 +52,9 @@ enum tb_stat {tb_saved, tb_unsaved, tb_ro, tb_monitored};
 #define DIR_LEFT true
 #define DIR_RIGHT false
 
+static constexpr int IDI_SEPARATOR_ICON = -1;
 
-
-ToolBarButtonUnit toolBarIcons[] = {
+static constexpr ToolBarButtonUnit toolBarIcons[]{
     {IDM_FILE_NEW,                     IDI_NEW_ICON,               IDI_NEW_ICON,                  IDI_NEW_ICON2,              IDI_NEW_ICON2,                 IDI_NEW_ICON_DM,               IDI_NEW_ICON_DM,                  IDI_NEW_ICON_DM2,              IDI_NEW_ICON_DM2,                 IDR_FILENEW},
     {IDM_FILE_OPEN,                    IDI_OPEN_ICON,              IDI_OPEN_ICON,                 IDI_OPEN_ICON2,             IDI_OPEN_ICON2,                IDI_OPEN_ICON_DM,              IDI_OPEN_ICON_DM,                 IDI_OPEN_ICON_DM2,             IDI_OPEN_ICON_DM2,                IDR_FILEOPEN},
     {IDM_FILE_SAVE,                    IDI_SAVE_ICON,              IDI_SAVE_DISABLE_ICON,         IDI_SAVE_ICON2,             IDI_SAVE_DISABLE_ICON2,        IDI_SAVE_ICON_DM,              IDI_SAVE_DISABLE_ICON_DM,         IDI_SAVE_ICON_DM2,             IDI_SAVE_DISABLE_ICON_DM2,        IDR_FILESAVE},
@@ -135,8 +140,8 @@ Notepad_plus::Notepad_plus()
 	ZeroMemory(&_prevSelectedRange, sizeof(_prevSelectedRange));
 
 	NppParameters& nppParam = NppParameters::getInstance();
-	TiXmlDocumentA *nativeLangDocRootA = nppParam.getNativeLangA();
-    _nativeLangSpeaker.init(nativeLangDocRootA);
+	NppXml::Document nativeLangDocRoot = nppParam.getNativeLang();
+	_nativeLangSpeaker.init(nativeLangDocRoot);
 
 	LocalizationSwitcher & localizationSwitcher = nppParam.getLocalizationSwitcher();
 	// localizationSwitcher.switchToLang(L"简体中文"); // 这里并不生效
@@ -149,7 +154,7 @@ Notepad_plus::Notepad_plus()
 
 	nppParam.setNativeLangSpeaker(&_nativeLangSpeaker);
 
-	TiXmlDocument *toolButtonsDocRoot = nppParam.getCustomizedToolButtons();
+	NppXml::Document toolButtonsDocRoot = nppParam.getCustomizedToolButtons();
 
 	if (toolButtonsDocRoot)
 	{
@@ -7158,13 +7163,13 @@ bool Notepad_plus::reloadLang()
 		return false;
 	}
 
-	TiXmlDocumentA *nativeLangDocRootA = nppParam.getNativeLangA();
-	if (!nativeLangDocRootA)
+	NppXml::Document nativeLangDocRoot = nppParam.getNativeLang();
+	if (nativeLangDocRoot == nullptr)
 	{
 		return false;
 	}
 
-    _nativeLangSpeaker.init(nativeLangDocRootA, true);
+    _nativeLangSpeaker.init(nativeLangDocRoot, true);
 
     nppParam.reloadContextMenuFromXmlTree(_mainMenuHandle, _pluginsManager.getMenuHandle());
 
@@ -9189,7 +9194,7 @@ BOOL Notepad_plus::notifyTBShowMenu(LPNMTOOLBARW lpnmtb, const char* menuPosId)
 	::SendMessage(lpnmtb->hdr.hwndFrom, TB_GETRECT, static_cast<WPARAM>(lpnmtb->iItem), reinterpret_cast<LPARAM>(&rcItem));
 	::MapWindowPoints(lpnmtb->hdr.hwndFrom, HWND_DESKTOP, reinterpret_cast<LPPOINT>(&rcItem), 2);
 
-	const MenuPosition& menuPos = getMenuPosition(menuPosId);
+	const MenuPosition& menuPos = MenuPosition::getMenuPosition(menuPosId);
 	HMENU hSubMenuView = ::GetSubMenu(_mainMenuHandle, menuPos._x);
 	if (hSubMenuView != nullptr)
 	{
