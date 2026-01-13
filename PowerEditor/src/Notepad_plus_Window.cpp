@@ -223,7 +223,7 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 
 
 	// Auto switch language by user region
-	if ( !nppParams.getNativeLangA()) {
+	if ( !nppParams.getNativeLang()) {
 		auto fn = localizationSwitcher.getFileName();
 		// 获取当前的语言
 		wstring lang = L"English";
