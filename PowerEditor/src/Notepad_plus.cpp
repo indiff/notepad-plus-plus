@@ -526,11 +526,11 @@ LRESULT Notepad_plus::init(HWND hwnd)
 	for (int i = 0; i < nppParam.getNbExternalLang(); ++i)
 	{
 		HMENU subMenu = hLangMenu;
-		ExternalLangContainer & externalLangContainer = nppParam.getELCFromIndex(i);
+		const ExternalLangContainer* externalLangContainer = nppParam.getELCFromIndex(i);
 
 		int nbItem = ::GetMenuItemCount(subMenu);
 		wchar_t buffer[MAX_EXTERNAL_LEXER_NAME_LEN]{L'\0'};
-		const wchar_t* lexerNameW = wmc.char2wchar(externalLangContainer._name.c_str(), CP_ACP);
+		const wchar_t* lexerNameW = wmc.char2wchar(externalLangContainer->_name.c_str(), CP_ACP);
 
 		// Find the first separator which is between IDM_LANG_TEXT and languages
 		int x = 0;
@@ -593,8 +593,8 @@ LRESULT Notepad_plus::init(HWND hwnd)
 
 	for (int i = 0, len = nppParam.getNbUserLang(); i < len; ++i)
 	{
-		UserLangContainer & userLangContainer = nppParam.getULCFromIndex(i);
-		::InsertMenu(hLangMenu, udlpos + i, MF_BYPOSITION, IDM_LANG_USER + i + 1, userLangContainer.getName());
+		const UserLangContainer* userLangContainer = nppParam.getULCFromIndex(i);
+		::InsertMenu(hLangMenu, udlpos + i, MF_BYPOSITION, IDM_LANG_USER + i + 1, userLangContainer->getName());
 	}
 
 	//Add recent files
@@ -2807,10 +2807,8 @@ wstring Notepad_plus::getLangDesc(LangType langType, bool getName)
 
 	if ((langType >= L_EXTERNAL) && (langType < nppParams.L_END))
 	{
-		ExternalLangContainer & elc = nppParams.getELCFromIndex(langType - L_EXTERNAL);
-		WcharMbcsConvertor& wmc = WcharMbcsConvertor::getInstance();
-		const wchar_t* lexerNameW = wmc.char2wchar(elc._name.c_str(), CP_ACP);
-		return wstring(lexerNameW);
+		const ExternalLangContainer* elc = nppParams.getELCFromIndex(langType - L_EXTERNAL);
+		return string2wstring(elc->_name);
 	}
 
 	if (langType < L_TEXT || langType > L_EXTERNAL)
@@ -3130,9 +3128,39 @@ bool isUrlSchemeDelimiter(wchar_t const c) // characters allowed immedeately bef
 			 ||  (c == '_'));
 }
 
+// Checks URL character if it is a part of text or a special symbol
+// If the character is a part of regular text:
+// - True is returned
+// - Regular text is a fundamental alphanumeric which is regularly a part of the common text of the URL, and not a part of queries, http requests etc
+// If the character is a whitespace, unicode equivalent of whitespace, or a special character used in URL queries (for example http queries, requests)
+// - False is returned
 bool isUrlTextChar(wchar_t const c)
 {
 	if (c <= ' ') return false;
+
+	// Checks for unicode whitespace equivalents (ex: whitespace in different languages, mathematical or other contexts)
+	switch (c)
+	{
+		case L'\u0020':		// space
+		case L'\u00A0':		// non breaking space
+		case L'\u2002':		// en space
+		case L'\u2003':		// em space
+		case L'\u3000':		// ideographic space (east asian languages)
+		case L'\u2004':		// three-per-em
+		case L'\u2005':		// four-per-em
+		case L'\u2006':		// six-per-em
+		case L'\u2007':		// figure space
+		case L'\u2008':		// punctuation space
+		case L'\u2009':		// thin space
+		case L'\u200A':		// hair space
+		case L'\u200B':		// zero width space
+		case L'\u202F':		// narrow non breaking space
+		case L'\u205F':		// medium mathematical space
+		case L'\uFEFF':		// zero width non breaking space (byte order mark)
+			return false;		
+	}
+	
+	// Checks for special characters
 	switch (c)
 	{
 		case '"':
@@ -3145,6 +3173,7 @@ bool isUrlTextChar(wchar_t const c)
 		case '\u007F':
 			return false;
 	}
+	
 	return true;
 }
 
@@ -3621,7 +3650,7 @@ void Notepad_plus::maintainIndentation(wchar_t ch)
 	if (type >= L_EXTERNAL)
 	{
 		NppParameters& nppParam = NppParameters::getInstance();
-		autoIndentMode = nppParam.getELCFromIndex(type - L_EXTERNAL)._autoIndentMode;
+		autoIndentMode = nppParam.getELCFromIndex(type - L_EXTERNAL)->_autoIndentMode;
 		if (autoIndentMode == ExternalLexerAutoIndentMode::Custom)
 			return;
 	}
@@ -6961,7 +6990,7 @@ void Notepad_plus::setFindReplaceFolderFilter(const wchar_t *dir, const wchar_t 
 		if (lt == L_USER)
 		{
 			Buffer * buf = _pEditView->getCurrentBuffer();
-			UserLangContainer * userLangContainer = nppParam.getULCFromName(buf->getUserDefineLangName());
+			const UserLangContainer* userLangContainer = nppParam.getULCFromName(buf->getUserDefineLangName());
 			if (userLangContainer)
 				ext = userLangContainer->getExtention();
 		}
