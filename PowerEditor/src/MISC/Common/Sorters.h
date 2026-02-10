@@ -82,7 +82,7 @@ public:
 		// getSortKey() so many times.
 		if (isSortingSpecificColumns())
 		{
-			std::stable_sort(lines.begin(), lines.end(), [this](std::wstring a, std::wstring b)
+			std::stable_sort(lines.begin(), lines.end(), [this](const std::wstring& a, const std::wstring& b)
 			{
 				if (isDescending())
 				{
@@ -97,7 +97,7 @@ public:
 		}
 		else
 		{
-			std::sort(lines.begin(), lines.end(), [this](std::wstring a, std::wstring b)
+			std::sort(lines.begin(), lines.end(), [this](const std::wstring& a, const std::wstring& b)
 			{
 				if (isDescending())
 				{
@@ -124,7 +124,7 @@ public:
 		// getSortKey() so many times.
 		if (isSortingSpecificColumns())
 		{
-			std::stable_sort(lines.begin(), lines.end(), [this](std::wstring a, std::wstring b)
+			std::stable_sort(lines.begin(), lines.end(), [this](const std::wstring& a, const std::wstring& b)
 				{
 					if (isDescending())
 					{
@@ -138,7 +138,7 @@ public:
 		}
 		else
 		{
-			std::sort(lines.begin(), lines.end(), [this](std::wstring a, std::wstring b)
+			std::sort(lines.begin(), lines.end(), [this](const std::wstring& a, const std::wstring& b)
 				{
 					if (isDescending())
 					{
@@ -654,5 +654,49 @@ public:
 
 	void sort(std::vector<std::wstring>& lines) override {
 		std::shuffle(lines.begin(), lines.end(), std::default_random_engine(seed));
+	}
+};
+
+// Implementation of length wise sorting of lines.
+class LineLengthSorter : public ISorter
+{
+public:
+	LineLengthSorter(bool isDescending, size_t fromColumn, size_t toColumn) : ISorter(isDescending, fromColumn, toColumn) {}
+
+	void sort(std::vector<std::wstring>& lines) override {
+		// When sorting specific columns, the effect would be to sort the lines whose length is between
+		// fromColumn and toColumn. Any lines shorter than fromColumn would be considered length 0.
+		// Any lines longer than toColumn would be considered same length (toColumn - fromColumn) and hence their
+		// relative order would be preserved.
+		if (isSortingSpecificColumns())
+		{
+			std::stable_sort(lines.begin(), lines.end(), [this](std::wstring a, std::wstring b)
+				{
+					if (isDescending())
+					{
+						return getSortKey(a).length() > getSortKey(b).length();
+
+					}
+					else
+					{
+						return getSortKey(a).length() < getSortKey(b).length();
+					}
+				});
+		}
+		// Normal sorting by line length
+		else
+		{
+			std::sort(lines.begin(), lines.end(), [this](std::wstring a, std::wstring b)
+				{
+					if (isDescending())
+					{
+						return a.length() > b.length();
+					}
+					else
+					{
+						return a.length() < b.length();
+					}
+				});
+		}
 	}
 };

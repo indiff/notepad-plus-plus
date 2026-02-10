@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
 	Croatian localization for Notepad++
-	Updated: November 5, 2025 by Elvis Gambiraža (el.gambo@gmail.com)
+	Updated: January 12, 2026 by Elvis Gambiraža (el.gambo@gmail.com)
 	All the comments are for explanation, they are not for translation.
 -->
 <NotepadPlus>
-	<Native-Langue name="Hrvatski" filename="croatian.xml" version="8.8.7">
+	<Native-Langue name="Hrvatski" filename="croatian.xml" version="8.9">
 		<Menu>
 			<Main>
 				<!-- Main Menu Entries -->
@@ -140,6 +140,8 @@
 					<Item id="42081" name="Sortiraj retke padajuće ig&amp;norirajući velika i mala slova"/>
 					<Item id="42100" name="Sortiraj retke rastuće prema l&amp;okalnom jeziku"/>
 					<Item id="42101" name="Sortiraj retke padaju&amp;će prema lokalnom jeziku"/>
+					<Item id="42104" name="Sortiraj retke po duljini rastuće"/>
+					<Item id="42105" name="Sortiraj retke po duljini padajuće"/>
 					<Item id="42061" name="Sortira&amp;j retke s cijelim brojevima rastuće (2 prije 10)"/>
 					<Item id="42062" name="Sortiraj retke s cije&amp;lim brojevima padajuće (10 prije 2)"/>
 					<Item id="42063" name="Sortiraj r&amp;etke s decimalnim brojevima (zarez) rastuće"/>
@@ -1794,6 +1796,9 @@ Nađi u svim datotekama s izuzetkom svih mapa log ili logs rekurzivno:
 			<find-status-scope-all value="u cijeloj datoteci"/>
 			<find-status-scope-backward value="od početka datoteke do kursora"/>
 			<find-status-scope-forward value="od kursora do kraja datoteke"/>
+			<find-status-invisible-chars-findWhat value="Nevidljivi znakovi u zalijepljenom sadržaju &quot;Pronađi&quot; ili &quot;Zamijeni sa&quot;"/>
+			<find-status-invisible-chars-findWhat-tip value="Upozorenje: Nevidljivi znakovi u polju za pretraživanje (ili zamjenu).
+Tekst zalijepljen u ovo polje sadrži nevidljive znakove (možda one koji završavaju redak). Ako nastavite bez brisanja, bit će uključeni u tekst za pretraživanje (ili zamjenu)."/>
 			<finder-find-in-finder value="Traži u pronađenim rezultatima..."/>
 			<finder-close-this value="Zatvori ove rezultate pretraživanja"/>
 			<finder-collapse-all value="Smotaj sve"/>

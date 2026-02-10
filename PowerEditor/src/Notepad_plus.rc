@@ -548,6 +548,7 @@ BEGIN
             MENUITEM "Sort Lines As Integers Ascending",                 IDM_EDIT_SORTLINES_INTEGER_ASCENDING
             MENUITEM "Sort Lines As Decimals (Comma) Ascending",         IDM_EDIT_SORTLINES_DECIMALCOMMA_ASCENDING
             MENUITEM "Sort Lines As Decimals (Dot) Ascending",           IDM_EDIT_SORTLINES_DECIMALDOT_ASCENDING
+            MENUITEM "Sort Lines By Length Ascending",                   IDM_EDIT_SORTLINES_LENGTH_ASCENDING
             MENUITEM SEPARATOR
             MENUITEM "Sort Lines Lexicographically Descending",          IDM_EDIT_SORTLINES_LEXICOGRAPHIC_DESCENDING
             MENUITEM "Sort Lines Lex. Descending Ignoring Case",         IDM_EDIT_SORTLINES_LEXICO_CASE_INSENS_DESCENDING
@@ -555,6 +556,7 @@ BEGIN
             MENUITEM "Sort Lines As Integers Descending",                IDM_EDIT_SORTLINES_INTEGER_DESCENDING
             MENUITEM "Sort Lines As Decimals (Comma) Descending",        IDM_EDIT_SORTLINES_DECIMALCOMMA_DESCENDING
             MENUITEM "Sort Lines As Decimals (Dot) Descending",          IDM_EDIT_SORTLINES_DECIMALDOT_DESCENDING
+            MENUITEM "Sort Lines By Length Descending",                  IDM_EDIT_SORTLINES_LENGTH_DESCENDING
         END
         POPUP "Co&mment/Uncomment"
         BEGIN
@@ -602,10 +604,12 @@ BEGIN
         END
         POPUP "&On Selection"
         BEGIN
-            MENUITEM "Open File",           IDM_EDIT_OPENASFILE
-            MENUITEM "Open Containing Folder in Explorer",         IDM_EDIT_OPENINFOLDER
+            MENUITEM "Open File", IDM_EDIT_OPENASFILE
+            MENUITEM "Open Containing Folder in Explorer", IDM_EDIT_OPENINFOLDER
             MENUITEM SEPARATOR
-            MENUITEM "Search on Internet",      IDM_EDIT_SEARCHONINTERNET
+            MENUITEM "&Redact Selection █ (Shift: ●)", IDM_EDIT_REDACT_SELECTION
+            MENUITEM SEPARATOR
+            MENUITEM "Search on Internet", IDM_EDIT_SEARCHONINTERNET
             MENUITEM "Change Search Engine...", IDM_EDIT_CHANGESEARCHENGINE
         END
         MENUITEM SEPARATOR
@@ -1418,13 +1422,13 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,125,175,50,14
 END
 
-IDD_COMMANDLINEARGSBOX DIALOGEX 0, 0, 420, 385
+IDD_COMMANDLINEARGSBOX DIALOGEX 0, 0, 435, 385
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE
 CAPTION "Command Line Arguments"
 FONT 8, L"MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    EDITTEXT        IDC_COMMANDLINEARGS_EDIT,10,10,400,345,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | NOT WS_BORDER | WS_VSCROLL
+    EDITTEXT        IDC_COMMANDLINEARGS_EDIT,10,10,420,345,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | NOT WS_BORDER | WS_VSCROLL
     DEFPUSHBUTTON   "OK",IDOK,185,360,50,14
 END
 

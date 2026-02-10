@@ -3,7 +3,7 @@
 	Slovak localization for Notepad++
 -->
 <NotepadPlus>
-	<Native-Langue name="Slovenčina" filename="slovak.xml" version="8.8.7">
+	<Native-Langue name="Slovenčina" filename="slovak.xml" version="8.9">
 		<Menu>
 			<Main>
 				<!-- Main Menu Entries -->
@@ -138,6 +138,8 @@
 					<Item id="42081" name="Usporiadať riadky zostupne (nerozlišovať veľkosť písma)"/>
 					<Item id="42100" name="Usporiadať riadky vzostupne podľa abecedy"/>
 					<Item id="42101" name="Usporiadať riadky zostupne podľa abecedy"/>
+					<Item id="42104" name="Usporiadať riadky vzostupne podľa dĺžky"/>
+					<Item id="42105" name="Usporiadať riadky zostupne podľa dĺžky"/>
 					<Item id="42061" name="Usporiadať riadky ako celé čísla vzostupne"/>
 					<Item id="42062" name="Usporiadať riadky ako celé čísla zostupne"/>
 					<Item id="42063" name="Usporiadať riadky ako desatinné čísla (s čiarkou) vzostupne"/>
@@ -1771,6 +1773,9 @@ Hľadá vo všetkých súboroch okrem všetkých priečinkov log alebo logs reku
 			<find-status-scope-all value="v celom súbore"/>
 			<find-status-scope-backward value="od začiatku súboru po kurzor"/>
 			<find-status-scope-forward value="od kurzoru po koniec súboru"/>
+			<find-status-invisible-chars-findWhat value="Do poľa &quot;Hľadať&quot; alebo &quot;Nahradiť čím&quot; boli vložené neviditeľné znaky"/>
+			<find-status-invisible-chars-findWhat-tip value="Upozornenie: Neviditeľné znaky v poli vyhľadávania (alebo nahradenia).
+Text vložený do tohto poľa obsahuje neviditeľné znaky (asi znaky konca riadka). Ak ich neodstránite, budú zahrnuté do vyhľadávaného (alebo nahradzovaného) textu."/>
 			<finder-find-in-finder value="Vyhľadať v týchto výsledkoch hľadania…"/>
 			<finder-close-this value="Zavrieť tieto výsledky vyhľadávania"/>
 			<finder-collapse-all value="Zbaliť všetko"/>

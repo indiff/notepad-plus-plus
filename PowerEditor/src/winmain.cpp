@@ -387,23 +387,8 @@ bool launchUpdater(const std::wstring& updaterFullPath, const std::wstring& upda
 	if (today < nppGui._autoUpdateOpt._nextUpdateDate)
 		return false;
 
-	std::wstring updaterParams = L"-v";
-	updaterParams += VERSION_INTERNAL_VALUE;
-
-	if (nppParameters.archType() == IMAGE_FILE_MACHINE_AMD64)
-	{
-		updaterParams += L" -px64";
-	}
-	else if (nppParameters.archType() == IMAGE_FILE_MACHINE_ARM64)
-	{
-		updaterParams += L" -parm64";
-	}
-
-	updaterParams += L" -i";
-	updaterParams += INFO_URL;
-
-	updaterParams += L" -d";
-	updaterParams += FORCED_DOWNLOAD_DOMAIN;
+	std::wstring updaterParams;
+	nppParameters.buildGupParams(updaterParams);
 
 	Process updater(updaterFullPath.c_str(), updaterParams.c_str(), updaterDir.c_str());
 	updater.run();

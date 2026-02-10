@@ -1951,10 +1951,10 @@ bool FileManager::loadFileData(Document doc, int64_t fileSize, const wchar_t * f
 	else
 	{
 		int id = fileFormat._language - L_EXTERNAL;
-		ExternalLangContainer& externalLexer = nppParam.getELCFromIndex(id);
-		const char* lexerName = externalLexer._name.c_str();
-		if (externalLexer.fnCL)
-			_pscratchTilla->execute(SCI_SETILEXER, 0, reinterpret_cast<LPARAM>(externalLexer.fnCL(lexerName)));
+		const ExternalLangContainer* externalLexer = nppParam.getELCFromIndex(id);
+		const char* lexerName = externalLexer->_name.c_str();
+		if (externalLexer->fnCL)
+			_pscratchTilla->execute(SCI_SETILEXER, 0, reinterpret_cast<LPARAM>(externalLexer->fnCL(lexerName)));
 	}
 
 	if (fileFormat._encoding != -1)
@@ -1976,6 +1976,7 @@ bool FileManager::loadFileData(Document doc, int64_t fileSize, const wchar_t * f
 		size_t lenConvert = 0;	//just in case conversion results in 0, but file not empty
 		bool isFirstTime = true;
 		int incompleteMultibyteChar = 0;
+		bool hasBOM = false;
 
 		do
 		{
@@ -1988,9 +1989,8 @@ bool FileManager::loadFileData(Document doc, int64_t fileSize, const wchar_t * f
 
 			if (lenFile == 0) break;
 
-			bool hasBOM = false;
-            if (isFirstTime)
-            {
+			if (isFirstTime)
+			{
 				NppParameters& nppParamInst = NppParameters::getInstance();
 				const NppGUI& nppGui = nppParamInst.getNppGUI();
 
@@ -2023,8 +2023,8 @@ bool FileManager::loadFileData(Document doc, int64_t fileSize, const wchar_t * f
 					fileFormat._language = detectLanguageFromTextBeginning((unsigned char *)data, lenFile);
 				}
 
-                isFirstTime = false;
-            }
+				isFirstTime = false;
+			}
 
 
 			if (fileFormat._encoding != -1)
@@ -2148,10 +2148,11 @@ bool FileManager::loadFileData(Document doc, int64_t fileSize, const wchar_t * f
 		const NewDocDefaultSettings & ndds = (nppParam.getNppGUI()).getNewDocDefaultSettings(); // for ndds._format
 		fileFormat._eolFormat = ndds._format;
 
-		//for empty files, if the default for new files is UTF8, and "Apply to opened ANSI files" is set, apply it
+		// for empty files, if the default for new files is UTF8, and "Apply to opened ANSI files" is set, apply it
+		// if the system code page is UTF-8, empty files without a forced encoding must be UTF8
 		if ((fileSize == 0) && (fileFormat._encoding < 1))
 		{
-			if (ndds._unicodeMode == uniUTF8_NoBOM && ndds._openAnsiAsUtf8)
+			if ((ndds._unicodeMode == uniUTF8_NoBOM && ndds._openAnsiAsUtf8) || NppParameters::getInstance().isCurrentSystemCodepageUTF8())
 				fileFormat._encoding = SC_CP_UTF8;
 		}
 	}

@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 #include <shlwapi.h>
+#include <shlobj.h>
+#include <filesystem>
 #include "Notepad_plus_Window.h"
 #include "EncodingMapper.h"
 #include "ShortcutMapper.h"
@@ -47,20 +49,76 @@ using namespace std;
 
 std::mutex command_mutex;
 
-void Notepad_plus::macroPlayback(Macro macro)
+void Notepad_plus::macroPlayback(Macro macro, std::vector<Document>* pDocs4EndUAIn)
 {
 	_playingBackMacro = true;
-	_pEditView->execute(SCI_BEGINUNDOACTION);
 
+	std::vector<Document>* pDocs4EndUA = nullptr;
+	if (pDocs4EndUAIn)
+	{
+		// continue with the passed param doc list
+		pDocs4EndUA = pDocs4EndUAIn;
+	}
+	else
+	{
+		// use local doc list
+		pDocs4EndUA = new std::vector<Document>;
+		if (!pDocs4EndUA)
+			return;
+	}
+
+	Document prevSciDoc = 0;
 	for (Macro::iterator step = macro.begin(); step != macro.end(); ++step)
 	{
+		Document curSciDoc = _pEditView->getCurrentBuffer()->getDocument();
+		if (curSciDoc != prevSciDoc)
+		{
+			// macro step is going to work with different Scintilla Document object
+			// (for which the undo actions are bound)
+
+			if (std::find(pDocs4EndUA->begin(), pDocs4EndUA->end(), curSciDoc) == pDocs4EndUA->end())
+			{
+				// not in the list of the macro affected docs so far
+				_pEditView->execute(SCI_BEGINUNDOACTION); // the macro step will touch another doc, open another undo action
+				pDocs4EndUA->push_back(curSciDoc); // store for possible ending undo action later
+			}
+
+			prevSciDoc = curSciDoc; // remember the doc switch
+		}
+
 		if (step->isScintillaMacro())
 			step->PlayBack(_pPublicInterface, _pEditView);
 		else
 			_findReplaceDlg.execSavedCommand(step->_message, step->_lParameter, string2wstring(step->_sParameter, CP_UTF8));
 	}
 
-	_pEditView->execute(SCI_ENDUNDOACTION);
+	if (!pDocs4EndUAIn)
+	{
+		// handle all the affected docs undo actions closing (for local-only doc list)
+
+		Document invisSciDoc = _invisibleEditView.execute(SCI_GETDOCPOINTER); // store the view's original doc
+		while (!pDocs4EndUA->empty())
+		{
+			Document doc = pDocs4EndUA->back();
+			if (MainFileManager.getBufferFromDocument(doc) == BUFFER_INVALID)
+			{
+				// affected doc no longer exists (a macro step closed its associated Notepad++ tab/buffer),
+				// the ending undo action is not needed (until Notepad++ supports tab/buffer closing undo)
+			}
+			else
+			{
+				// complete the open undo action for existing doc object
+				_invisibleEditView.execute(SCI_SETDOCPOINTER, 0, doc);
+				_invisibleEditView.execute(SCI_ENDUNDOACTION);
+			}
+			pDocs4EndUA->pop_back();
+		}
+		_invisibleEditView.execute(SCI_SETDOCPOINTER, 0, invisSciDoc); // restore
+
+		delete pDocs4EndUA;
+		pDocs4EndUA = nullptr;
+	}
+
 	_playingBackMacro = false;
 }
 
@@ -138,10 +196,32 @@ void Notepad_plus::command(int id)
 
 		case IDM_FILE_OPEN_FOLDER:
 		{
-			Command cmd(L"explorer /select,\"$(FULL_CURRENT_PATH)\"");
-			cmd.run(_pPublicInterface->getHSelf());
+			HRESULT hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+			ScopedCOMInit com;
+			if (com.isInitialized())
+			{
+				ITEMIDLIST* pidl = nullptr;
+				hr = ::SHParseDisplayName(_pEditView->getCurrentBuffer()->getFullPathName(), nullptr, &pidl, 0, nullptr);
+				if (SUCCEEDED(hr))
+				{
+					hr = ::SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0);
+					::CoTaskMemFree(pidl);
+				}
+			}
+
+			if (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+			{
+				// fallback (but without selecting the current file)
+				// - either the COM cannot be used or the above shell APIs mysteriously fail on some systems
+				//   with the "file not found" even though the file is there
+				// - do not use this fallback for any other possible error (like E_INVALIDARG, etc.)
+				::ShellExecuteW(_pPublicInterface->getHSelf(), L"explore",
+					std::filesystem::path(_pEditView->getCurrentBuffer()->getFullPathName()).parent_path().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+			}
+
+			break;
 		}
-		break;
 
 		case IDM_FILE_OPEN_CMD:
 		{
@@ -588,6 +668,48 @@ void Notepad_plus::command(int id)
 		}
 		break;
 
+		case IDM_EDIT_REDACT_SELECTION:
+		{
+			_pEditView->execute(SCI_BEGINUNDOACTION);
+
+			const int selCount = static_cast<int>(_pEditView->execute(SCI_GETSELECTIONS));
+			const bool useBullet = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+
+			const int codePage = static_cast<int>(_pEditView->execute(SCI_GETCODEPAGE));
+			const bool isUnicode = (codePage == SC_CP_UTF8);
+
+			std::string charToUse;
+			if (isUnicode)
+			{
+				charToUse = useBullet ? "\xE2\x97\x8F" : "\xE2\x96\x88"; // ● or █ (UTF-8)
+			}
+			else
+			{
+				charToUse = useBullet ? "." : "#";
+			}
+
+			for (int i = 0; i < selCount; ++i)
+			{
+				WPARAM start = _pEditView->execute(SCI_GETSELECTIONNSTART, i);
+				LPARAM end = _pEditView->execute(SCI_GETSELECTIONNEND, i);
+				int charCount = static_cast<int>(_pEditView->execute(SCI_COUNTCHARACTERS, start, end));
+
+				if (charCount > 0)
+				{
+					std::string mask = "";
+					for (int j = 0; j < charCount; ++j)
+						mask += charToUse;
+
+					_pEditView->execute(SCI_SETTARGETRANGE, start, end);
+
+					_pEditView->execute(SCI_REPLACETARGET, static_cast<WPARAM>(-1), reinterpret_cast<LPARAM>(mask.c_str()));
+				}
+			}
+
+			_pEditView->execute(SCI_ENDUNDOACTION);
+		}
+		break;
+
 		case IDM_EDIT_OPENINFOLDER:
 		case IDM_EDIT_OPENASFILE:
 		{
@@ -605,7 +727,13 @@ void Notepad_plus::command(int id)
 			wchar_t cmd2Exec[CURRENTWORD_MAXLENGTH] = { '\0' };
 			if (id == IDM_EDIT_OPENINFOLDER)
 			{
-				wcscpy_s(cmd2Exec, L"explorer");
+				if (!::GetWindowsDirectoryW(cmd2Exec, MAX_PATH))
+					return;
+
+				PathAppend(cmd2Exec, L"explorer.exe");
+
+				if (!doesFileExist(cmd2Exec))
+					return;
 			}
 			else
 			{
@@ -758,6 +886,8 @@ void Notepad_plus::command(int id)
 		case IDM_EDIT_SORTLINES_DECIMALDOT_DESCENDING:
 		case IDM_EDIT_SORTLINES_REVERSE_ORDER:
 		case IDM_EDIT_SORTLINES_RANDOMLY:
+		case IDM_EDIT_SORTLINES_LENGTH_ASCENDING:
+		case IDM_EDIT_SORTLINES_LENGTH_DESCENDING:
 		{
 			std::lock_guard<std::mutex> lock(command_mutex);
 
@@ -813,37 +943,42 @@ void Notepad_plus::command(int id)
 								id == IDM_EDIT_SORTLINES_INTEGER_DESCENDING ||
 								id == IDM_EDIT_SORTLINES_DECIMALCOMMA_DESCENDING ||
 								id == IDM_EDIT_SORTLINES_DECIMALDOT_DESCENDING ||
-								id == IDM_EDIT_SORTLINES_LEXICO_CASE_INSENS_DESCENDING;
+								id == IDM_EDIT_SORTLINES_LEXICO_CASE_INSENS_DESCENDING ||
+								id == IDM_EDIT_SORTLINES_LENGTH_DESCENDING;
 
 			_pEditView->execute(SCI_BEGINUNDOACTION);
 			std::unique_ptr<ISorter> pSorter;
 			if (id == IDM_EDIT_SORTLINES_LEXICOGRAPHIC_DESCENDING || id == IDM_EDIT_SORTLINES_LEXICOGRAPHIC_ASCENDING)
 			{
-				pSorter = std::unique_ptr<ISorter>(new LexicographicSorter(isDescending, fromColumn, toColumn));
+				pSorter = std::make_unique<LexicographicSorter>(isDescending, fromColumn, toColumn);
 			}
 			else if (id == IDM_EDIT_SORTLINES_LEXICO_CASE_INSENS_DESCENDING || id == IDM_EDIT_SORTLINES_LEXICO_CASE_INSENS_ASCENDING)
 			{
-				pSorter = std::unique_ptr<ISorter>(new LexicographicCaseInsensitiveSorter(isDescending, fromColumn, toColumn));
+				pSorter = std::make_unique<LexicographicCaseInsensitiveSorter>(isDescending, fromColumn, toColumn);
 			}
 			else if (id == IDM_EDIT_SORTLINES_INTEGER_DESCENDING || id == IDM_EDIT_SORTLINES_INTEGER_ASCENDING)
 			{
-				pSorter = std::unique_ptr<ISorter>(new IntegerSorter(isDescending, fromColumn, toColumn));
+				pSorter = std::make_unique<IntegerSorter>(isDescending, fromColumn, toColumn);
 			}
 			else if (id == IDM_EDIT_SORTLINES_DECIMALCOMMA_DESCENDING || id == IDM_EDIT_SORTLINES_DECIMALCOMMA_ASCENDING)
 			{
-				pSorter = std::unique_ptr<ISorter>(new DecimalCommaSorter(isDescending, fromColumn, toColumn));
+				pSorter = std::make_unique<DecimalCommaSorter>(isDescending, fromColumn, toColumn);
 			}
 			else if (id == IDM_EDIT_SORTLINES_DECIMALDOT_DESCENDING || id == IDM_EDIT_SORTLINES_DECIMALDOT_ASCENDING)
 			{
-				pSorter = std::unique_ptr<ISorter>(new DecimalDotSorter(isDescending, fromColumn, toColumn));
+				pSorter = std::make_unique<DecimalDotSorter>(isDescending, fromColumn, toColumn);
+			}
+			else if (id == IDM_EDIT_SORTLINES_LENGTH_ASCENDING || id == IDM_EDIT_SORTLINES_LENGTH_DESCENDING)
+			{
+				pSorter = std::make_unique<LineLengthSorter>(isDescending, fromColumn, toColumn);
 			}
 			else if (id == IDM_EDIT_SORTLINES_REVERSE_ORDER)
 			{
-				pSorter = std::unique_ptr<ISorter>(new ReverseSorter(isDescending, fromColumn, toColumn));
+				pSorter = std::make_unique<ReverseSorter>(isDescending, fromColumn, toColumn);
 			}
 			else
 			{
-				pSorter = std::unique_ptr<ISorter>(new RandomSorter(isDescending, fromColumn, toColumn));
+				pSorter = std::make_unique<RandomSorter>(isDescending, fromColumn, toColumn);
 			}
 			try
 			{
@@ -2309,23 +2444,23 @@ void Notepad_plus::command(int id)
 			auto currentBuf = _pEditView->getCurrentBuffer();
 			if (!currentBuf->isUntitled())
 			{
-				wstring appName;
+				wstring appPathsEntryName;
 
 				if (id == IDM_VIEW_IN_FIREFOX)
 				{
-					appName = L"firefox.exe";
+					appPathsEntryName = L"firefox.exe";
 				}
 				else if (id == IDM_VIEW_IN_CHROME)
 				{
-					appName = L"chrome.exe";
+					appPathsEntryName = L"chrome.exe";
 				}
 				else if (id == IDM_VIEW_IN_EDGE)
 				{
-					appName = L"msedge.exe";
+					appPathsEntryName = L"msedge.exe";
 				}
 				else // if (id == IDM_VIEW_IN_IE)
 				{
-					appName = L"IEXPLORE.EXE";
+					appPathsEntryName = L"IEXPLORE.EXE";
 				}
 
 				wchar_t valData[MAX_PATH] = {'\0'};
@@ -2333,7 +2468,7 @@ void Notepad_plus::command(int id)
 				DWORD valType = 0;
 				HKEY hKey2Check = nullptr;
 				wstring appEntry = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
-				appEntry += appName;
+				appEntry += appPathsEntryName;
 				::RegOpenKeyEx(HKEY_LOCAL_MACHINE, appEntry.c_str(), 0, KEY_READ, &hKey2Check);
 				::RegQueryValueEx(hKey2Check, L"", nullptr, &valType, reinterpret_cast<LPBYTE>(valData), &valDataLen);
 
@@ -3539,22 +3674,7 @@ void Notepad_plus::command(int id)
 
 			if (doAboutDlg)
 			{
-				//bool isFirstTime = !_aboutDlg.isCreated();
 				_aboutDlg.doDialog();
-				/*
-				if (isFirstTime && _nativeLangSpeaker.getNativeLangA())
-				{
-					if (_nativeLangSpeaker.getLangEncoding() == NPP_CP_BIG5)
-					{
-						const char *authorName = "«J¤µ§^";
-						HWND hItem = ::GetDlgItem(_aboutDlg.getHSelf(), IDC_AUTHOR_NAME);
-
-						WcharMbcsConvertor& wmc = WcharMbcsConvertor::getInstance();
-						const wchar_t *authorNameW = wmc.char2wchar(authorName, NPP_CP_BIG5);
-						::SetWindowText(hItem, authorNameW);
-					}
-				}
-				*/
 			}
 			break;
 		}
@@ -3592,7 +3712,8 @@ void Notepad_plus::command(int id)
 		case IDM_CONFUPDATERPROXY :
 		{
 			// wingup doesn't work with the obsolete security layer (API) under xp since downloads are secured with SSL on notepad_plus_plus.org
-			winVer ver = NppParameters::getInstance().getWinVersion();
+			const NppParameters& nppParams = NppParameters::getInstance();
+			winVer ver = nppParams.getWinVersion();
 			if (ver <= WV_XP)
 			{
 				long res = _nativeLangSpeaker.messageBox("XpUpdaterProblem",
@@ -3608,7 +3729,7 @@ void Notepad_plus::command(int id)
 			}
 			else
 			{
-				wstring updaterDir = (NppParameters::getInstance()).getNppPath();
+				wstring updaterDir = nppParams.getNppPath();
 				pathAppend(updaterDir, L"updater");
 
 				wstring updaterFullPath = updaterDir;
@@ -3639,24 +3760,10 @@ void Notepad_plus::command(int id)
 						param = L"-options";
 					}
 					else
-					{
-						param = L"-verbose -v";
-						param += VERSION_INTERNAL_VALUE;
-						int archType = NppParameters::getInstance().archType();
-						if (archType == IMAGE_FILE_MACHINE_AMD64)
-						{
-							param += L" -px64";
-						}
-						else if (archType == IMAGE_FILE_MACHINE_ARM64)
-						{
-							param += L" -parm64";
-						}
+					{	
+						nppParams.buildGupParams(param);
 
-						param += L" -i";
-						param += INFO_URL;
-
-						param += L" -d";
-						param += FORCED_DOWNLOAD_DOMAIN;
+						param += L" -verbose";
 					}
 					Process updater(updaterFullPath.c_str(), param.c_str(), updaterDir.c_str());
 
@@ -4345,6 +4452,9 @@ void Notepad_plus::command(int id)
 			case IDM_EDIT_SORTLINES_LOCALE_DESCENDING:
 			case IDM_EDIT_SETREADONLYFORALLDOCS:
 			case IDM_EDIT_CLEARREADONLYFORALLDOCS:
+			case IDM_EDIT_SORTLINES_LENGTH_ASCENDING:
+			case IDM_EDIT_SORTLINES_LENGTH_DESCENDING:
+			case IDM_EDIT_REDACT_SELECTION:
 				_macro.push_back(recordedMacroStep(id));
 				break;
 

@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
+#include "localization.h"
 #include "Notepad_plus_Window.h"
 #include "functionListPanel.h"
 #include "xmlMatchedTagsHighlighter.h"
@@ -24,6 +24,7 @@
 #include "documentMap.h"
 #include "Common.h"
 #include <stack>
+#include "shortcut.h"
 
 using namespace std;
 
@@ -178,7 +179,7 @@ BOOL Notepad_plus::notify(SCNotification *notification)
 			{
 				POINT p;
 				::GetCursorPos(&p);
-				MenuPosition& menuPos = getMenuPosition("search-bookmark");
+				const MenuPosition& menuPos = MenuPosition::getMenuPosition("search-bookmark");
 				HMENU hSearchMenu = ::GetSubMenu(_mainMenuHandle, menuPos._x);
 				if (hSearchMenu)
 				{
@@ -473,6 +474,33 @@ BOOL Notepad_plus::notify(SCNotification *notification)
 
 		case SCN_MACRORECORD:
 		{
+			// Normalize EOL by replacing macro step using SCI_REPLACESEL
+			// with lParam representing string of one char with '\n' or '\r'
+			// with step using SCI_NEWLINE which is document context aware and will insert correct EOL.
+			if (notification->message == SCI_REPLACESEL)
+			{
+				const auto* ch = reinterpret_cast<char*>(notification->lParam);
+				if (ch != nullptr
+					&& ch[0] != '\0' // is not ""
+					&& ch[1] == '\0' // is length == 1
+					&& (ch[0] == '\n' || ch[0] == '\r')) // is EOL
+				{
+					// Current detected EOL is LF and document has CRLF,
+					// previous detected step using SCI_REPLACESEL with CR was already replaced by SCI_NEWLINE.
+					// To avoid double newlines, the previous macro step is removed.
+					if (_pEditView->getCurrentBuffer()->getEolFormat() == EolType::windows
+						&& ch[0] == '\n'
+						&& !_macro.empty()
+						&& _macro.back()._message == SCI_NEWLINE)
+					{
+						_macro.pop_back();
+					}
+
+					_macro.push_back(recordedMacroStep(SCI_NEWLINE, 0, 0, nullptr, 0));
+					break;
+				}
+			}
+
 			_macro.push_back(
 				recordedMacroStep(
 					notification->message,
@@ -923,7 +951,7 @@ BOOL Notepad_plus::notify(SCNotification *notification)
 				{
 					POINT p;
 					::GetCursorPos(&p);
-					MenuPosition & menuPos = getMenuPosition("edit-eolConversion");
+					const MenuPosition& menuPos = MenuPosition::getMenuPosition("edit-eolConversion");
 					HMENU hEditMenu = ::GetSubMenu(_mainMenuHandle, menuPos._x);
 					if (!hEditMenu)
 						return TRUE;
@@ -966,7 +994,7 @@ BOOL Notepad_plus::notify(SCNotification *notification)
 				}
 				else if (lpnm->dwItemSpec == DWORD(STATUSBAR_EOF_FORMAT))
 				{
-					MenuPosition & menuPos = getMenuPosition("edit-eolConversion");
+					const MenuPosition& menuPos = MenuPosition::getMenuPosition("edit-eolConversion");
 					HMENU hEditMenu = ::GetSubMenu(_mainMenuHandle, menuPos._x);
 					if (!hEditMenu)
 						return TRUE;
