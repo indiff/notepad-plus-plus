@@ -290,7 +290,7 @@ std::wstring NativeLangSpeaker::getShortcutNameString(int itemID) const
 	if (!_nativeLang)
 		return L"";
 
-	NppXml::Node node = NppXml::firstChildElement(_nativeLang, "Dialog");
+	NppXml::Element node = NppXml::firstChildElement(_nativeLang, "Dialog");
 	if (!node) return L"";
 
 	node = NppXml::firstChildElement(node, "ShortcutMapper");
@@ -299,14 +299,13 @@ std::wstring NativeLangSpeaker::getShortcutNameString(int itemID) const
 	node = NppXml::firstChildElement(node, "MainCommandNames");
 	if (!node) return L"";
 
-	for (NppXml::Node childNode = NppXml::firstChildElement(node, "Item");
+	for (NppXml::Element childNode = NppXml::firstChildElement(node, "Item");
 		childNode;
 		childNode = NppXml::nextSiblingElement(childNode, "Item"))
 	{
-		NppXml::Element element = NppXml::toElement(childNode);
-		if (int id = NppXml::intAttribute(element, "id", 0); (id == itemID))
+		if (NppXml::intAttribute(childNode, "id", 0) == itemID)
 		{
-			const char* name = NppXml::attribute(element, "name");
+			const char* name = NppXml::attribute(childNode, "name");
 			if (name)
 			{
 				WcharMbcsConvertor& wmc = WcharMbcsConvertor::getInstance();
@@ -930,7 +929,7 @@ void NativeLangSpeaker::changePluginsAdminDlgLang(PluginsAdminDlg& pluginsAdminD
 {
 	if (_nativeLang)
 	{
-		NppXml::Node dlgNode = NppXml::firstChildElement(_nativeLang, "Dialog");
+		NppXml::Element dlgNode = NppXml::firstChildElement(_nativeLang, "Dialog");
 		if (dlgNode)
 		{
 			dlgNode = searchDlgNode(dlgNode, "PluginsAdminDlg");
@@ -938,7 +937,7 @@ void NativeLangSpeaker::changePluginsAdminDlgLang(PluginsAdminDlg& pluginsAdminD
 			{
 				WcharMbcsConvertor& wmc = WcharMbcsConvertor::getInstance();
 
-				NppXml::Node ColumnPluginNode = NppXml::firstChildElement(dlgNode, "ColumnPlugin");
+				NppXml::Element ColumnPluginNode = NppXml::firstChildElement(dlgNode, "ColumnPlugin");
 				if (ColumnPluginNode)
 				{
 					const char* name = NppXml::attribute(NppXml::toElement(ColumnPluginNode), "name");
@@ -949,7 +948,7 @@ void NativeLangSpeaker::changePluginsAdminDlgLang(PluginsAdminDlg& pluginsAdminD
 					}
 				}
 
-				NppXml::Node ColumnVersionNode = NppXml::firstChildElement(dlgNode, "ColumnVersion");
+				NppXml::Element ColumnVersionNode = NppXml::firstChildElement(dlgNode, "ColumnVersion");
 				if (ColumnVersionNode)
 				{
 					const char* name = NppXml::attribute(NppXml::toElement(ColumnVersionNode), "name");
@@ -960,30 +959,30 @@ void NativeLangSpeaker::changePluginsAdminDlgLang(PluginsAdminDlg& pluginsAdminD
 					}
 				}
 
-				const char* titre1 = NppXml::attribute(NppXml::toElement(dlgNode), "titleAvailable");
-				const char* titre2 = NppXml::attribute(NppXml::toElement(dlgNode), "titleUpdates");
-				const char* titre3 = NppXml::attribute(NppXml::toElement(dlgNode), "titleInstalled");
-				const char* titre4 = NppXml::attribute(NppXml::toElement(dlgNode), "titleIncompatible");
+				const char* titre1 = NppXml::attribute(dlgNode, "titleAvailable");
+				const char* titre2 = NppXml::attribute(dlgNode, "titleUpdates");
+				const char* titre3 = NppXml::attribute(dlgNode, "titleInstalled");
+				const char* titre4 = NppXml::attribute(dlgNode, "titleIncompatible");
 
 				if (titre1 && titre1[0])
 				{
 					std::wstring nameW = wmc.char2wchar(titre1, _nativeLangEncoding);
-					pluginsAdminDlg.changeTabName(AVAILABLE_LIST, nameW.c_str());
+					pluginsAdminDlg.changeTabName(AVAILABLE_LIST, nameW.data());
 				}
 				if (titre2 && titre2[0])
 				{
 					std::wstring nameW = wmc.char2wchar(titre2, _nativeLangEncoding);
-					pluginsAdminDlg.changeTabName(UPDATES_LIST, nameW.c_str());
+					pluginsAdminDlg.changeTabName(UPDATES_LIST, nameW.data());
 				}
 				if (titre3 && titre3[0])
 				{
 					std::wstring nameW = wmc.char2wchar(titre3, _nativeLangEncoding);
-					pluginsAdminDlg.changeTabName(INSTALLED_LIST, nameW.c_str());
+					pluginsAdminDlg.changeTabName(INSTALLED_LIST, nameW.data());
 				}
 				if (titre4 && titre4[0])
 				{
 					std::wstring nameW = wmc.char2wchar(titre4, _nativeLangEncoding);
-					pluginsAdminDlg.changeTabName(INCOMPATIBLE_LIST, nameW.c_str());
+					pluginsAdminDlg.changeTabName(INCOMPATIBLE_LIST, nameW.data());
 				}
 			}
 
@@ -1259,11 +1258,11 @@ std::wstring NativeLangSpeaker::getShortcutMapperLangStr(const char* nodeName, c
 }
 
 
-NppXml::Node NativeLangSpeaker::searchDlgNode(NppXml::Node node, const char* dlgTagName)
+NppXml::Element NativeLangSpeaker::searchDlgNode(NppXml::Element node, const char* dlgTagName)
 {
-	NppXml::Node dlgNode = NppXml::firstChildElement(node, dlgTagName);
+	NppXml::Element dlgNode = NppXml::firstChildElement(node, dlgTagName);
 	if (dlgNode) return dlgNode;
-	for (NppXml::Node childNode = NppXml::firstChildElement(node, nullptr);
+	for (NppXml::Element childNode = NppXml::firstChildElement(node, nullptr);
 		childNode;
 		childNode = NppXml::nextSibling(childNode))
 	{

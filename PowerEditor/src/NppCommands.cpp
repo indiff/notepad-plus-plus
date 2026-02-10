@@ -668,6 +668,48 @@ void Notepad_plus::command(int id)
 		}
 		break;
 
+		case IDM_EDIT_REDACT_SELECTION:
+		{
+			_pEditView->execute(SCI_BEGINUNDOACTION);
+
+			const int selCount = static_cast<int>(_pEditView->execute(SCI_GETSELECTIONS));
+			const bool useBullet = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+
+			const int codePage = static_cast<int>(_pEditView->execute(SCI_GETCODEPAGE));
+			const bool isUnicode = (codePage == SC_CP_UTF8);
+
+			std::string charToUse;
+			if (isUnicode)
+			{
+				charToUse = useBullet ? "\xE2\x97\x8F" : "\xE2\x96\x88"; // ● or █ (UTF-8)
+			}
+			else
+			{
+				charToUse = useBullet ? "." : "#";
+			}
+
+			for (int i = 0; i < selCount; ++i)
+			{
+				WPARAM start = _pEditView->execute(SCI_GETSELECTIONNSTART, i);
+				LPARAM end = _pEditView->execute(SCI_GETSELECTIONNEND, i);
+				int charCount = static_cast<int>(_pEditView->execute(SCI_COUNTCHARACTERS, start, end));
+
+				if (charCount > 0)
+				{
+					std::string mask = "";
+					for (int j = 0; j < charCount; ++j)
+						mask += charToUse;
+
+					_pEditView->execute(SCI_SETTARGETRANGE, start, end);
+
+					_pEditView->execute(SCI_REPLACETARGET, static_cast<WPARAM>(-1), reinterpret_cast<LPARAM>(mask.c_str()));
+				}
+			}
+
+			_pEditView->execute(SCI_ENDUNDOACTION);
+		}
+		break;
+
 		case IDM_EDIT_OPENINFOLDER:
 		case IDM_EDIT_OPENASFILE:
 		{
@@ -685,7 +727,13 @@ void Notepad_plus::command(int id)
 			wchar_t cmd2Exec[CURRENTWORD_MAXLENGTH] = { '\0' };
 			if (id == IDM_EDIT_OPENINFOLDER)
 			{
-				wcscpy_s(cmd2Exec, L"explorer");
+				if (!::GetWindowsDirectoryW(cmd2Exec, MAX_PATH))
+					return;
+
+				PathAppend(cmd2Exec, L"explorer.exe");
+
+				if (!doesFileExist(cmd2Exec))
+					return;
 			}
 			else
 			{
@@ -2396,23 +2444,23 @@ void Notepad_plus::command(int id)
 			auto currentBuf = _pEditView->getCurrentBuffer();
 			if (!currentBuf->isUntitled())
 			{
-				wstring appName;
+				wstring appPathsEntryName;
 
 				if (id == IDM_VIEW_IN_FIREFOX)
 				{
-					appName = L"firefox.exe";
+					appPathsEntryName = L"firefox.exe";
 				}
 				else if (id == IDM_VIEW_IN_CHROME)
 				{
-					appName = L"chrome.exe";
+					appPathsEntryName = L"chrome.exe";
 				}
 				else if (id == IDM_VIEW_IN_EDGE)
 				{
-					appName = L"msedge.exe";
+					appPathsEntryName = L"msedge.exe";
 				}
 				else // if (id == IDM_VIEW_IN_IE)
 				{
-					appName = L"IEXPLORE.EXE";
+					appPathsEntryName = L"IEXPLORE.EXE";
 				}
 
 				wchar_t valData[MAX_PATH] = {'\0'};
@@ -2420,7 +2468,7 @@ void Notepad_plus::command(int id)
 				DWORD valType = 0;
 				HKEY hKey2Check = nullptr;
 				wstring appEntry = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
-				appEntry += appName;
+				appEntry += appPathsEntryName;
 				::RegOpenKeyEx(HKEY_LOCAL_MACHINE, appEntry.c_str(), 0, KEY_READ, &hKey2Check);
 				::RegQueryValueEx(hKey2Check, L"", nullptr, &valType, reinterpret_cast<LPBYTE>(valData), &valDataLen);
 
@@ -3664,7 +3712,8 @@ void Notepad_plus::command(int id)
 		case IDM_CONFUPDATERPROXY :
 		{
 			// wingup doesn't work with the obsolete security layer (API) under xp since downloads are secured with SSL on notepad_plus_plus.org
-			winVer ver = NppParameters::getInstance().getWinVersion();
+			const NppParameters& nppParams = NppParameters::getInstance();
+			winVer ver = nppParams.getWinVersion();
 			if (ver <= WV_XP)
 			{
 				long res = _nativeLangSpeaker.messageBox("XpUpdaterProblem",
@@ -3680,7 +3729,7 @@ void Notepad_plus::command(int id)
 			}
 			else
 			{
-				wstring updaterDir = (NppParameters::getInstance()).getNppPath();
+				wstring updaterDir = nppParams.getNppPath();
 				pathAppend(updaterDir, L"updater");
 
 				wstring updaterFullPath = updaterDir;
@@ -3711,44 +3760,10 @@ void Notepad_plus::command(int id)
 						param = L"-options";
 					}
 					else
-					{
-						param = L"-verbose -v";
-						param += VERSION_INTERNAL_VALUE;
-						int archType = NppParameters::getInstance().archType();
-						if (archType == IMAGE_FILE_MACHINE_AMD64)
-						{
-							param += L" -px64";
-						}
-						else if (archType == IMAGE_FILE_MACHINE_ARM64)
-						{
-							param += L" -parm64";
-						}
+					{	
+						nppParams.buildGupParams(param);
 
-						param += L" -infoUrl=";
-						param += INFO_URL;
-
-						param += L" -forceDomain=";
-						param += FORCED_DOWNLOAD_DOMAIN;
-
-						// Verify the code signing certificate and signature of the downloaded installer
-						SecurityGuard sgd;
-						param += L" -chkCertSig=yes";
-
-						param += L" -chkCertRevoc";
-						param += L" -chkCertTrustChain";
-
-						param += L" -chkCertName=";
-						param += sgd.signer_display_name();
-
-						param += L" -chkCertSubject=\"";
-						param += stringReplace(sgd.signer_subject(), L"\"", L"{QUOTE}");
-						param += L"\"";
-
-						param += L" -chkCertKeyId=";
-						param += sgd.signer_key_id();
-
-						param += L" -errLogPath=";
-						param += L"\"%LOCALAPPDATA%\\Notepad++\\log\\securityError.log\"";
+						param += L" -verbose";
 					}
 					Process updater(updaterFullPath.c_str(), param.c_str(), updaterDir.c_str());
 
@@ -4439,6 +4454,7 @@ void Notepad_plus::command(int id)
 			case IDM_EDIT_CLEARREADONLYFORALLDOCS:
 			case IDM_EDIT_SORTLINES_LENGTH_ASCENDING:
 			case IDM_EDIT_SORTLINES_LENGTH_DESCENDING:
+			case IDM_EDIT_REDACT_SELECTION:
 				_macro.push_back(recordedMacroStep(id));
 				break;
 

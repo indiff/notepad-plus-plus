@@ -4855,7 +4855,7 @@ intptr_t CALLBACK LanguageSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 						bool found(false);
 						for (size_t x = 0; x < nppParam.getExternalLexerDoc()->size() && !found; ++x)
 						{
-							TiXmlNode *lexersRoot = nppParam.getExternalLexerDoc()->at(x)->FirstChild(L"NotepadPlus")->FirstChildElement(L"LexerStyles");
+							TiXmlNode *lexersRoot = nppParam.getExternalLexerDoc()->at(x)._doc->FirstChild(L"NotepadPlus")->FirstChildElement(L"LexerStyles");
 							for (TiXmlNode *childNode = lexersRoot->FirstChildElement(L"LexerType");
 								childNode ;
 								childNode = childNode->NextSibling(L"LexerType"))
@@ -4865,7 +4865,7 @@ intptr_t CALLBACK LanguageSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 								if (wstring(element->Attribute(L"name")) == lmi._langName)
 								{
 									element->SetAttribute(L"excluded", (LOWORD(wParam)==IDC_BUTTON_REMOVE)?L"yes":L"no");
-									nppParam.getExternalLexerDoc()->at(x)->SaveFile();
+									nppParam.getExternalLexerDoc()->at(x)._doc->SaveFile();
 									found = true;
 									break;
 								}

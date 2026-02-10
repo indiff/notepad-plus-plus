@@ -151,13 +151,14 @@ T* variedFormatNumber2String(T* str, size_t strLen, size_t number, size_t base, 
 	//
 	// Determine leading zero/space or none
 	//
-	if (lead == ColumnEditorParam::spaceLeading)
+	using enum ColumnEditorParam::leadingChoice;
+	if (lead == spaceLeading)
 	{
 		noneUsedStart = 0;
 		noneUsedEnd = nbStart = noneUsedZoneLen;
 		nbEnd = nbDigits;
 	}
-	else if (lead == ColumnEditorParam::zeroLeading)
+	else if (lead == zeroLeading)
 	{
 		noUsedSymbol = '0';
 
@@ -165,7 +166,7 @@ T* variedFormatNumber2String(T* str, size_t strLen, size_t number, size_t base, 
 		noneUsedEnd = nbStart = noneUsedZoneLen;
 		nbEnd = nbDigits;
 	}
-	else //if (lead != ColumnEditorParam::noneLeading)
+	else //if (lead != noneLeading)
 	{
 		nbStart = 0;
 		nbEnd = noneUsedStart = numberStrLen;
@@ -283,6 +284,7 @@ public:
 	void getGenericText(wchar_t *dest, size_t destlen, size_t start, size_t end) const;
 	void getGenericText(wchar_t* dest, size_t destlen, size_t start, size_t end, intptr_t* mstart, intptr_t* mend, intptr_t* outLen = nullptr) const;
 	std::wstring getGenericTextAsString(size_t start, size_t end) const;
+	void insertGenericTextFrom(size_t position, const char* text2insert) const;
 	void insertGenericTextFrom(size_t position, const wchar_t *text2insert) const;
 	void replaceSelWith(const char * replaceText);
 
@@ -619,8 +621,8 @@ public:
 
 	ColumnModeInfos getColumnModeSelectInfo();
 
-	void columnReplace(ColumnModeInfos & cmi, const wchar_t *str);
-	void columnReplace(ColumnModeInfos & cmi, size_t initial, size_t incr, size_t repeat, UCHAR format, ColumnEditorParam::leadingChoice lead);
+	void columnReplace(ColumnModeInfos& cmi, const char* str) const;
+	void columnReplace(ColumnModeInfos& cmi, size_t initial, size_t incr, size_t repeat, NumBase format, ColumnEditorParam::leadingChoice lead) const;
 
 	void clearIndicator(int indicatorNumber) {
 		size_t docStart = 0;
