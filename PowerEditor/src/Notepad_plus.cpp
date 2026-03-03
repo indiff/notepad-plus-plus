@@ -683,9 +683,6 @@ LRESULT Notepad_plus::init(HWND hwnd)
 
 	updateCommandShortcuts();
 
-	//Translate non-menu shortcuts
-	_nativeLangSpeaker.changeShortcutLang();
-
 	//Update plugin shortcuts, all plugin commands should be available now
 	nppParam.reloadPluginCmds();
 
@@ -1945,12 +1942,12 @@ bool Notepad_plus::replaceInFilelist(std::vector<wstring> & fileNames)
 		if (filesCount >= 200)
 			filesPerPercent = filesCount / 100;
 		
-		wstring msg = _nativeLangSpeaker.getLocalizedStrFromID(
-			"replace-in-files-progress-title", L"Replace In Files progress...");
+		wstring msg = _nativeLangSpeaker.getLocalizedStrFromID("replace-in-files-progress-title", L"Replace In Files progress...");
 		progress.open(_findReplaceDlg.getHSelf(), msg.c_str());
 	}
 
 	bool hasInvalidRegExpr = false;
+	NppGUI& nppGUI = (NppParameters::getInstance()).getNppGUI();
 
 	for (size_t i = 0, updateOnCount = filesPerPercent; i < filesCount; ++i)
 	{
@@ -1958,7 +1955,8 @@ bool Notepad_plus::replaceInFilelist(std::vector<wstring> & fileNames)
 
 		bool closeBuf = false;
 
-		BufferID id = MainFileManager.getBufferFromName(fileNames.at(i).c_str());
+		BufferID id = nppGUI._fif_ignoreunsavedChangesInOpenedFiles ? BUFFER_INVALID : MainFileManager.getBufferFromName(fileNames.at(i).c_str());
+
 		if (id == BUFFER_INVALID)
 		{
 			id = MainFileManager.loadFile(fileNames.at(i).c_str());
@@ -2052,8 +2050,7 @@ bool Notepad_plus::findInFinderFiles(FindersInfo *findInFolderInfo)
 		if (filesCount >= 200)
 			filesPerPercent = filesCount / 100;
 		
-		wstring msg = _nativeLangSpeaker.getLocalizedStrFromID(
-			"find-in-files-progress-title", L"Find In Files progress...");
+		wstring msg = _nativeLangSpeaker.getLocalizedStrFromID("find-in-files-progress-title", L"Find In Files progress...");
 		progress.open(_findReplaceDlg.getHSelf(), msg.c_str());
 	}
 
@@ -2150,20 +2147,24 @@ bool Notepad_plus::findInFilelist(std::vector<wstring> & fileNames)
 		if (filesCount >= 200)
 			filesPerPercent = filesCount / 100;
 
-		wstring msg = _nativeLangSpeaker.getLocalizedStrFromID(
-			"find-in-files-progress-title", L"Find In Files progress...");
+		wstring msg = _nativeLangSpeaker.getLocalizedStrFromID("find-in-files-progress-title", L"Find In Files progress...");
 		progress.open(_findReplaceDlg.getHSelf(), msg.c_str());
 	}
 
 	const bool isEntireDoc = true;
 	bool hasInvalidRegExpr = false;
 
+	NppParameters& nppParam = NppParameters::getInstance();
+	const NppGUI& nppGui = nppParam.getNppGUI();
+
 	for (size_t i = 0, updateOnCount = filesPerPercent; i < filesCount; ++i)
 	{
 		if (progress.isCancelled()) break;
 
 		bool closeBuf = false;
-		BufferID id = MainFileManager.getBufferFromName(fileNames.at(i).c_str());
+
+		BufferID id = nppGui._fif_ignoreunsavedChangesInOpenedFiles ? BUFFER_INVALID : MainFileManager.getBufferFromName(fileNames.at(i).c_str());
+
 		if (id == BUFFER_INVALID)
 		{
 			id = MainFileManager.loadFile(fileNames.at(i).c_str());
@@ -2219,14 +2220,9 @@ bool Notepad_plus::findInFilelist(std::vector<wstring> & fileNames)
 		return false;
 	}
 
-	if (nbTotal > 0)
+	if (nbTotal > 0 && !nppGui._findDlgAlwaysVisible)
 	{
-		NppParameters& nppParam = NppParameters::getInstance();
-		const NppGUI& nppGui = nppParam.getNppGUI();
-		if (!nppGui._findDlgAlwaysVisible)
-		{
-			_findReplaceDlg.display(false);
-		}
+		_findReplaceDlg.display(false);
 	}
 
 	return true;
@@ -2487,7 +2483,7 @@ int Notepad_plus::doReloadOrNot(const wchar_t *fn, bool dirty)
 			_pPublicInterface->getHSelf(),
 			L"\"$STR_REPLACE$\"\r\rThis file has been modified by another program.\rDo you want to reload it and lose the changes made in Notepad++?",
 			L"Reload",
-			MB_YESNO | MB_APPLMODAL | MB_ICONEXCLAMATION,
+			MB_YESNO | MB_DEFBUTTON2 | MB_APPLMODAL | MB_ICONEXCLAMATION,
 			0, // not used
 			fn);
 	else
@@ -5355,7 +5351,7 @@ bool Notepad_plus::doBlockComment(comment_mode currCommentMode)
 		if (!userLangContainer)
 			return false;
 
-		const std::string kws = wstring2string(userLangContainer->_keywordLists[SCE_USER_KWLIST_COMMENTS]);
+		const std::string& kws = userLangContainer->_keywordLists[SCE_USER_KWLIST_COMMENTS];
 
 		symbol = extractSymbol('0', '0', kws.c_str());
 		commentLineSymbol = symbol.c_str();
@@ -5655,7 +5651,7 @@ bool Notepad_plus::doStreamComment()
 		if (!userLangContainer)
 			return false;
 
-		const std::string kws = wstring2string(userLangContainer->_keywordLists[SCE_USER_KWLIST_COMMENTS]);
+		const std::string& kws = userLangContainer->_keywordLists[SCE_USER_KWLIST_COMMENTS];
 
 		// BlockToStreamComment: Next two lines needed to decide, if block-comment can be called below!
 		symbol = extractSymbol('0', '0', kws.c_str());
@@ -8784,7 +8780,7 @@ bool Notepad_plus::undoStreamComment(bool tryBlockComment)
 		if (!userLangContainer)
 			return false;
 
-		const std::string kws = wstring2string(userLangContainer->_keywordLists[SCE_USER_KWLIST_COMMENTS]);
+		const std::string& kws = userLangContainer->_keywordLists[SCE_USER_KWLIST_COMMENTS];
 
 		symbol = extractSymbol('0', '0', kws.c_str());
 		commentLineSymbol = symbol.c_str();

@@ -699,7 +699,9 @@ void Notepad_plus::command(int id)
 					std::vector<std::pair<int, int>> segments2replace;
 					for (int j = 0; j < charCount; ++j)
 					{
-						char aChar = static_cast<char>(_pEditView->execute(SCI_GETCHARAT, start + j));
+						// Get byte position of the jth character, starting from "start"
+						auto bytePos = _pEditView->execute(SCI_POSITIONRELATIVE, start, j);
+						char aChar = static_cast<char>(_pEditView->execute(SCI_GETCHARAT, bytePos));
 						
 						if (aChar == '\r' || aChar == '\n')
 							maskStr += aChar;
@@ -1021,11 +1023,11 @@ void Notepad_plus::command(int id)
 			SortLocale sortLocale;
 			auto result = sortLocale.sort(_pEditView, id == IDM_EDIT_SORTLINES_LOCALE_DESCENDING);
 			if (result.status)
-				_nativeLangSpeaker.messageBox(result.tagName.data(),
+				_nativeLangSpeaker.messageBox(result.tagName.c_str(),
 					_pPublicInterface->getHSelf(),
-					result.message.data(),
+					result.message.c_str(),
 					result.status == MB_ICONERROR ? L"Sort Failed" : L"Sort not performed",
-					result.status | MB_OK | MB_APPLMODAL, 0, result.message.data());
+					result.status | MB_OK | MB_APPLMODAL, 0, result.message.c_str());
 		}
 		break;
 
@@ -3742,7 +3744,7 @@ void Notepad_plus::command(int id)
 				pathAppend(updaterFullPath, L"gup.exe");
 
 
-#ifdef DEBUG // if not debug, then it's release
+#if !defined(NDEBUG)  // if not debug, then it's release
 				bool isCertifVerified = true;
 #else //RELEASE
 				// check the signature on updater

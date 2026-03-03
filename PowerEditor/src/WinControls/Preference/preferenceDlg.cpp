@@ -3058,7 +3058,7 @@ intptr_t CALLBACK MarginsBorderEdgeSubDlg::run_dlgProc(UINT message, WPARAM wPar
 {
 	NppParameters& nppParam = NppParameters::getInstance();
 
-	switch (message) 
+	switch (message)
 	{
 		case WM_INITDIALOG :
 		{
@@ -3896,7 +3896,7 @@ intptr_t CALLBACK DefaultDirectorySubDlg::run_dlgProc(UINT message, WPARAM wPara
 	NppParameters& nppParam = NppParameters::getInstance();
 	NppGUI& nppGUI = nppParam.getNppGUI();
 
-	switch (message) 
+	switch (message)
 	{
 		case WM_INITDIALOG:
 		{
@@ -4852,24 +4852,34 @@ intptr_t CALLBACK LanguageSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 
 					if ((lmi._langType >= L_EXTERNAL) && (lmi._langType < nppParam.L_END))
 					{
-						bool found(false);
-						for (size_t x = 0; x < nppParam.getExternalLexerDoc()->size() && !found; ++x)
+						const std::string langName = wstring2string(lmi._langName);
+						const char* excludeValue = (LOWORD(wParam) == IDC_BUTTON_REMOVE) ? "yes" : "no";
+						bool found = false;
+						for (const auto& extLexer : *nppParam.getExternalLexerDoc())
 						{
-							TiXmlNode *lexersRoot = nppParam.getExternalLexerDoc()->at(x)._doc->FirstChild(L"NotepadPlus")->FirstChildElement(L"LexerStyles");
-							for (TiXmlNode *childNode = lexersRoot->FirstChildElement(L"LexerType");
-								childNode ;
-								childNode = childNode->NextSibling(L"LexerType"))
-							{
-								TiXmlElement *element = childNode->ToElement();
+							NppXml::Element root = NppXml::firstChildElement(extLexer._doc, "NotepadPlus");
+							if (!root)
+								continue;
 
-								if (wstring(element->Attribute(L"name")) == lmi._langName)
+							NppXml::Element lexersRoot = NppXml::firstChildElement(root, "LexerStyles");
+							if (!lexersRoot)
+								continue;
+
+							for (NppXml::Element childNode = NppXml::firstChildElement(lexersRoot, "LexerType");
+								childNode;
+								childNode = NppXml::nextSiblingElement(childNode, "LexerType"))
+							{
+								if (NppXml::attribute(childNode, "name", "") == langName)
 								{
-									element->SetAttribute(L"excluded", (LOWORD(wParam)==IDC_BUTTON_REMOVE)?L"yes":L"no");
-									nppParam.getExternalLexerDoc()->at(x)._doc->SaveFile();
+									NppXml::setAttribute(childNode, "excluded", excludeValue);
+									static_cast<void>(NppXml::saveFile(extLexer._doc, extLexer._path.c_str()));
 									found = true;
 									break;
 								}
 							}
+
+							if (found)
+								break;
 						}
 					}
 
@@ -7154,6 +7164,7 @@ intptr_t CALLBACK SearchingSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPAR
 			::SendDlgItemMessage(_hSelf, IDC_CHECK_CONFIRMREPLOPENDOCS, BM_SETCHECK, nppGUI._confirmReplaceInAllOpenDocs, 0);
 			::SendDlgItemMessage(_hSelf, IDC_CHECK_REPLACEANDSTOP, BM_SETCHECK, nppGUI._replaceStopsWithoutFindingNext, 0);
 			::SendDlgItemMessage(_hSelf, IDC_CHECK_SHOWONCEPERFOUNDLINE, BM_SETCHECK, nppGUI._finderShowOnlyOneEntryPerFoundLine, 0);
+			::SendDlgItemMessage(_hSelf, IDC_CHECK_FIF_IGNOREOPENEDFILES, BM_SETCHECK, nppGUI._fif_ignoreunsavedChangesInOpenedFiles, 0);
 			::SetDlgItemInt(_hSelf, IDC_INSELECTION_THRESHOLD_EDIT, nppGUI._inSelectionAutocheckThreshold, 0);
 			::SendDlgItemMessage(_hSelf, IDC_CHECK_FILL_DIR_FIELD_FROM_ACTIVE_DOC, BM_SETCHECK, nppGUI._fillDirFieldFromActiveDoc, 0);
 
@@ -7332,6 +7343,12 @@ intptr_t CALLBACK SearchingSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPAR
 				case IDC_CHECK_SHOWONCEPERFOUNDLINE:
 				{
 					nppGUI._finderShowOnlyOneEntryPerFoundLine = isCheckedOrNot(IDC_CHECK_SHOWONCEPERFOUNDLINE);
+					return TRUE;
+				}
+
+				case IDC_CHECK_FIF_IGNOREOPENEDFILES:
+				{
+					nppGUI._fif_ignoreunsavedChangesInOpenedFiles = isCheckedOrNot(IDC_CHECK_FIF_IGNOREOPENEDFILES);
 					return TRUE;
 				}
 
