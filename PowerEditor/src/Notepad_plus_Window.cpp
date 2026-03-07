@@ -225,18 +225,18 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 	// Auto switch language by user region
 	if ( !nppParams.getNativeLang()) {
 		auto fn = localizationSwitcher.getFileName();
-		// »ñÈ¡µ±Ç°µÄÓïÑÔ
+		// è·å–å½“å‰çš„è¯­è¨€
 		wstring lang = L"English";
 		wchar_t localeName[LOCALE_NAME_MAX_LENGTH] = { 0 };
 		if (GetUserDefaultLocaleName(localeName, LOCALE_NAME_MAX_LENGTH))
 		{
 			if (wstring(localeName).find(L"zh-CN") != wstring::npos) {
 				localizationSwitcher.setFileName("chineseSimplified.xml");
-				localizationSwitcher.switchToLang(L"ÖĞÎÄ¼òÌå");
+				localizationSwitcher.switchToLang(L"ä¸­æ–‡ç®€ä½“");
 				::SendMessage(_hSelf, NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
 
 
-				// ¿ªÆô°µºÚÄ£Ê½
+				// å¼€å¯æš—é»‘æ¨¡å¼
 				// Parameters.cpp 7793
 				wstring configXml = nppDir; // <- load default dark mode for first.
 				wstring themePath = nppDir; // <- load default dark mode for first.
@@ -263,14 +263,14 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 					}
 				}
 
-				// Ä¬ÈÏ¿ªÆô ×Ô¶¯»»ĞĞ
+				// é»˜è®¤å¼€å¯ è‡ªåŠ¨æ¢è¡Œ
 				ScintillaViewParams& svp1 = (ScintillaViewParams&)(NppParameters::getInstance()).getSVP();
 				svp1._doWrap = true;
 				_notepad_plus_plus_core.command(IDM_VIEW_WRAP);
 				_notepad_plus_plus_core.checkMenuItem(IDM_VIEW_WRAP, true);
 				// (&FileManager::getInstance()) -> wrap; 
 
-				// ÕâÀïÇ¿ÖÆÄ¬ÈÏ¼ÓÔØ°µÉ«Ä£Ê½, ÕâÀï¼ÓÔØµÄ²»È«
+				// è¿™é‡Œå¼ºåˆ¶é»˜è®¤åŠ è½½æš—è‰²æ¨¡å¼, è¿™é‡ŒåŠ è½½çš„ä¸å…¨
 				/*
 				NppGUI& nppGUI = nppParams.getNppGUI();
 				nppGUI._darkmode._isEnabled = true;
@@ -302,17 +302,17 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 			}
 			else if (wstring(localeName).find(L"zh-HK") != wstring::npos) {
 				localizationSwitcher.setFileName("hongKongCantonese.xml");
-				localizationSwitcher.switchToLang(L"Ïã¸Û·±ów");
+				localizationSwitcher.switchToLang(L"é¦™æ¸¯ç¹é«”");
 				::SendMessage(_hSelf, NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
 			}
 			else if (wstring(localeName).find(L"zh-TW") != wstring::npos) {
 				localizationSwitcher.setFileName("taiwaneseMandarin.xml");
-				localizationSwitcher.switchToLang(L"Ì¨³·±ów");
+				localizationSwitcher.switchToLang(L"å°ç£ç¹é«”");
 				::SendMessage(_hSelf, NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
 			}
 			else if (wstring(localeName).find(L"ja-JP") != wstring::npos) {
 				localizationSwitcher.setFileName("japanese.xml");
-				localizationSwitcher.switchToLang(L"ÈÕ±¾ÕZ");
+				localizationSwitcher.switchToLang(L"æ—¥æœ¬èª");
 				::SendMessage(_hSelf, NPPM_INTERNAL_RELOADNATIVELANG, TRUE, 0);
 			}
 			else if (wstring(localeName).find(L"ko-KR") != wstring::npos) {
