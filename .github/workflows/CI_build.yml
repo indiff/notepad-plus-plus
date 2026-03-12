@@ -288,7 +288,7 @@ jobs:
 
     - name: Archive artifacts for x64 / Release
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
           name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ env.BUILD_VERSION_TIMESTAMP }}
  #         path: PowerEditor\bin64\Notepad++.exe
@@ -304,28 +304,28 @@ jobs:
             !PowerEditor\bin64\**\*.exp
     - name: Archive artifacts for Win32 / Release
       if: matrix.build_platform == 'Win32' && matrix.build_configuration == 'Release'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
           name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}
           path: PowerEditor\bin\Notepad++.exe
 
     - name: Archive artifacts for ARM64 / Release
       if: matrix.build_platform == 'ARM64' && matrix.build_configuration == 'Release'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
           name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}
           path: PowerEditor\binarm64\Notepad++.exe
 
     - name: Archive artifacts for ARM64|x64 / Debug
       if: (matrix.build_platform == 'ARM64' || matrix.build_platform == 'x64') && matrix.build_configuration == 'Debug'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
           name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}
           path: PowerEditor\visual.net\${{ matrix.build_platform}}\${{ matrix.build_configuration}}\Notepad++.exe
 
     - name: Archive artifacts for Win32 / Debug
       if: matrix.build_platform == 'Win32' && matrix.build_configuration == 'Debug'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
           name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}
           path: PowerEditor\visual.net\${{ matrix.build_configuration}}\Notepad++.exe
@@ -357,10 +357,8 @@ jobs:
            Copy-Item "PowerEditor\visual.net\Debug\Notepad++.exe" -Destination "PowerEditor\bin"
            Copy-Item "PowerEditor\src\langs.model.xml" -Destination "PowerEditor\bin"
            Copy-Item "PowerEditor\src\stylers.model.xml" -Destination "PowerEditor\bin"
-           Copy-Item "PowerEditor\src\shortcuts.xml" -Destination "PowerEditor\bin"
-           Copy-Item "PowerEditor\src\contextMenu.xml" -Destination "PowerEditor\bin"
            Copy-Item "PowerEditor\installer\functionList" -Destination "PowerEditor\bin" -Recurse
-
+           Copy-Item "PowerEditor\installer\xml4Config\doLocalConf.xml" -Destination "PowerEditor\bin"
            Copy-Item "PowerEditor\installer\filesForTesting\regexGlobalTest.xml" -Destination "PowerEditor\bin\functionList"
            Copy-Item "PowerEditor\installer\filesForTesting\overrideMap.xml" -Destination "PowerEditor\bin\functionList"
 
@@ -537,7 +535,7 @@ jobs:
         mingw32-make -f PowerEditor\gcc\makefile
 
     - name: Archive artifacts for ${{ matrix.msys }} / ${{ matrix.configuration }}
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: Notepad++.${{ matrix.compiler }}.${{ matrix.arch }}.${{ matrix.configuration }}
         path: bin.${{ matrix.compiler }}.${{ matrix.arch }}${{ matrix.configuration == 'Debug' && '-debug' || '' }}\notepad++.exe
