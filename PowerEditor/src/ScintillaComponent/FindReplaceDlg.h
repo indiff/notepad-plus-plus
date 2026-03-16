@@ -301,14 +301,6 @@ public :
 	void getPatterns(std::vector<std::wstring> & patternVect);
 	void getAndValidatePatterns(std::vector<std::wstring> & patternVect);
 
-	void launchFindInFilesDlg() {
-		doDialog(FINDINFILES_DLG);
-	}
-
-	void launchFindInProjectsDlg() {
-		doDialog(FINDINPROJECTS_DLG);
-	}
-
 	void setFindInFilesDirFilter(const wchar_t *dir, const wchar_t *filters);
 	void setProjectCheckmarks(FindHistory *findHistory, int Msk);
 	void enableProjectCheckmarks();

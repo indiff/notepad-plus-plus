@@ -422,13 +422,12 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 			// Find in files function code should be here due to the number of parameters (2) cannot be passed via WM_COMMAND
 
 			bool isFirstTime = !_findReplaceDlg.isCreated();
-			_findReplaceDlg.doDialog(FIND_DLG, _nativeLangSpeaker.isRTL());
+			_findReplaceDlg.doDialog(FINDINFILES_DLG, _nativeLangSpeaker.isRTL());
 
 			_findReplaceDlg.setSearchTextWithSettings();
 
 			if (isFirstTime)
 				_nativeLangSpeaker.changeFindReplaceDlgLang(_findReplaceDlg);
-			_findReplaceDlg.launchFindInFilesDlg();
 			setFindReplaceFolderFilter(reinterpret_cast<const wchar_t*>(wParam), reinterpret_cast<const wchar_t*>(lParam));
 
 			return TRUE;
@@ -437,14 +436,13 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 		case NPPM_INTERNAL_FINDINPROJECTS:
 		{
 			bool isFirstTime = not _findReplaceDlg.isCreated();
-			_findReplaceDlg.doDialog(FIND_DLG, _nativeLangSpeaker.isRTL());
+			_findReplaceDlg.doDialog(FINDINPROJECTS_DLG, _nativeLangSpeaker.isRTL());
 
 			_findReplaceDlg.setSearchTextWithSettings();
 
 			if (isFirstTime)
 				_nativeLangSpeaker.changeFindReplaceDlgLang(_findReplaceDlg);
 
-			_findReplaceDlg.launchFindInProjectsDlg();
 			_findReplaceDlg.setProjectCheckmarks(NULL, (int) wParam);
 			return TRUE;
 		}
