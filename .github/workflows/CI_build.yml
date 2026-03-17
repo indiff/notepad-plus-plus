@@ -21,7 +21,8 @@ env:
 jobs:
   before_build:
 
-    runs-on: windows-latest
+    #runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     outputs:
       result: ${{ steps.filter.outputs.result }}
       matrix: ${{ steps.filter.outputs.matrix }}
@@ -251,7 +252,7 @@ jobs:
            Copy-Item "PowerEditor\bin\change.log" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\bin\userDefineLangs" -Destination "PowerEditor\bin64" -Recurse
            # Copy-Item "PowerEditor\bin\doLocalConf.xml" -Destination "PowerEditor\bin64" -Recurse
-           Copy-Item "PowerEditor\bin\nppLogNulContentCorruptionIssue.xml" -Destination "PowerEditor\bin64" -Recurse
+           # Copy-Item "PowerEditor\bin\nppLogNulContentCorruptionIssue.xml" -Destination "PowerEditor\bin64" -Recurse
            # Copy-Item "PowerEditor\src\toolbarIcons.xml" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\APIs" -Destination "PowerEditor\bin64" -Recurse
            move PowerEditor\bin64\APIs PowerEditor\bin64\autoCompletion
