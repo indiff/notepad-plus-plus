@@ -250,7 +250,7 @@ jobs:
            move PowerEditor\bin64\nativeLang PowerEditor\bin64\localization
            Copy-Item "PowerEditor\bin\change.log" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\bin\userDefineLangs" -Destination "PowerEditor\bin64" -Recurse
-           Copy-Item "PowerEditor\bin\doLocalConf.xml" -Destination "PowerEditor\bin64" -Recurse
+           # Copy-Item "PowerEditor\bin\doLocalConf.xml" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\bin\nppLogNulContentCorruptionIssue.xml" -Destination "PowerEditor\bin64" -Recurse
            # Copy-Item "PowerEditor\src\toolbarIcons.xml" -Destination "PowerEditor\bin64" -Recurse
            Copy-Item "PowerEditor\installer\APIs" -Destination "PowerEditor\bin64" -Recurse
