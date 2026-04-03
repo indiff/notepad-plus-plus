@@ -1948,6 +1948,7 @@ bool Notepad_plus::replaceInFilelist(std::vector<wstring> & fileNames)
 	}
 
 	bool hasInvalidRegExpr = false;
+
 	NppGUI& nppGUI = (NppParameters::getInstance()).getNppGUI();
 
 	for (size_t i = 0, updateOnCount = filesPerPercent; i < filesCount; ++i)
@@ -1980,7 +1981,7 @@ bool Notepad_plus::replaceInFilelist(std::vector<wstring> & fileNames)
 			if (nbReplaced == FIND_INVALID_REGULAR_EXPRESSION)
 			{
 				hasInvalidRegExpr = true;
-				break;;
+				break;
 			}
 			else
 			{
@@ -2021,10 +2022,10 @@ bool Notepad_plus::replaceInFilelist(std::vector<wstring> & fileNames)
 		result = stringReplace(result, L"$INT_REPLACE$", std::to_wstring(nbTotal));
 	}
 
-	if (!hasInvalidRegExpr)
-		_findReplaceDlg.setStatusbarMessage(result, FSMessage);
-	else
+	if (hasInvalidRegExpr)
 		_findReplaceDlg.setStatusbarMessageWithRegExprErr(&_invisibleEditView);
+	else
+		_findReplaceDlg.setStatusbarMessage(result, FSMessage);
 
 	return true;
 }

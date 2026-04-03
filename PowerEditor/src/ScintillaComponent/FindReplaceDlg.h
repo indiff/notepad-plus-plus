@@ -406,8 +406,11 @@ public :
 	void clearMarks(const FindOption& opt);
 	void setStatusbarMessage(const std::wstring & msg, FindStatus status, const std::wstring& tooltipMsg = L"");
 	void setStatusbarMessageWithRegExprErr(ScintillaEditView* pEditView);
+	void setStatusMessageNotFound(const std::wstring& textNotFound, const std::wstring& tooltipMsg = L"");
+
 	void setStatusMessageWithInvisibleCharsWarning();
 	void removeStatusMessageWithInvisibleCharsWarning();
+
 	std::wstring getScopeInfoForStatusBar(FindOption const *pFindOpt) const;
 	Finder * createFinder();
 	bool removeFinder(Finder *finder2remove);
@@ -521,6 +524,8 @@ private:
 	bool replaceInFilesConfirmCheck(const std::wstring& directory, const std::wstring& fileTypes);
 	bool replaceInProjectsConfirmCheck();
 	bool replaceInOpenDocsConfirmCheck();
+
+	bool isSearchUnicodeCharOnAnsi(const wchar_t* text) const;
 
 	ContextMenu _swapPopupMenu;
 	enum SwapButtonStatus {swap, down, up} _swapButtonStatus = swap;
