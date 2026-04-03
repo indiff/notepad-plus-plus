@@ -2942,6 +2942,32 @@ bool FindReplaceDlg::processFindNext(const wchar_t *txt2find, const FindOption *
 		return false;
 
 	const FindOption *pOptions = options?options:_env;
+	NativeLangSpeaker* pNativeSpeaker = (NppParameters::getInstance()).getNativeLangSpeaker();
+
+	// If txt2find contains non-ANSI characters and document type is ANSI, search cannot match
+	if (isSearchUnicodeCharOnAnsi(txt2find))
+	{
+		if (oFindStatus)
+			*oFindStatus = FSNotFound;
+
+		// Show warning for regex (could work in theory, but we disallow it to prevent unexpected behavior)
+		if (pOptions->_incrementalType == NotIncremental) //incremental search doesn't trigger messages
+		{
+			setStatusMessageNotFound(txt2find);
+
+			// if the dialog is not shown, pass the focus to his parent(ie. Notepad++)
+			if (!::IsWindowVisible(_hSelf))
+			{
+				(*_ppEditView)->grabFocus();
+			}
+			else
+			{
+				::SetFocus(::GetDlgItem(_hSelf, IDFINDWHAT));
+			}
+		}
+		return false;
+
+	}
 
 	(*_ppEditView)->execute(SCI_CALLTIPCANCEL);
 
@@ -3025,8 +3051,6 @@ bool FindReplaceDlg::processFindNext(const wchar_t *txt2find, const FindOption *
 
 	(*_ppEditView)->execute(SCI_SETSEARCHFLAGS, flags);
 
-	NativeLangSpeaker* pNativeSpeaker = (NppParameters::getInstance()).getNativeLangSpeaker();
-
 	posFind = (*_ppEditView)->searchInTarget(pText, stringSizeFind, startPosition, endPosition);
 	if (posFind == -1) //no match found in target, check if a new target should be used
 	{
@@ -3059,27 +3083,13 @@ bool FindReplaceDlg::processFindNext(const wchar_t *txt2find, const FindOption *
 			//failed, or failed twice with wrap
 			if (pOptions->_incrementalType == NotIncremental) //incremental search doesn't trigger messages
 			{
-				wstring warningMsg = pNativeSpeaker->getLocalizedStrFromID("find-status-cannot-find", L"Find: Can't find the text \"$STR_REPLACE$\"");
-				wstring newTxt2find = stringReplace(txt2find, L"&", L"&&");
-
-				if (newTxt2find.length() > 32) // truncate the search string to display, if the search string is too long
-				{
-					newTxt2find.erase(28);
-					newTxt2find += L"...";
-				}
-
-				warningMsg = stringReplace(warningMsg, L"$STR_REPLACE$", newTxt2find);
-
-				warningMsg += L" ";
-				warningMsg += getScopeInfoForStatusBar(&_options);
-
 				wstring reasonMsg;
 				bool isTheMostLaxMode = _options._isWrapAround && !_options._isMatchCase && !_options._isWholeWord;
 				if (!isTheMostLaxMode)
 				{
 					reasonMsg = pNativeSpeaker->getLocalizedStrFromID("find-status-cannot-find-pebkac-maybe", noFoundPotentialReason);
 				}
-				setStatusbarMessage(warningMsg, FSNotFound, reasonMsg);
+				setStatusMessageNotFound(txt2find, reasonMsg);
 
 				// if the dialog is not shown, pass the focus to his parent(ie. Notepad++)
 				if (!::IsWindowVisible(_hSelf))
@@ -3136,9 +3146,10 @@ bool FindReplaceDlg::processReplace(const wchar_t *txt2find, const wchar_t *txt2
 	if (!txt2find || !txt2find[0] || !txt2replace)
 		return false;
 
+	NativeLangSpeaker* pNativeSpeaker = (NppParameters::getInstance()).getNativeLangSpeaker();
+
 	if ((*_ppEditView)->getCurrentBuffer()->isReadOnly())
 	{
-		NativeLangSpeaker *pNativeSpeaker = (NppParameters::getInstance()).getNativeLangSpeaker();
 		wstring msg = pNativeSpeaker->getLocalizedStrFromID("find-status-replace-readonly", L"Replace: Cannot replace text. The current document is read only.");
 		setStatusbarMessage(msg, FSNotFound);
 		return false;
@@ -3147,11 +3158,29 @@ bool FindReplaceDlg::processReplace(const wchar_t *txt2find, const wchar_t *txt2
 	FindOption replaceOptions = options ? *options : *_env;
 	replaceOptions._incrementalType = FirstIncremental;
 
+	// If txt2find contains non-ANSI characters and document type is ANSI, search cannot match
+	if (isSearchUnicodeCharOnAnsi(txt2find))
+	{
+		wstring msg = pNativeSpeaker->getLocalizedStrFromID("find-status-replace-not-found", L"Replace: no occurrence was found");
+
+		msg += L" ";
+		msg += getScopeInfoForStatusBar(&_options);
+
+		setStatusbarMessage(msg, FSNotFound);
+
+		return false;
+	}
+	else if (isSearchUnicodeCharOnAnsi(txt2replace))
+	{
+		NativeLangSpeaker* pNativeSpeaker = (NppParameters::getInstance()).getNativeLangSpeaker();
+		wstring msg = pNativeSpeaker->getLocalizedStrFromID("find-status-replace-invalid-replace-chars", L"Replace: can't replace with non-ANSI text in ANSI document");
+		setStatusbarMessage(msg, FSNotFound);
+		return false;
+	}
+	
 	Sci_CharacterRangeFull currentSelection = (*_ppEditView)->getSelection();
 	FindStatus status;
 	moreMatches = processFindNext(txt2find, &replaceOptions, &status, FINDNEXTTYPE_FINDNEXTFORREPLACE);
-
-	NativeLangSpeaker* pNativeSpeaker = (NppParameters::getInstance()).getNativeLangSpeaker();
 
 	if (moreMatches)
 	{
@@ -3269,11 +3298,28 @@ int FindReplaceDlg::markAllInc(const FindOption *opt)
 
 int FindReplaceDlg::processAll(ProcessOperation op, const FindOption *opt, bool isEntire, const FindersInfo *pFindersInfo, int colourStyleID)
 {
+	NativeLangSpeaker* pNativeSpeaker = (NppParameters::getInstance()).getNativeLangSpeaker();
 	if (op == ProcessReplaceAll && (*_ppEditView)->getCurrentBuffer()->isReadOnly())
 	{
-		NppParameters& nppParam = NppParameters::getInstance();
-		NativeLangSpeaker *pNativeSpeaker = nppParam.getNativeLangSpeaker();
 		wstring msg = pNativeSpeaker->getLocalizedStrFromID("find-status-replaceall-readonly", L"Replace All: Cannot replace text. The current document is read only.");
+		setStatusbarMessage(msg, FSNotFound);
+		return 0;
+	}
+
+	const FindOption* pOptions = opt ? opt : _env;
+	const wchar_t* txt2find = pOptions->_str2Search.c_str();
+	const wchar_t* txt2replace = pOptions->_str4Replace.c_str();
+
+	// If txt2find contains non-ANSI characters and document type is ANSI, search cannot match
+	if (isSearchUnicodeCharOnAnsi(txt2find))
+	{
+		return 0;
+	}
+
+	// If txt2replace contains non-ANSI characters and document type is ANSI, the match cannot be replaced
+	if (isSearchUnicodeCharOnAnsi(txt2replace))
+	{
+		wstring msg = pNativeSpeaker->getLocalizedStrFromID("find-status-replace-invalid-replace-chars", L"Replace: can't replace with non-ANSI text in ANSI document");
 		setStatusbarMessage(msg, FSNotFound);
 		return 0;
 	}
@@ -3281,12 +3327,6 @@ int FindReplaceDlg::processAll(ProcessOperation op, const FindOption *opt, bool 
 	// Turn OFF all the notification of modification (SCN_MODIFIED) for the sake of performance
 	LRESULT notifFlag = (*_ppEditView)->execute(SCI_GETMODEVENTMASK);
 	(*_ppEditView)->execute(SCI_SETMODEVENTMASK, 0);
-
-
-
-	const FindOption *pOptions = opt?opt:_env;
-	const wchar_t *txt2find = pOptions->_str2Search.c_str();
-	const wchar_t *txt2replace = pOptions->_str4Replace.c_str();
 
 	Sci_CharacterRangeFull cr = (*_ppEditView)->getSelection();
 	size_t docLength = (*_ppEditView)->execute(SCI_GETLENGTH);
@@ -4381,6 +4421,26 @@ void FindReplaceDlg::setStatusbarMessageWithRegExprErr(ScintillaEditView* pEditV
 	setStatusbarMessage(result, FSNotFound, string2wstring(s, CP_UTF8));
 }
 
+void FindReplaceDlg::setStatusMessageNotFound(const std::wstring& textNotFound, const std::wstring& tooltipMsg)
+{
+	NativeLangSpeaker* pNativeSpeaker = (NppParameters::getInstance()).getNativeLangSpeaker();
+	wstring warningMsg = pNativeSpeaker->getLocalizedStrFromID("find-status-cannot-find", L"Find: Can't find the text \"$STR_REPLACE$\"");
+	wstring newTxt2find = stringReplace(textNotFound, L"&", L"&&");
+
+	if (newTxt2find.length() > 32) // truncate the search string to display, if the search string is too long
+	{
+		newTxt2find.erase(28);
+		newTxt2find += L"...";
+	}
+
+	warningMsg = stringReplace(warningMsg, L"$STR_REPLACE$", newTxt2find);
+
+	warningMsg += L" ";
+	warningMsg += getScopeInfoForStatusBar(&_options);
+
+	setStatusbarMessage(warningMsg, FSNotFound, tooltipMsg);
+}
+
 void FindReplaceDlg::setStatusMessageWithInvisibleCharsWarning()
 {
 	NativeLangSpeaker* pNativeSpeaker = (NppParameters::getInstance()).getNativeLangSpeaker();
@@ -5199,13 +5259,13 @@ void FindReplaceDlg::calcAndSetCtrlsPos(DIALOG_TYPE dlgT, bool fromColBtn)
 		LONG yFrame = -btnGapOneHalf;
 		LONG hFrame = btnGapDbl;
 		int ySelCheck = rcBtn3rdPos.top;
-		RECT rcToUse{};
+		RECT closeNewRc{};
 
 		switch (dlgT)
 		{
 			case FIND_DLG:
 			{
-				getMappedChildRect(IDC_FINDALL_OPENEDFILES, rcToUse);
+				getMappedChildRect(IDC_FINDALL_OPENEDFILES, closeNewRc);
 
 				RECT rcBtn3rdPosLarge{};
 				getMappedChildRect(IDC_FINDALL_CURRENTFILE, rcBtn3rdPosLarge);
@@ -5216,7 +5276,7 @@ void FindReplaceDlg::calcAndSetCtrlsPos(DIALOG_TYPE dlgT, bool fromColBtn)
 
 			case REPLACE_DLG:
 			{
-				getMappedChildRect(IDC_REPLACE_OPENEDFILES, rcToUse);
+				getMappedChildRect(IDC_REPLACE_OPENEDFILES, closeNewRc);
 
 				yFrame += rcBtn3rdPos.top;
 				hFrame += (rcBtn3rdPos.bottom - rcBtn3rdPos.top);
@@ -5226,25 +5286,26 @@ void FindReplaceDlg::calcAndSetCtrlsPos(DIALOG_TYPE dlgT, bool fromColBtn)
 			case FINDINFILES_DLG:
 			case FINDINPROJECTS_DLG:
 			{
-				rcToUse = rcBtn2ndPos;
+				closeNewRc = rcBtn2ndPos;
 				break;
 			}
 
 			case MARK_DLG:
 			{
-
 				RECT rcBtn1stPos{};
 				getMappedChildRect(IDOK, rcBtn1stPos);
-				yFrame += rcBtn1stPos.top;
+				yFrame += rcBtn2ndPos.top;
 				hFrame += (rcBtn2ndPos.bottom - rcBtn1stPos.top);
 				ySelCheck = rcBtn2ndPos.top;
 
-				rcToUse = rcBtn3rdPos;
+				RECT rcCopyMarkedBtn{};
+				getMappedChildRect(IDC_COPY_MARKED_TEXT, rcCopyMarkedBtn);
+				closeNewRc = rcCopyMarkedBtn;
 				break;
 			}
 		}
 		
-		::SetWindowPos(::GetDlgItem(_hSelf, IDCANCEL), nullptr, rcToUse.left, (rcToUse.bottom + btnGap), 0, 0, SWP_NOSIZE | flags);
+		::SetWindowPos(::GetDlgItem(_hSelf, IDCANCEL), nullptr, closeNewRc.left, (closeNewRc.bottom + btnGap), 0, 0, SWP_NOSIZE | flags);
 
 		if (dlgT == FIND_DLG || dlgT == REPLACE_DLG || dlgT == MARK_DLG)
 		{
@@ -5511,6 +5572,17 @@ bool FindReplaceDlg::replaceInOpenDocsConfirmCheck()
 	}
 
 	return confirmed;
+}
+
+bool FindReplaceDlg::isSearchUnicodeCharOnAnsi(const wchar_t* text) const
+{
+	if ((*_ppEditView)->execute(SCI_GETCODEPAGE) == CP_ACP)
+	{
+		BOOL convertible = FALSE;
+		WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, text, -1, nullptr, 0, nullptr, &convertible);
+		return convertible;
+	}
+	return false;
 }
 
 // Expand selection (if needed) and set the selected text in Find What field.
