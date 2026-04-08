@@ -108,9 +108,9 @@ void DockingCont::doDialog(bool willBeShown, bool isFloating)
 }
 
 
-tTbData* DockingCont::createToolbar(const tTbData& data)
+DockedWidgetData* DockingCont::createDockedWidget(const DockedWidgetData& data)
 {
-	tTbData *pTbData = new tTbData;
+	DockedWidgetData *pTbData = new DockedWidgetData;
 
 	*pTbData = data;
 
@@ -128,61 +128,61 @@ tTbData* DockingCont::createToolbar(const tTbData& data)
 	::SetParent(pTbData->hClient, ::GetDlgItem(_hSelf, IDC_CLIENT_TAB));
 
 	// set names for captions and view toolbar
-	viewToolbar(pTbData);
+	viewDockedWidget(pTbData);
 
 	// attach to list
-	_vTbData.push_back(pTbData);
+	_dwDataVect.push_back(pTbData);
 
 	return pTbData;
 }
 
 
-void DockingCont::removeToolbar(const tTbData& data)
+void DockingCont::removeDockedWidget(const DockedWidgetData& data)
 {
 	// remove from list
-	// items in _vTbData are removed in the loop so _vTbData.size() should be checked in every iteration
-	for (size_t iTb = 0 ; iTb < _vTbData.size(); ++iTb)
+	// items in _dwDataVect are removed in the loop so _dwDataVect.size() should be checked in every iteration
+	for (size_t iTb = 0 ; iTb < _dwDataVect.size(); ++iTb)
 	{
-		if (_vTbData[iTb]->hClient == data.hClient)
+		if (_dwDataVect[iTb]->hClient == data.hClient)
 		{
 			// remove tab
-			removeTab(_vTbData[iTb]);
+			removeTab(_dwDataVect[iTb]);
 
 			// free resources
-			delete _vTbData[iTb];
-			vector<tTbData*>::iterator itr = _vTbData.begin() + iTb;
-			_vTbData.erase(itr);
+			delete _dwDataVect[iTb];
+			vector<DockedWidgetData*>::iterator itr = _dwDataVect.begin() + iTb;
+			_dwDataVect.erase(itr);
 		}
 	}
 }
 
-tTbData* DockingCont::findToolbarByWnd(HWND hClient)
+DockedWidgetData* DockingCont::findDockedWidgetByWnd(HWND hClient)
 {
-	auto matchesWnd = [hClient](const tTbData* pTb) -> bool {
+	auto matchesWnd = [hClient](const DockedWidgetData* pTb) -> bool {
 			return pTb->hClient == hClient;
 		};
 
-	auto it = std::find_if(_vTbData.begin(), _vTbData.end(), matchesWnd);
+	auto it = std::find_if(_dwDataVect.begin(), _dwDataVect.end(), matchesWnd);
 
-	return (it != _vTbData.end()) ? *it : nullptr;
+	return (it != _dwDataVect.end()) ? *it : nullptr;
 }
 
-tTbData* DockingCont::findToolbarByName(wchar_t* pszName)
+DockedWidgetData* DockingCont::findDockedWidgetByName(wchar_t* pszName)
 {
-	tTbData*	pTbData		= NULL;
+	DockedWidgetData*	pTbData		= NULL;
 
 	// find entry by handle
-	for (size_t iTb = 0, len = _vTbData.size(); iTb < len; ++iTb)
+	for (size_t iTb = 0, len = _dwDataVect.size(); iTb < len; ++iTb)
 	{
-		if (lstrcmp(pszName, _vTbData[iTb]->pszName) == 0)
+		if (lstrcmp(pszName, _dwDataVect[iTb]->pszName) == 0)
 		{
-			pTbData = _vTbData[iTb];
+			pTbData = _dwDataVect[iTb];
 		}
 	}
 	return pTbData;
 }
 
-void DockingCont::setActiveTb(tTbData* pTbData)
+void DockingCont::setActiveTb(DockedWidgetData* pTbData)
 {
 	int iItem = searchPosInTab(pTbData);
 	setActiveTb(iItem);
@@ -201,26 +201,23 @@ int DockingCont::getActiveTb()
 	return static_cast<int32_t>(::SendMessage(_hContTab, TCM_GETCURSEL, 0, 0));
 }
 
-tTbData* DockingCont::getDataOfActiveTb()
+DockedWidgetData* DockingCont::getDataOfActiveTb()
 {
-	tTbData*	pTbData	= NULL;
-	int			iItem	= getActiveTb();
+	int iItem = getActiveTb();
 
-	if (iItem != -1)
-	{
-		TCITEM tcItem {};
+	if (iItem == -1) // no active tab
+		return nullptr;
 
-		tcItem.mask = TCIF_PARAM;
-		::SendMessage(_hContTab, TCM_GETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
-		pTbData = (tTbData*)tcItem.lParam;
-	}
+	TCITEM tcItem {};
+	tcItem.mask = TCIF_PARAM;
+	::SendMessage(_hContTab, TCM_GETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
 
-	return pTbData;
+	return reinterpret_cast<DockedWidgetData*>(tcItem.lParam);
 }
 
-vector<tTbData*> DockingCont::getDataOfVisTb()
+vector<DockedWidgetData*> DockingCont::getDataOfVisTb()
 {
-	vector<tTbData*> vTbData;
+	vector<DockedWidgetData*> vTbData;
 	TCITEM tcItem {};
 	int iItemCnt = static_cast<int32_t>(::SendMessage(_hContTab, TCM_GETITEMCOUNT, 0, 0));
 
@@ -229,12 +226,12 @@ vector<tTbData*> DockingCont::getDataOfVisTb()
 	for (int iItem = 0; iItem < iItemCnt; ++iItem)
 	{
 		::SendMessage(_hContTab, TCM_GETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
-		vTbData.push_back((tTbData*)tcItem.lParam);
+		vTbData.push_back(reinterpret_cast<DockedWidgetData*>(tcItem.lParam));
 	}
 	return vTbData;
 }
 
-bool DockingCont::isTbVis(tTbData* data)
+bool DockingCont::isTbVis(DockedWidgetData* data)
 {
 	TCITEM tcItem {};
 	int iItemCnt = static_cast<int32_t>(::SendMessage(_hContTab, TCM_GETITEMCOUNT, 0, 0));
@@ -244,9 +241,12 @@ bool DockingCont::isTbVis(tTbData* data)
 	for (int iItem = 0; iItem < iItemCnt; ++iItem)
 	{
 		::SendMessage(_hContTab, TCM_GETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
-		if (!tcItem.lParam)
+		DockedWidgetData* dwData = reinterpret_cast<DockedWidgetData*>(tcItem.lParam);
+
+		if (!dwData)
 			return false;
-		if (((tTbData*)tcItem.lParam) == data)
+
+		if (dwData == data)
 			return true;
 	}
 	return false;
@@ -868,14 +868,15 @@ LRESULT DockingCont::runProcTab(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 			// get data and hide toolbar
 			tcItem.mask		= TCIF_PARAM;
 			::SendMessage(hwnd, TCM_GETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
+			DockedWidgetData* dwData = reinterpret_cast<DockedWidgetData*>(tcItem.lParam);
 
-			if (!tcItem.lParam)
+			if (!dwData)
 				return FALSE;
 
 			// notify child windows
 			if (NotifyParent(DMM_CLOSE) == 0)
 			{
-				hideToolbar((tTbData*)tcItem.lParam);
+				hideDockedWidget(dwData);
 			}
 			return 0;
 		}
@@ -930,14 +931,16 @@ LRESULT DockingCont::runProcTab(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 						// get text of toolbar
 						tcItem.mask		= TCIF_PARAM;
 						::SendMessage(hwnd, TCM_GETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
-						if (!tcItem.lParam)
+						DockedWidgetData* dwData = reinterpret_cast<DockedWidgetData*>(tcItem.lParam);
+
+						if (!dwData)
 							break;
 
 						// destroy old tooltip
 						toolTip.destroy();
 
 						toolTip.init(_hInst, hwnd);
-						toolTip.Show(rc, (reinterpret_cast<tTbData*>(tcItem.lParam))->pszName, info.pt.x, info.pt.y + 20);
+						toolTip.Show(rc, dwData->pszName, info.pt.x, info.pt.y + 20);
 					}
 				}
 
@@ -971,7 +974,7 @@ LRESULT DockingCont::runProcTab(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 				break;
 
 			toolTip.init(_hInst, hwnd);
-			toolTip.Show(rc, reinterpret_cast<tTbData*>(tcItem.lParam)->pszName, info.pt.x, info.pt.y + 20);
+			toolTip.Show(rc, reinterpret_cast<DockedWidgetData*>(tcItem.lParam)->pszName, info.pt.x, info.pt.y + 20);
 			return 0;
 		}
 
@@ -1054,13 +1057,13 @@ void DockingCont::drawTabItem(DRAWITEMSTRUCT* pDrawItemStruct)
 	// get current selected item
 	tcItem.mask = TCIF_PARAM;
 	::SendMessage(_hContTab, TCM_GETITEM, nTab, reinterpret_cast<LPARAM>(&tcItem));
-	if (!tcItem.lParam)
+	DockedWidgetData* dwData = reinterpret_cast<DockedWidgetData*>(tcItem.lParam);
+
+	if (!dwData)
 		return;
 
-	auto tbData = reinterpret_cast<tTbData*>(tcItem.lParam);
-
-	const wchar_t* text = tbData->pszName;
-	int length = lstrlen(tbData->pszName);
+	const wchar_t* text = dwData->pszName;
+	int length = lstrlen(dwData->pszName);
 
 	// get drawing context
 	HDC hDc = pDrawItemStruct->hDC;
@@ -1087,7 +1090,7 @@ void DockingCont::drawTabItem(DRAWITEMSTRUCT* pDrawItemStruct)
 	}
 
 	// draw icon if enabled
-	if ((tbData->uMask & DWS_ICONTAB) == DWS_ICONTAB)
+	if ((dwData->uMask & DWS_ICONTAB) == DWS_ICONTAB)
 	{
 		const int wPadding = _dpiManager.scale(g_dockingContTabIconPadding);
 		const int iconSize = _dpiManager.scale(g_dockingContTabIconSize);
@@ -1095,7 +1098,7 @@ void DockingCont::drawTabItem(DRAWITEMSTRUCT* pDrawItemStruct)
 		const int iconDpiDynamicalX = rc.left + (isSelected ? wPadding : (rc.right - rc.left - iconSize + 1) / 2);
 		const int iconDpiDynamicalY = rc.top + (rc.bottom - rc.top - iconSize - onePadding) / 2;
 
-		::DrawIconEx(hDc, iconDpiDynamicalX, iconDpiDynamicalY, tbData->hIconTab, iconSize, iconSize, 0, nullptr, DI_NORMAL);
+		::DrawIconEx(hDc, iconDpiDynamicalX, iconDpiDynamicalY, dwData->hIconTab, iconSize, iconSize, 0, nullptr, DI_NORMAL);
 
 		if (isSelected)
 		{
@@ -1324,132 +1327,132 @@ intptr_t CALLBACK DockingCont::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
 
 void DockingCont::onSize()
 {
-	TCITEM tcItem {};
-	RECT rc {};
-	RECT rcTemp {};
-	UINT iItemCnt = static_cast<int32_t>(::SendMessage(_hContTab, TCM_GETITEMCOUNT, 0, 0));
-	UINT iTabOff = 0;
+	const size_t nbTab = static_cast<size_t>(::SendMessage(_hContTab, TCM_GETITEMCOUNT, 0, 0));
 
+	if (!nbTab) return;
+
+	RECT rcTemp {};
+	RECT rc {};
 	getClientRect(rc);
 
-	if (iItemCnt >= 1)
+	// resize to docked window
+	const int tabDpiDynamicalHeight = _dpiManager.scale(g_dockingContTabIconSize + (g_dockingContTabIconPadding) * 2 + CAPTION_GAP);
+	if (_isFloating == false)
 	{
-		// resize to docked window
-		const int tabDpiDynamicalHeight = _dpiManager.scale(g_dockingContTabIconSize + (g_dockingContTabIconPadding) * 2 + CAPTION_GAP);
-		if (_isFloating == false)
+		// draw caption
+		if (_isTopCaption == TRUE)
 		{
-			// draw caption
-			if (_isTopCaption == TRUE)
-			{
-				::SetWindowPos(_hCaption, NULL, rc.left, rc.top, rc.right, _captionHeightDynamic, SWP_NOZORDER | SWP_NOACTIVATE);
-				rc.top += _captionHeightDynamic;
-				rc.bottom -= _captionHeightDynamic;
-			}
-			else
-			{
-				::SetWindowPos(_hCaption, NULL, rc.left, rc.top, _captionHeightDynamic, rc.bottom, SWP_NOZORDER | SWP_NOACTIVATE);
-				rc.left += _captionHeightDynamic;
-				rc.right -= _captionHeightDynamic;
-			}
-
-			if (iItemCnt >= 2)
-			{
-				// resize tab and plugin control if tabs exceeds one
-				// resize tab
-				rcTemp = rc;
-				rcTemp.top = (rcTemp.bottom + rcTemp.top) - (tabDpiDynamicalHeight + _captionGapDynamic);
-				rcTemp.bottom	= tabDpiDynamicalHeight;
-				iTabOff			= tabDpiDynamicalHeight;
-
-				::SetWindowPos(_hContTab, NULL,
-								rcTemp.left, rcTemp.top, rcTemp.right, rcTemp.bottom,
-								SWP_NOZORDER | SWP_SHOWWINDOW |  SWP_NOACTIVATE);
-
-				if (_hTabUpdown != nullptr)
-				{
-					::InvalidateRect(_hTabUpdown, nullptr, TRUE);
-					::UpdateWindow(_hTabUpdown);
-				}
-			}
-
-			// resize client area for plugin
-			rcTemp = rc;
-			if (_isTopCaption == TRUE)
-			{
-				rcTemp.top += _captionGapDynamic;
-				rcTemp.bottom -= (iTabOff + _captionGapDynamic);
-			}
-			else
-			{
-				rcTemp.left += _captionGapDynamic;
-				rcTemp.right -= _captionGapDynamic;
-				rcTemp.bottom -= iTabOff;
-			}
-
-			// set position of client area
-			::SetWindowPos(::GetDlgItem(_hSelf, IDC_CLIENT_TAB), NULL,
-							rcTemp.left, rcTemp.top, rcTemp.right, rcTemp.bottom,
-							SWP_NOZORDER | SWP_NOACTIVATE);
+			::SetWindowPos(_hCaption, NULL, rc.left, rc.top, rc.right, _captionHeightDynamic, SWP_NOZORDER | SWP_NOACTIVATE);
+			rc.top += _captionHeightDynamic;
+			rc.bottom -= _captionHeightDynamic;
 		}
-		// resize to float window
 		else
 		{
-			// update floating size
-			for (size_t iTb = 0, len = _vTbData.size(); iTb < len; ++iTb)
-			{
-				getWindowRect(_vTbData[iTb]->rcFloat);
-			}
-
-			// draw caption
-			if (iItemCnt >= 2)
-			{
-				// resize tab if size of elements exceeds one
-				rcTemp = rc;
-				rcTemp.top = rcTemp.bottom - (tabDpiDynamicalHeight + _captionGapDynamic);
-				rcTemp.bottom = tabDpiDynamicalHeight;
-
-				::SetWindowPos(_hContTab, NULL,
-								rcTemp.left, rcTemp.top, rcTemp.right, rcTemp.bottom,
-								SWP_NOZORDER | SWP_SHOWWINDOW);
-
-				if (_hTabUpdown != nullptr)
-				{
-					::InvalidateRect(_hTabUpdown, nullptr, TRUE);
-					::UpdateWindow(_hTabUpdown);
-				}
-			}
-
-			// resize client area for plugin
-			rcTemp = rc;
-			rcTemp.bottom -= ((iItemCnt == 1)?0:tabDpiDynamicalHeight);
-
-			::SetWindowPos(::GetDlgItem(_hSelf, IDC_CLIENT_TAB), NULL,
-							rcTemp.left, rcTemp.top, rcTemp.right, rcTemp.bottom,
-							SWP_NOZORDER | SWP_NOACTIVATE);
+			::SetWindowPos(_hCaption, NULL, rc.left, rc.top, _captionHeightDynamic, rc.bottom, SWP_NOZORDER | SWP_NOACTIVATE);
+			rc.left += _captionHeightDynamic;
+			rc.right -= _captionHeightDynamic;
 		}
 
-		// get active item data
-		size_t iItemCnt2 = static_cast<size_t>(::SendMessage(_hContTab, TCM_GETITEMCOUNT, 0, 0));
+		UINT iTabOff = 0;
 
-		// resize visible plugin windows
-		for (size_t iItem = 0; iItem < iItemCnt2; ++iItem)
+		if (nbTab >= 2)
 		{
-			tcItem.mask		= TCIF_PARAM;
-			::SendMessage(_hContTab, TCM_GETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
-			if (!tcItem.lParam)
-				continue;
+			// resize tab and plugin control if tabs exceeds one
+			// resize tab
+			rcTemp = rc;
+			rcTemp.top = (rcTemp.bottom + rcTemp.top) - (tabDpiDynamicalHeight + _captionGapDynamic);
+			rcTemp.bottom	= tabDpiDynamicalHeight;
+			iTabOff			= tabDpiDynamicalHeight;
 
-			::SetWindowPos(((tTbData*)tcItem.lParam)->hClient, NULL,
-							0, 0, rcTemp.right, rcTemp.bottom, 
+			::SetWindowPos(_hContTab, NULL,
+							rcTemp.left, rcTemp.top, rcTemp.right, rcTemp.bottom,
+							SWP_NOZORDER | SWP_SHOWWINDOW |  SWP_NOACTIVATE);
+
+			if (_hTabUpdown != nullptr)
+			{
+				::InvalidateRect(_hTabUpdown, nullptr, TRUE);
+				::UpdateWindow(_hTabUpdown);
+			}
+		}
+
+		// resize client area for plugin
+		rcTemp = rc;
+		if (_isTopCaption == TRUE)
+		{
+			rcTemp.top += _captionGapDynamic;
+			rcTemp.bottom -= (iTabOff + _captionGapDynamic);
+		}
+		else
+		{
+			rcTemp.left += _captionGapDynamic;
+			rcTemp.right -= _captionGapDynamic;
+			rcTemp.bottom -= iTabOff;
+		}
+
+		// set position of client area
+		::SetWindowPos(::GetDlgItem(_hSelf, IDC_CLIENT_TAB), NULL,
+						rcTemp.left, rcTemp.top, rcTemp.right, rcTemp.bottom,
+						SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+	else // resize to float window
+	{
+		// update floating size
+		for (size_t iTb = 0, len = _dwDataVect.size(); iTb < len; ++iTb)
+		{
+			getWindowRect(_dwDataVect[iTb]->rcFloat);
+		}
+
+		// draw caption
+		if (nbTab >= 2)
+		{
+			// resize tab if size of elements exceeds one
+			rcTemp = rc;
+			rcTemp.top = rcTemp.bottom - (tabDpiDynamicalHeight + _captionGapDynamic);
+			rcTemp.bottom = tabDpiDynamicalHeight;
+
+			::SetWindowPos(_hContTab, NULL,
+							rcTemp.left, rcTemp.top, rcTemp.right, rcTemp.bottom,
+							SWP_NOZORDER | SWP_SHOWWINDOW);
+
+			if (_hTabUpdown != nullptr)
+			{
+				::InvalidateRect(_hTabUpdown, nullptr, TRUE);
+				::UpdateWindow(_hTabUpdown);
+			}
+		}
+
+		// resize client area for plugin
+		rcTemp = rc;
+		rcTemp.bottom -= ((nbTab == 1)?0:tabDpiDynamicalHeight);
+
+		::SetWindowPos(::GetDlgItem(_hSelf, IDC_CLIENT_TAB), NULL,
+						rcTemp.left, rcTemp.top, rcTemp.right, rcTemp.bottom,
+						SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+
+	// get active item data
+
+	TCITEM tcItem{};
+
+	// resize visible plugin windows
+	for (size_t iItem = 0; iItem < nbTab; ++iItem)
+	{
+		tcItem.mask	= TCIF_PARAM;
+		::SendMessage(_hContTab, TCM_GETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
+		DockedWidgetData* dwData = reinterpret_cast<DockedWidgetData*>(tcItem.lParam);
+
+		if (dwData)
+		{
+			::SetWindowPos(dwData->hClient, NULL,
+							0, 0, rcTemp.right, rcTemp.bottom,
 							SWP_NOZORDER);
 
 			// Notify switch in
 			NMHDR nmhdr{};
-			nmhdr.code		= DMN_FLOATDROPPED;
-			nmhdr.hwndFrom	= _hSelf;
-			nmhdr.idFrom	= 0;
-			::SendMessage(((tTbData*)tcItem.lParam)->hClient, WM_NOTIFY, nmhdr.idFrom, reinterpret_cast<LPARAM>(&nmhdr));
-			
+			nmhdr.code = DMN_FLOATDROPPED;
+			nmhdr.hwndFrom = _hSelf;
+			nmhdr.idFrom = 0;
+			::SendMessage(dwData->hClient, WM_NOTIFY, nmhdr.idFrom, reinterpret_cast<LPARAM>(&nmhdr));
 		}
 	}
 }
@@ -1461,13 +1464,15 @@ void DockingCont::doClose(BOOL closeAll)
 	TCITEM item {};
 	item.mask = TCIF_PARAM;
 	::SendMessage(_hContTab, TCM_GETITEM, iItemCur, reinterpret_cast<LPARAM>(&item));
-	if (item.lParam)
+	DockedWidgetData* dwData = reinterpret_cast<DockedWidgetData*>(item.lParam);
+
+	if (dwData)
 	{
 		// notify child windows
 		if (NotifyParent(DMM_CLOSE) == 0)
 		{
 			// delete tab
-			hideToolbar((tTbData*)item.lParam);
+			hideDockedWidget(dwData);
 		}
 	}
 
@@ -1483,14 +1488,16 @@ void DockingCont::doClose(BOOL closeAll)
 			selectTab(iItemOff);
 			tcItem.mask	= TCIF_PARAM;
 			::SendMessage(_hContTab, TCM_GETITEM, iItemOff, reinterpret_cast<LPARAM>(&tcItem));
-			if (!tcItem.lParam)
+			DockedWidgetData* dwData = reinterpret_cast<DockedWidgetData*>(tcItem.lParam);
+
+			if (!dwData)
 				continue;
 
 			// notify child windows
 			if (NotifyParent(DMM_CLOSE) == 0)
 			{
 				// delete tab
-				hideToolbar((tTbData*)tcItem.lParam);
+				hideDockedWidget(dwData);
 			}
 			else
 			{
@@ -1509,19 +1516,19 @@ void DockingCont::doClose(BOOL closeAll)
 	}
 }
 
-void DockingCont::showToolbar(tTbData* pTbData, BOOL state)
+void DockingCont::showDockedWidget(DockedWidgetData* pTbData, BOOL state)
 {
 	if (state == SW_SHOW)
 	{
-		viewToolbar(pTbData);
+		viewDockedWidget(pTbData);
 	}
 	else
 	{
-		hideToolbar(pTbData);
+		hideDockedWidget(pTbData);
 	}
 }
 
-int DockingCont::hideToolbar(tTbData *pTbData, BOOL hideClient)
+int DockingCont::hideDockedWidget(DockedWidgetData *pTbData, BOOL hideClient)
 {
 	int iItem = searchPosInTab(pTbData);
 	BOOL hadFocus = ::IsChild (pTbData->hClient, ::GetFocus());
@@ -1574,28 +1581,30 @@ int DockingCont::hideToolbar(tTbData *pTbData, BOOL hideClient)
 	return iItem;
 }
 
-void DockingCont::viewToolbar(tTbData *pTbData)
+void DockingCont::viewDockedWidget(DockedWidgetData* pDwData)
 {
 	TCITEM tcItem {};
 	int iItemCnt = static_cast<int32_t>(::SendMessage(_hContTab, TCM_GETITEMCOUNT, 0, 0));
 
 	if (iItemCnt > 0)
 	{
-		UINT	iItem	= getActiveTb();
+		UINT iItem = getActiveTb();
 
-		tcItem.mask		= TCIF_PARAM;
+		tcItem.mask = TCIF_PARAM;
 		::SendMessage(_hContTab, TCM_GETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
-		if (!tcItem.lParam)
+		DockedWidgetData* dwData = reinterpret_cast<DockedWidgetData*>(tcItem.lParam);
+		
+		if (!dwData)
 			return;
 		
 		// hide active dialog
-		::ShowWindow(((tTbData*)tcItem.lParam)->hClient, SW_HIDE);
+		::ShowWindow(dwData->hClient, SW_HIDE);
 	}
 
 	// create new tab if it not exists
-	int iTabPos = searchPosInTab(pTbData);
-	tcItem.mask			= TCIF_PARAM;
-	tcItem.lParam = reinterpret_cast<LPARAM>(pTbData);
+	int iTabPos = searchPosInTab(pDwData);
+	tcItem.mask = TCIF_PARAM;
+	tcItem.lParam = reinterpret_cast<LPARAM>(pDwData);
 
 	if (iTabPos == -1)
 	{
@@ -1621,7 +1630,7 @@ void DockingCont::viewToolbar(tTbData *pTbData)
 	onSize();
 }
 
-int DockingCont::searchPosInTab(tTbData* pTbData)
+int DockingCont::searchPosInTab(DockedWidgetData* pTbData)
 {
 	TCITEM tcItem {};
 	int iItemCnt = static_cast<int32_t>(::SendMessage(_hContTab, TCM_GETITEMCOUNT, 0, 0));
@@ -1634,7 +1643,7 @@ int DockingCont::searchPosInTab(tTbData* pTbData)
 		if (!tcItem.lParam)
 			continue;
 
-		if (((tTbData*)tcItem.lParam)->hClient == pTbData->hClient)
+		if (((DockedWidgetData*)tcItem.lParam)->hClient == pTbData->hClient)
 			return iItem;
 	}
 	return -1;
@@ -1642,98 +1651,103 @@ int DockingCont::searchPosInTab(tTbData* pTbData)
 
 void DockingCont::selectTab(int iTab)
 {
-	if (iTab != -1)
-	{
-		const wchar_t	*pszMaxTxt	= NULL;
-		TCITEM tcItem {};
-		SIZE size = {};
-		int maxWidth = 0;
-		int iItemCnt = static_cast<int32_t>(::SendMessage(_hContTab, TCM_GETITEMCOUNT, 0, 0));
+	if (iTab == -1)
+		return;
 
-		// get data of new active dialog
-		tcItem.mask		= TCIF_PARAM;
-		::SendMessage(_hContTab, TCM_GETITEM, iTab, reinterpret_cast<LPARAM>(&tcItem));
-		// show active dialog
-		if (!tcItem.lParam)
+	const wchar_t	*pszMaxTxt	= NULL;
+	TCITEM tcItem {};
+	SIZE size = {};
+	int maxWidth = 0;
+	int iItemCnt = static_cast<int32_t>(::SendMessage(_hContTab, TCM_GETITEMCOUNT, 0, 0));
+
+	// get data of new active dialog
+	tcItem.mask		= TCIF_PARAM;
+	::SendMessage(_hContTab, TCM_GETITEM, iTab, reinterpret_cast<LPARAM>(&tcItem));
+	DockedWidgetData* dwData = reinterpret_cast<DockedWidgetData*>(tcItem.lParam);
+
+	if (!dwData)
+		return;
+
+	// show active dialog
+	::ShowWindow(dwData->hClient, SW_SHOW);
+	::SetFocus(dwData->hClient);
+
+	// Notify switch in
+	NMHDR nmhdrIn{};
+	nmhdrIn.code		= DMN_SWITCHIN;
+	nmhdrIn.hwndFrom	= _hSelf;
+	nmhdrIn.idFrom	= 0;
+	::SendMessage(dwData->hClient, WM_NOTIFY, nmhdrIn.idFrom, reinterpret_cast<LPARAM>(&nmhdrIn));
+
+	if (static_cast<unsigned int>(iTab) != _prevItem)
+	{
+		// hide previous dialog
+		::SendMessage(_hContTab, TCM_GETITEM, _prevItem, reinterpret_cast<LPARAM>(&tcItem));
+		dwData = reinterpret_cast<DockedWidgetData*>(tcItem.lParam);
+
+		if (!dwData)
 			return;
 
-		::ShowWindow(((tTbData*)tcItem.lParam)->hClient, SW_SHOW);
-		::SetFocus(((tTbData*)tcItem.lParam)->hClient);
-
-		// Notify switch in
-		NMHDR nmhdrIn{};
-		nmhdrIn.code		= DMN_SWITCHIN;
-		nmhdrIn.hwndFrom	= _hSelf;
-		nmhdrIn.idFrom	= 0;
-		::SendMessage(reinterpret_cast<tTbData*>(tcItem.lParam)->hClient, WM_NOTIFY, nmhdrIn.idFrom, reinterpret_cast<LPARAM>(&nmhdrIn));
-
-		if (static_cast<unsigned int>(iTab) != _prevItem)
-		{
-			// hide previous dialog
-			::SendMessage(_hContTab, TCM_GETITEM, _prevItem, reinterpret_cast<LPARAM>(&tcItem));
-
-			if (!tcItem.lParam)
-				return;
-			::ShowWindow(((tTbData*)tcItem.lParam)->hClient, SW_HIDE);
+		::ShowWindow(dwData->hClient, SW_HIDE);
 		
-			// Notify switch off
-			NMHDR nmhdrOff{};
-			nmhdrOff.code		= DMN_SWITCHOFF;
-			nmhdrOff.hwndFrom	= _hSelf;
-			nmhdrOff.idFrom	= 0;
-			::SendMessage(((tTbData*)tcItem.lParam)->hClient, WM_NOTIFY, nmhdrOff.idFrom, reinterpret_cast<LPARAM>(&nmhdrOff));
-		}
+		// Notify switch off
+		NMHDR nmhdrOff{};
+		nmhdrOff.code		= DMN_SWITCHOFF;
+		nmhdrOff.hwndFrom	= _hSelf;
+		nmhdrOff.idFrom	= 0;
+		::SendMessage(dwData->hClient, WM_NOTIFY, nmhdrOff.idFrom, reinterpret_cast<LPARAM>(&nmhdrOff));
+	}
 
-		// resize tab item
+	// resize tab item
 
-		// get at first largest item ...
-		HDC		hDc	= ::GetDC(_hContTab);
-		SelectObject(hDc, _hFont);
+	// get at first largest item ...
+	HDC hDc = ::GetDC(_hContTab);
+	SelectObject(hDc, _hFont);
 
-		for (int iItem = 0; iItem < iItemCnt; ++iItem)
+	for (int iItem = 0; iItem < iItemCnt; ++iItem)
+	{
+		::SendMessage(_hContTab, TCM_GETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
+		dwData = reinterpret_cast<DockedWidgetData*>(tcItem.lParam);
+
+		if (dwData)
 		{
-			const wchar_t *pszTabTxt = NULL;
-
-			::SendMessage(_hContTab, TCM_GETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
-			if (!tcItem.lParam)
-				continue;
-			pszTabTxt = reinterpret_cast<tTbData*>(tcItem.lParam)->pszName;
+			const wchar_t* pszTabTxt = dwData->pszName;
 
 			// get current font width
 			GetTextExtentPoint32(hDc, pszTabTxt, lstrlen(pszTabTxt), &size);
 
-			if (maxWidth < size.cx) 
+			if (maxWidth < size.cx)
 			{
-				maxWidth	= size.cx;
-				pszMaxTxt	= pszTabTxt;
+				maxWidth = size.cx;
+				pszMaxTxt = pszTabTxt;
 			}
 		}
-		::ReleaseDC(_hSelf, hDc);
-
-		tcItem.mask	= TCIF_TEXT;
-
-		for (int iItem = 0; iItem < iItemCnt; ++iItem)
-		{
-			wstring szText;
-			if (iItem == iTab && pszMaxTxt)
-			{
-				// fake here an icon before text ...
-				szText = L"        ";
-				szText += pszMaxTxt;
-			}
-			tcItem.pszText = (wchar_t *)szText.c_str();
-			::SendMessage(_hContTab, TCM_SETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
-		}
-
-		// selects the pressed tab and store previous tab
-		::SendMessage(_hContTab, TCM_SETCURSEL, iTab, 0);
-		_prevItem = iTab;
-
-		// update caption text
-		updateCaption();
-
-		onSize();
 	}
+	::ReleaseDC(_hSelf, hDc);
+
+	tcItem.mask	= TCIF_TEXT;
+
+	for (int iItem = 0; iItem < iItemCnt; ++iItem)
+	{
+		wstring szText;
+		if (iItem == iTab && pszMaxTxt)
+		{
+			// fake here an icon before text ...
+			szText = L"        ";
+			szText += pszMaxTxt;
+		}
+		tcItem.pszText = (wchar_t *)szText.c_str();
+		::SendMessage(_hContTab, TCM_SETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
+	}
+
+	// selects the pressed tab and store previous tab
+	::SendMessage(_hContTab, TCM_SETCURSEL, iTab, 0);
+	_prevItem = iTab;
+
+	// update caption text
+	updateCaption();
+
+	onSize();
 }
 
 bool DockingCont::updateCaption()
@@ -1750,18 +1764,18 @@ bool DockingCont::updateCaption()
 	// get data of new active dialog
 	tcItem.mask		= TCIF_PARAM;
 	::SendMessage(_hContTab, TCM_GETITEM, iItem, reinterpret_cast<LPARAM>(&tcItem));
+	DockedWidgetData* dwData = reinterpret_cast<DockedWidgetData*>(tcItem.lParam);
 
-	if (!tcItem.lParam) return false;
+	if (!dwData) return false;
 
 	// update caption text
-	_pszCaption = ((tTbData*)tcItem.lParam)->pszName;
+	_pszCaption = dwData->pszName;
 
 	// test if additional information are available
-	if ((((tTbData*)tcItem.lParam)->uMask & DWS_ADDINFO) && 
-		(lstrlen(((tTbData*)tcItem.lParam)->pszAddInfo) != 0))
+	if ((dwData->uMask & DWS_ADDINFO) && (lstrlen(dwData->pszAddInfo) != 0))
 	{
 		_pszCaption += L" - ";
-		_pszCaption += ((tTbData*)tcItem.lParam)->pszAddInfo; 
+		_pszCaption += dwData->pszAddInfo;
 	}
 
 	if (_isFloating == true)
@@ -1790,11 +1804,11 @@ void DockingCont::focusClient()
 		if (!tcItem.lParam)
 			return;
 
-		tTbData *tbData = (tTbData *)tcItem.lParam;
-		if (tbData->pszAddInfo && lstrcmp(tbData->pszAddInfo, DM_NOFOCUSWHILECLICKINGCAPTION) == 0)
+		DockedWidgetData* dwData = (DockedWidgetData *)tcItem.lParam;
+		if (dwData->pszAddInfo && lstrcmp(dwData->pszAddInfo, DM_NOFOCUSWHILECLICKINGCAPTION) == 0)
 			return;
 		
-		::SetFocus(tbData->hClient);
+		::SetFocus(dwData->hClient);
 	}
 }
 

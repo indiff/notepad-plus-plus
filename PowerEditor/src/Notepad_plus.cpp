@@ -1001,7 +1001,7 @@ void Notepad_plus::saveDockingParams()
 	for (size_t i = 0, len = vCont.size(); i < len ; ++i)
 	{
 		// save at first the visible Tb's
-		vector<tTbData *>	vDataVis	= vCont[i]->getDataOfVisTb();
+		vector<DockedWidgetData *>	vDataVis	= vCont[i]->getDataOfVisTb();
 
 		for (size_t j = 0, len2 = vDataVis.size(); j < len2 ; ++j)
 		{
@@ -1013,7 +1013,7 @@ void Notepad_plus::saveDockingParams()
 		}
 
 		// save the hidden Tb's
-		vector<tTbData *>	vDataAll	= vCont[i]->getDataOfAllTb();
+		vector<DockedWidgetData *>	vDataAll	= vCont[i]->getDataOfAllTb();
 
 		for (size_t j = 0, len3 = vDataAll.size(); j < len3 ; ++j)
 		{
@@ -4507,19 +4507,21 @@ void Notepad_plus::dropFiles(HDROP hdrop)
 		//else
 			// do not change the current Notepad++ edit-view
 
-		int filesDropped = ::DragQueryFile(hdrop, 0xffffffff, NULL, 0);
+		int filesDropped = ::DragQueryFileW(hdrop, 0xffffffff, NULL, 0);
 
 		vector<wstring> folderPaths;
 		vector<wstring> filePaths;
 		for (int i = 0; i < filesDropped; ++i)
 		{
-			wchar_t pathDropped[MAX_PATH];
-			::DragQueryFile(hdrop, i, pathDropped, MAX_PATH);
+			wchar_t pathDropped[MAX_PATH]{};
+			::DragQueryFileW(hdrop, i, pathDropped, MAX_PATH);
 			if (doesDirectoryExist(pathDropped))
 			{
-				size_t len = lstrlen(pathDropped);
-				if (len > 0 && pathDropped[len - 1] != wchar_t('\\'))
+				size_t len = lstrlenW(pathDropped);
+				if ((len > 0) && (pathDropped[len - 1] != wchar_t('\\')))
 				{
+					if (len + 1 >= MAX_PATH)
+						continue; // not enough space for the trailing backslash, try next
 					pathDropped[len] = wchar_t('\\');
 					pathDropped[len + 1] = wchar_t('\0');
 				}
@@ -4534,13 +4536,17 @@ void Notepad_plus::dropFiles(HDROP hdrop)
 		NppParameters& nppParam = NppParameters::getInstance();
 		bool isOldMode = nppParam.getNppGUI()._isFolderDroppedOpenFiles;
 
-		if (isOldMode || folderPaths.size() == 0) // old mode or new mode + only files
+		if ((filePaths.size() == 0) && (folderPaths.size() == 0))
+		{
+			// invalid paths, do nothing
+		}
+		else if (isOldMode || folderPaths.size() == 0) // old mode or new mode + only files
 		{
 			BufferID lastOpened = BUFFER_INVALID;
 			for (int i = 0; i < filesDropped; ++i)
 			{
-				wchar_t pathDropped[MAX_PATH];
-				::DragQueryFile(hdrop, i, pathDropped, MAX_PATH);
+				wchar_t pathDropped[MAX_PATH]{};
+				::DragQueryFileW(hdrop, i, pathDropped, MAX_PATH);
 				BufferID test = doOpen(pathDropped);
 				if (test != BUFFER_INVALID)
 					lastOpened = test;
@@ -6337,7 +6343,7 @@ void Notepad_plus::doSynScroll(HWND whichView)
 	pView->scroll(column, line);
 }
 
-bool Notepad_plus::getIntegralDockingData(tTbData & dockData, int & iCont, bool & isVisible)
+bool Notepad_plus::getIntegralDockingData(DockedWidgetData & dockData, int & iCont, bool & isVisible)
 {
 	const DockingManagerData & dockingData = (DockingManagerData &)(NppParameters::getInstance()).getNppGUI()._dockingData;
 
@@ -6354,7 +6360,7 @@ bool Notepad_plus::getIntegralDockingData(tTbData & dockData, int & iCont, bool 
 			if (dockData.iPrevCont != -1)
 			{
 				int cont = (pddi._currContainer < DOCKCONT_MAX ? pddi._prevContainer : pddi._currContainer);
-				RECT rc;
+				RECT rc {};
 				if (dockingData.getFloatingRCFrom(cont, rc))
 					dockData.rcFloat = rc;
 			}
@@ -7338,7 +7344,7 @@ void Notepad_plus::launchClipboardHistoryPanel()
 
 		NativeLangSpeaker *pNativeSpeaker = nppParams.getNativeLangSpeaker();
 		bool isRTL = pNativeSpeaker->isRTL();
-		tTbData	data{};
+		DockedWidgetData	data{};
 		_pClipboardHistoryPanel->create(&data, { IDR_CLIPBOARDPANEL_ICO, IDR_CLIPBOARDPANEL_ICO_DM, IDR_CLIPBOARDPANEL_ICO2 }, isRTL);
 
 		::SendMessage(_pPublicInterface->getHSelf(), NPPM_MODELESSDIALOG, MODELESSDIALOGREMOVE, reinterpret_cast<LPARAM>(_pClipboardHistoryPanel->getHSelf()));
@@ -7395,7 +7401,7 @@ void Notepad_plus::launchDocumentListPanel(bool changeFromBtnCmd)
 		_pDocumentListPanel->init(_pPublicInterface->getHinst(), _pPublicInterface->getHSelf(), hImgLst);
 		NativeLangSpeaker *pNativeSpeaker = nppParams.getNativeLangSpeaker();
 		bool isRTL = pNativeSpeaker->isRTL();
-		tTbData	data{};
+		DockedWidgetData	data{};
 		_pDocumentListPanel->create(&data, { IDR_DOCLIST_ICO, IDR_DOCLIST_ICO_DM, IDR_DOCLIST_ICO2 }, isRTL);
 
 		::SendMessage(_pPublicInterface->getHSelf(), NPPM_MODELESSDIALOG, MODELESSDIALOGREMOVE, reinterpret_cast<LPARAM>(_pDocumentListPanel->getHSelf()));
@@ -7476,7 +7482,7 @@ void Notepad_plus::launchAnsiCharPanel()
 
 		NativeLangSpeaker *pNativeSpeaker = nppParams.getNativeLangSpeaker();
 		bool isRTL = pNativeSpeaker->isRTL();
-		tTbData	data{};
+		DockedWidgetData	data{};
 		_pAnsiCharPanel->create(&data, { IDR_ASCIIPANEL_ICO, IDR_ASCIIPANEL_ICO_DM, IDR_ASCIIPANEL_ICO2 }, isRTL);
 
 		::SendMessage(_pPublicInterface->getHSelf(), NPPM_MODELESSDIALOG, MODELESSDIALOGREMOVE, reinterpret_cast<LPARAM>(_pAnsiCharPanel->getHSelf()));
@@ -7518,7 +7524,7 @@ void Notepad_plus::launchFileBrowser(const vector<wstring> & folders, const wstr
 		_pFileBrowser = new FileBrowser;
 		_pFileBrowser->init(_pPublicInterface->getHinst(), _pPublicInterface->getHSelf());
 
-		tTbData	data{};
+		DockedWidgetData	data{};
 		_pFileBrowser->create(&data, { IDR_FILEBROWSER_ICO, IDR_FILEBROWSER_ICO_DM, IDR_FILEBROWSER_ICO2 }, _nativeLangSpeaker.isRTL());
 		data.pszName = L"ST";
 
@@ -7623,7 +7629,7 @@ void Notepad_plus::launchProjectPanel(int cmdID, ProjectPanel ** pProjPanel, int
 		(*pProjPanel)->setWorkSpaceFilePath(nppParam.getWorkSpaceFilePath(panelID));
 		NativeLangSpeaker *pNativeSpeaker = nppParam.getNativeLangSpeaker();
 		bool isRTL = pNativeSpeaker->isRTL();
-		tTbData	data{};
+		DockedWidgetData	data{};
 		(*pProjPanel)->create(&data, { IDR_PROJECTPANEL_ICO, IDR_PROJECTPANEL_ICO_DM, IDR_PROJECTPANEL_ICO2 }, isRTL);
 		data.pszName = L"ST";
 
@@ -7683,7 +7689,7 @@ void Notepad_plus::launchDocMap()
 		_pDocMap = new DocumentMap();
 		_pDocMap->init(_pPublicInterface->getHinst(), _pPublicInterface->getHSelf(), &_pEditView);
 
-		tTbData	data{};
+		DockedWidgetData	data{};
 		_pDocMap->create(&data, { IDR_DOCMAP_ICO, IDR_DOCMAP_ICO_DM, IDR_DOCMAP_ICO2 });
 
 		::SendMessage(_pPublicInterface->getHSelf(), NPPM_MODELESSDIALOG, MODELESSDIALOGREMOVE, reinterpret_cast<LPARAM>(_pDocMap->getHSelf()));
@@ -7725,7 +7731,7 @@ void Notepad_plus::launchFunctionList()
 		_pFuncList = new FunctionListPanel();
 		_pFuncList->init(_pPublicInterface->getHinst(), _pPublicInterface->getHSelf(), &_pEditView);
 
-		tTbData	data{};
+		DockedWidgetData	data{};
 		_pFuncList->create(&data, { IDR_FUNC_LIST_ICO, IDR_FUNC_LIST_ICO_DM, IDR_FUNC_LIST_ICO2 });
 
 		::SendMessage(_pPublicInterface->getHSelf(), NPPM_MODELESSDIALOG, MODELESSDIALOGREMOVE, reinterpret_cast<LPARAM>(_pFuncList->getHSelf()));
@@ -8667,7 +8673,7 @@ void Notepad_plus::refreshPanelIcon(HINSTANCE hInst, DockingDlgInterface* panel)
 	HWND hWnd = panel->getHSelf();
 	for (const auto& docCont : _dockingManager.getContainerInfo())
 	{
-		auto data = docCont->findToolbarByWnd(hWnd);
+		auto data = docCont->findDockedWidgetByWnd(hWnd);
 		if (data != nullptr)
 		{
 			if (data->hIconTab != nullptr)

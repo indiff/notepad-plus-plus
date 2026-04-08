@@ -84,12 +84,12 @@ class DocumentMap : public DockingDlgInterface {
 public:
 	DocumentMap(): DockingDlgInterface(IDD_DOCUMENTMAP) {}
 
-	void create(tTbData * data, bool isRTL = false) override {
+	void create(DockedWidgetData * data, bool isRTL = false) override {
 		DockingDlgInterface::create(data, isRTL);
 		data->pszAddInfo = id4dockingCont.c_str();
 	}
 
-	void create(tTbData* data, std::array<int, 3> iconIDs, bool isRTL = false) override {
+	void create(DockedWidgetData* data, std::array<int, 3> iconIDs, bool isRTL = false) override {
 		DockingDlgInterface::create(data, iconIDs, isRTL);
 		data->pszAddInfo = id4dockingCont.c_str();
 	}

@@ -595,7 +595,7 @@ private:
 	void doSynScroll(HWND hW);
 	void setWorkingDir(const wchar_t *dir);
 
-	bool getIntegralDockingData(tTbData & dockData, int & iCont, bool & isVisible);
+	bool getIntegralDockingData(DockedWidgetData & dockData, int & iCont, bool & isVisible);
 	int getLangFromMenuName(const wchar_t * langName);
 	std::wstring getLangFromMenu(const Buffer * buf);
 

@@ -2943,7 +2943,7 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
 		case NPPM_DMMREGASDCKDLG:
 		{
-			tTbData *pData = reinterpret_cast<tTbData *>(lParam);
+			DockedWidgetData *pData = reinterpret_cast<DockedWidgetData *>(lParam);
 			int		iCont	= -1;
 			bool	isVisible	= false;
 
@@ -2969,7 +2969,7 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
 			for (size_t i = 0, len = dockContainer.size(); i < len ; ++i)
 			{
-				std::vector<tTbData *> tbData = dockContainer[i]->getDataOfAllTb();
+				std::vector<DockedWidgetData *> tbData = dockContainer[i]->getDataOfAllTb();
 				for (size_t j = 0, len2 = tbData.size() ; j < len2 ; ++j)
 				{
 					if (_wcsicmp(moduleName, tbData[j]->pszModuleName) == 0)
