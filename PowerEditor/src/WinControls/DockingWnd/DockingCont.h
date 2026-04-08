@@ -63,17 +63,17 @@ public:
 			return _hSelf;
 	}
 
-	tTbData* createToolbar(const tTbData& data);
-	void	 removeToolbar(const tTbData& data);
-	tTbData* findToolbarByWnd(HWND hClient);
-	tTbData* findToolbarByName(wchar_t* pszName);
+	DockedWidgetData* createDockedWidget(const DockedWidgetData& data);
+	void removeDockedWidget(const DockedWidgetData& data);
+	DockedWidgetData* findDockedWidgetByWnd(HWND hClient);
+	DockedWidgetData* findDockedWidgetByName(wchar_t* pszName);
 
-	void showToolbar(tTbData *pTbData, BOOL state);
+	void showDockedWidget(DockedWidgetData *pTbData, BOOL state);
 
 	BOOL updateInfo(HWND hClient) {
-		for (size_t iTb = 0; iTb < _vTbData.size(); ++iTb)
+		for (size_t iTb = 0; iTb < _dwDataVect.size(); ++iTb)
 		{
-			if (_vTbData[iTb]->hClient == hClient)
+			if (_dwDataVect[iTb]->hClient == hClient)
 			{
 				updateCaption();
 				return TRUE;
@@ -82,15 +82,17 @@ public:
 		return FALSE;
 	}
 
-	void setActiveTb(tTbData* pTbData);
+	void setActiveTb(DockedWidgetData* pTbData);
 	void setActiveTb(int iItem);
 	int getActiveTb();
-	tTbData * getDataOfActiveTb();
-	std::vector<tTbData *> getDataOfAllTb() {
-		return _vTbData;
+	DockedWidgetData * getDataOfActiveTb();
+
+	std::vector<DockedWidgetData *> getDataOfAllTb() {
+		return _dwDataVect;
 	}
-	std::vector<tTbData *> getDataOfVisTb();
-	bool isTbVis(tTbData* data);
+
+	std::vector<DockedWidgetData *> getDataOfVisTb();
+	bool isTbVis(DockedWidgetData* data);
 
 	void doDialog(bool willBeShown = true, bool isFloating = false);
 
@@ -99,7 +101,7 @@ public:
 	}
 
 	size_t getElementCnt() {
-		return _vTbData.size();
+		return _dwDataVect.size();
 	}
 
 	// interface function for gripper
@@ -122,14 +124,14 @@ public:
 	}
 
 	void destroy() override {
-		for (auto& tTbData : _vTbData)
+		for (auto& dwData : _dwDataVect)
 		{
-			if (tTbData->hIconTab != nullptr)
+			if (dwData->hIconTab != nullptr)
 			{
-				::DestroyIcon(tTbData->hIconTab);
-				tTbData->hIconTab = nullptr;
+				::DestroyIcon(dwData->hIconTab);
+				dwData->hIconTab = nullptr;
 			}
-			delete tTbData;
+			delete dwData;
 		}
 		::DestroyWindow(_hSelf);
 	}
@@ -156,17 +158,18 @@ protected:
 	// functions for caption handling and drawing
 	eMousePos isInRect(HWND hwnd, int x, int y);
 
-	// handling of toolbars
+	// handling of docked widgets
 	void doClose(BOOL closeAll);
 
 	// return new item
-	int  searchPosInTab(tTbData* pTbData);
+	int  searchPosInTab(DockedWidgetData* pTbData);
 	void selectTab(int iTab);
 
-	int  hideToolbar(tTbData* pTbData, BOOL hideClient = TRUE);
-	void viewToolbar(tTbData *pTbData);
-	int  removeTab(tTbData* pTbData) {
-		return hideToolbar(pTbData, FALSE);
+	int  hideDockedWidget(DockedWidgetData* pTbData, BOOL hideClient = TRUE);
+	void viewDockedWidget(DockedWidgetData *pTbData);
+
+	int  removeTab(DockedWidgetData* pTbData) {
+		return hideDockedWidget(pTbData, FALSE);
 	}
 
 	bool updateCaption();
@@ -216,5 +219,5 @@ private:
 	int _closeButtonHeight = g_dockingContCloseBtnSize;
 
 	// data of added windows
-	std::vector<tTbData *> _vTbData;
+	std::vector<DockedWidgetData *> _dwDataVect;
 };

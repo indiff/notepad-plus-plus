@@ -330,13 +330,13 @@ void Gripper::onButtonUp()
 			if ((!_pCont->isFloating()) ||
 				((_pCont->isFloating()) && (::SendMessage(_hTabSource, TCM_GETITEMCOUNT, 0, 0) > 1)))
 			{
-				pContMove = _pDockMgr->toggleActiveTb(_pCont, DMM_FLOAT, TRUE, &rc);
+				pContMove = _pDockMgr->toggleActiveWidget(_pCont, DMM_FLOAT, TRUE, &rc);
 			}
 		}
 		else if (!_pCont->isFloating())
 		{
 			/* when all windows are moved */
-			pContMove = _pDockMgr->toggleVisTb(_pCont, DMM_FLOAT, &rc);
+			pContMove = _pDockMgr->toggleVisWidget(_pCont, DMM_FLOAT, &rc);
 		}
 
 		/* set moving container */
@@ -355,12 +355,12 @@ void Gripper::onButtonUp()
 		if ((_startMovingFromTab == TRUE) && (::SendMessage(_hTabSource, TCM_GETITEMCOUNT, 0, 0) != 1))
 		{
 			/* when tab is moved */
-			_pDockMgr->toggleActiveTb(_pCont, pDockCont);
+			_pDockMgr->toggleActiveWidget(_pCont, pDockCont);
 		}
 		else
 		{
 			/* when all windows are moved */
-			_pDockMgr->toggleVisTb(_pCont, pDockCont);
+			_pDockMgr->toggleVisWidget(_pCont, pDockCont);
 		}
 	}
 }

@@ -45,23 +45,25 @@ public:
 	void showFloatingContainers(bool show);
 
 	void updateContainerInfo(HWND hClient);
-	void createDockableDlg(tTbData data, int iCont = CONT_LEFT, bool isVisible = false);
+	void createDockableDlg(DockedWidgetData data, int iCont = CONT_LEFT, bool isVisible = false);
 	void setActiveTab(int iCont, int iItem);
 	void showDockableDlg(HWND hDlg, BOOL view);
 	void showDockableDlg(wchar_t* pszName, BOOL view);
 
-	DockingCont* toggleActiveTb(DockingCont* pContSrc, UINT message, BOOL bNew = FALSE, LPRECT rcFloat = NULL);
-	DockingCont* toggleVisTb(DockingCont* pContSrc, UINT message, LPRECT rcFloat = NULL);
-	void		 toggleActiveTb(DockingCont* pContSrc, DockingCont* pContTgt);
-	void		 toggleVisTb(DockingCont* pContSrc, DockingCont* pContTgt);
+	DockingCont* toggleActiveWidget(DockingCont* pContSrc, UINT message, BOOL bNew = FALSE, LPRECT rcFloat = NULL);
+	DockingCont* toggleVisWidget(DockingCont* pContSrc, UINT message, LPRECT rcFloat = NULL);
+
+	void toggleActiveWidget(DockingCont* pContSrc, DockingCont* pContTgt);
+	void toggleVisWidget(DockingCont* pContSrc, DockingCont* pContTgt);
 
 	// get number of container
-	int  GetContainer(DockingCont* pCont); 
+	int getContainerIndex(DockingCont* pCont); 
 
 	// get all container in vector
 	std::vector<DockingCont*> & getContainerInfo() {
 		return _vContainer;
 	}
+
 	// get dock data (sized areas)
 	void getDockInfo(tDockMgr *pDockData) {
 		*pDockData	= _dockData;
@@ -94,10 +96,10 @@ private:
 	static LRESULT CALLBACK staticWinProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 	LRESULT runProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 
-	void	toggleTb(DockingCont* pContSrc, DockingCont* pContTgt, tTbData TbData);
+	void	toggleWidget(DockingCont* pContSrc, DockingCont* pContTgt, DockedWidgetData TbData);
 
 	// test if container exists
-	BOOL ContExists(size_t iCont);
-	int	 FindEmptyContainer();
+	BOOL doesContExist(size_t iCont);
+	int	 findEmptyContainerIndex();
 	LRESULT SendNotify(HWND hWnd, UINT message);
 };
