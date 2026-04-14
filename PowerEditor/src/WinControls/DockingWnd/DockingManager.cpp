@@ -675,11 +675,19 @@ void DockingManager::createDockableDlg(DockedWidgetData data, int iCont, bool is
 		}
 	}
 
-	// notify client app
+	// notify client zone
 	if (iCont < DOCKCONT_MAX)
 		SendNotify(data.hClient, MAKELONG(DMN_DOCK, iCont));
 	else
+	{
 		SendNotify(data.hClient, MAKELONG(DMN_FLOAT, iCont));
+
+		// Startup restore of a floating panel may skip WM_SIZE for this dialog.
+		// Force one layout pass so the list control gets a valid size.
+		RECT rc{};
+		::GetClientRect(data.hClient, &rc);
+		::SendMessage(data.hClient, WM_SIZE, 0, MAKELPARAM(rc.right - rc.left, rc.bottom - rc.top));
+	}
 }
 
 void DockingManager::setActiveTab(int iCont, int iItem)
