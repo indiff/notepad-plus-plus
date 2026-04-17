@@ -70,6 +70,9 @@ ${MementoSection} "Auto-Updater" AutoUpdater
 	${If} $noUpdater == "true"
 		Delete $INSTDIR\updater\*.*
 	${Else}
+		; libcurl.dll has been removed since WinGUp v5.4 (Notepad++ v8.9.1)
+		Delete "$INSTDIR\updater\libcurl.dll"
+
 		SetOverwrite on
 		SetOutPath "$INSTDIR\updater"
 !ifdef ARCH64
