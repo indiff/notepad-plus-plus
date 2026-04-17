@@ -3924,7 +3924,7 @@ void FindReplaceDlg::findAllIn(InWhat op)
 	if (::SendMessage(_hParent, cmdid, static_cast<WPARAM>(limitSearchScopeToSelection ? 1 : 0), 0))
 	{
 		wstring text = _pFinder->getHitsString(_findAllResult);
-		wsprintf(_findAllResultStr, text.c_str());
+		wcscpy_s(_findAllResultStr, sizeof(_findAllResultStr) / sizeof(wchar_t), text.c_str());
 
 		if (_findAllResult)
 		{
