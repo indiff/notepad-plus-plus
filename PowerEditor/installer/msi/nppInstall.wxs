@@ -19,6 +19,11 @@
 		<Property Id="REBOOT" Value="Suppress" />
 
 		<!--
+		Write version information to Details' Comments field in Property of MSI file
+		-->
+		<SummaryInformation Comments="Notepad++ v$(var.Version) (x64)" />
+
+		<!--
 		Installation directory structure
 		-->
 		<StandardDirectory Id="ProgramFiles64Folder">
