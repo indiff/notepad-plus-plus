@@ -5,7 +5,7 @@ Translation note:
 2. All the comments are for explanation, they are not for translation.
 -->
 <NotepadPlus>
-	<Native-Langue name="Français" filename="french.xml" version="8.9">
+	<Native-Langue name="Français" filename="french.xml" version="8.9.3">
 		<Menu>
 			<Main>
 				<!-- Main Menu Entries -->
@@ -288,6 +288,7 @@ Translation note:
 					<Item id="44024" name="Zoom a&amp;rrière (Ctrl+Molette vers le bas)"/>
 					<Item id="44025" name="Afficher les blancs et les tabulations"/>
 					<Item id="44026" name="Afficher les symboles de fin de ligne"/>
+					<Item id="44027" name="Synchroniser entre les vues"/>
 					<Item id="44029" name="Déplier tous les blocs"/>
 					<Item id="44030" name="Replier le bloc de la ligne actuelle"/>
 					<Item id="44031" name="Déplier le bloc de la ligne actuelle"/>

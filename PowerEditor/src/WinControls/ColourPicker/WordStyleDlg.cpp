@@ -265,7 +265,7 @@ intptr_t CALLBACK WordStyleDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM 
 			if (reinterpret_cast<HWND>(lParam) == ::GetDlgItem(_hSelf, IDC_SC_PERCENTAGE_SLIDER))
 			{
 				const auto percent = static_cast<int>(::SendDlgItemMessage(_hSelf, IDC_SC_PERCENTAGE_SLIDER, TBM_GETPOS, 0, 0));
-				NppParameters::SetTransparent(_hSelf, percent);
+				NppParameters::setTransparent(_hSelf, percent);
 			}
 			return TRUE;
 		}
@@ -420,7 +420,7 @@ intptr_t CALLBACK WordStyleDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM 
 						if (isChecked)
 						{
 							const auto percent = static_cast<int>(::SendDlgItemMessage(_hSelf, IDC_SC_PERCENTAGE_SLIDER, TBM_GETPOS, 0, 0));
-							NppParameters::SetTransparent(_hSelf, percent);
+							NppParameters::setTransparent(_hSelf, percent);
 						}
 						else
 							NppParameters::removeTransparent(_hSelf);

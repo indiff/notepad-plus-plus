@@ -899,6 +899,7 @@ struct ScintillaViewParams
 	std::vector<size_t> _edgeMultiColumnPos;
 	intptr_t _zoom = 0;
 	intptr_t _zoom2 = 0;
+	bool _zoomSync = false;
 	bool _whiteSpaceShow = false;
 	bool _eolShow = false;
 	enum crlfMode {plainText = 0, roundedRectangleText = 1, plainTextCustomColor = 2, roundedRectangleTextCustomColor = 3};
@@ -1557,7 +1558,7 @@ public:
 
 	// 0 <= percent < 256
 	// if (percent == 255) then opacq
-	static void SetTransparent(HWND hwnd, int percent);
+	static void setTransparent(HWND hwnd, int percent);
 
 	static void removeTransparent(HWND hwnd);
 

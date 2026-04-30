@@ -1892,7 +1892,7 @@ void NppParameters::removeTransparent(HWND hwnd)
 }
 
 
-void NppParameters::SetTransparent(HWND hwnd, int percent)
+void NppParameters::setTransparent(HWND hwnd, int percent)
 {
 	::SetWindowLongPtr(hwnd, GWL_EXSTYLE, ::GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
 	if (percent > 255)
@@ -6702,6 +6702,7 @@ void NppParameters::feedScintillaParam(const NppXml::Element& element)
 
 	_svp._zoom = static_cast<intptr_t>(NppXml::int64Attribute(element, "zoom", _svp._zoom));
 	_svp._zoom2 = static_cast<intptr_t>(NppXml::int64Attribute(element, "zoom2", _svp._zoom2));
+	_svp._zoomSync = getBoolAttribute(element, "zoomSync", _svp._zoomSync);
 
 	// White Space visibility State
 	_svp._whiteSpaceShow = getBoolAttribute(element, "whiteSpaceShow", _svp._whiteSpaceShow, STR_BOOL_SHOWHIDE);
@@ -6993,6 +6994,7 @@ bool NppParameters::writeScintillaParams()
 	NppXml::setAttribute(scintNode, "edgeMultiColumnPos", edgeColumnPosStr);
 	NppXml::setAttribute(scintNode, "zoom", _svp._zoom);
 	NppXml::setAttribute(scintNode, "zoom2", _svp._zoom2);
+	setBoolAttribute(scintNode, "zoomSync", _svp._zoomSync);
 	setBoolAttribute(scintNode, "whiteSpaceShow", _svp._whiteSpaceShow, STR_BOOL_SHOWHIDE);
 	setBoolAttribute(scintNode, "eolShow", _svp._eolShow, STR_BOOL_SHOWHIDE);
 	NppXml::setAttribute(scintNode, "eolMode", _svp._eolMode);
