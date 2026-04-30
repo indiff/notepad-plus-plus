@@ -1159,7 +1159,7 @@ intptr_t CALLBACK UserDefineDialog::run_dlgProc(UINT message, WPARAM wParam, LPA
             if (reinterpret_cast<HWND>(lParam) == ::GetDlgItem(_hSelf, IDC_UD_PERCENTAGE_SLIDER))
             {
 				const auto percent = static_cast<int>(::SendDlgItemMessage(_hSelf, IDC_UD_PERCENTAGE_SLIDER, TBM_GETPOS, 0, 0));
-                nppParam.SetTransparent(_hSelf, percent);
+                nppParam.setTransparent(_hSelf, percent);
             }
             return TRUE;
         }
@@ -1237,7 +1237,7 @@ intptr_t CALLBACK UserDefineDialog::run_dlgProc(UINT message, WPARAM wParam, LPA
                                 if (isChecked)
                                 {
 									const auto percent = static_cast<int>(::SendDlgItemMessage(_hSelf, IDC_UD_PERCENTAGE_SLIDER, TBM_GETPOS, 0, 0));
-                                    nppParam.SetTransparent(_hSelf, percent);
+                                    nppParam.setTransparent(_hSelf, percent);
                                 }
                                 ::ShowWindow(::GetDlgItem(_hSelf, IDC_UD_TRANSPARENT_CHECK), SW_SHOW);
                                 ::ShowWindow(::GetDlgItem(_hSelf, IDC_UD_PERCENTAGE_SLIDER), SW_SHOW);
@@ -1485,7 +1485,7 @@ intptr_t CALLBACK UserDefineDialog::run_dlgProc(UINT message, WPARAM wParam, LPA
                         if (isChecked)
                         {
 							const auto percent = static_cast<int>(::SendDlgItemMessage(_hSelf, IDC_UD_PERCENTAGE_SLIDER, TBM_GETPOS, 0, 0));
-                            nppParam.SetTransparent(_hSelf, percent);
+                            nppParam.setTransparent(_hSelf, percent);
                         }
                         else
                             nppParam.removeTransparent(_hSelf);
