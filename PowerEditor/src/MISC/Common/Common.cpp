@@ -1232,23 +1232,11 @@ static LRESULT CALLBACK helpTipStaticTextCtrlParentClickProc(
 
 		case WM_COMMAND:
 		{
-			if (HIWORD(wParam) == STN_CLICKED && lParam != 0)
+			if (HIWORD(wParam) == STN_CLICKED
+				&& lParam != 0
+				&& uIdSubclass == static_cast<UINT_PTR>(lParam))
 			{
-				static const auto hTool = [&hTip]() -> HWND
-				{
-					TOOLINFO toolInfo{};
-					toolInfo.cbSize = sizeof(TOOLINFO);
-					if (::SendMessage(hTip, TTM_GETCURRENTTOOL, 0, reinterpret_cast<LPARAM>(&toolInfo)) != 0)
-					{
-						return reinterpret_cast<HWND>(toolInfo.uId);
-					}
-					return nullptr;
-				}();
-
-				if (hTool == reinterpret_cast<HWND>(lParam))
-				{
-					::SendMessage(hTip, TTM_POPUP, 0, 0);
-				}
+				::SendMessage(hTip, TTM_POPUP, 0, 0);
 			}
 			break;
 		}
