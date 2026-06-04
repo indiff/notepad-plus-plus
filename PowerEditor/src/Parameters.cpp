@@ -216,8 +216,8 @@ static constexpr WinMenuKeyDefinition winKeyDefs[]
 	{ VK_NULL,    IDM_EDIT_COPY_BINARY,                         false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_CUT_BINARY,                          false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_PASTE_BINARY,                        false, false, false, nullptr },
-	{ VK_NULL,    IDM_EDIT_OPENASFILE,                          false, false, false, nullptr },
-	{ VK_NULL,    IDM_EDIT_OPENINFOLDER,                        false, false, false, nullptr },
+	{ VK_NULL,    IDM_EDIT_OPENSELECTEDFILETOEDIT,              false, false, false, nullptr },
+	{ VK_NULL,    IDM_EDIT_OPENSELECTEDFILEFOLDERINEXPLORER,    false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_SEARCHONINTERNET,                    false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_CHANGESEARCHENGINE,                  false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_MULTISELECTALL,                      false, false, false, L"Multi-select All: Ignore Case and Whole Word" },
@@ -1680,10 +1680,20 @@ bool NppParameters::load()
 
 		// Compute HMAC
 		std::string machineGUID = getMachineGUID();
-		std::string hmac = computeHMAC(machineGUID, fileContent);
+		_nppGUI._shortcutsOnDiskHmac = computeHMAC(machineGUID, fileContent);
 
-		// Store in config.xml
-		_nppGUI._shortcutsXmlHmacInConfig = hmac;
+		// For the HMAC of new copied or generated shortcuts.xml, store it in config.xml without any condition
+		_nppGUI._shortcutsXmlHmacInConfig = _nppGUI._shortcutsOnDiskHmac;
+	}
+	else // shortcuts.xml already exists, keep tracking its HMAC for checking the integrity later
+	{
+		// Calculate the HMAC of shortcuts.xml on disk
+
+		std::string fileContent = getFileContent(_shortcutsPath.c_str());
+
+		// Compute HMAC
+		std::string machineGUID = getMachineGUID();
+		_nppGUI._shortcutsOnDiskHmac = computeHMAC(machineGUID, fileContent);
 	}
 
 	_pXmlShortcutDoc = new NppXml::NewDocument();
