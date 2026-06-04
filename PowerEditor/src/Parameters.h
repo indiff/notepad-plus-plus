@@ -63,8 +63,6 @@
 
 #endif
 
-#define CMD_INTERPRETER L"%COMSPEC%"
-
 class NativeLangSpeaker;
 
 /*!
@@ -74,9 +72,9 @@ class NativeLangSpeaker;
 */
 EolType convertIntToFormatType(int value, EolType defvalue = EolType::osdefault);
 
-#define PURE_LC_NONE	0
-#define PURE_LC_BOL	 1
-#define PURE_LC_WSP	 2
+#define PURE_LC_NONE 0
+#define PURE_LC_BOL  1
+#define PURE_LC_WSP  2
 
 void cutString(const wchar_t* str2cut, std::vector<std::wstring>& patternVect);
 void cutStringBy(const wchar_t* str2cut, std::vector<std::wstring>& patternVect, wchar_t byChar, bool allowEmptyStr);
@@ -812,9 +810,6 @@ struct NppGUI final
 	std::wstring _definedSessionExt;
 	std::wstring _definedWorkspaceExt;
 
-	// items with no Notepad++ GUI to set
-	std::wstring _commandLineInterpreter = CMD_INTERPRETER;
-
 	enum AutoUpdateMode { autoupdate_disabled, autoupdate_on_startup, autoupdate_on_exit };
 	struct AutoUpdateOptions
 	{
@@ -873,6 +868,9 @@ struct NppGUI final
 	DarkModeConf _darkmode;
 
 	LargeFileRestriction _largeFileRestriction;
+
+	std::string _shortcutsXmlHmacInConfig;
+	std::string _shortcutsOnDiskHmac;
 };
 
 
@@ -1261,8 +1259,7 @@ public:
 	size_t size() const { return _themeList.size(); }
 
 
-	std::pair<std::wstring, std::wstring> & getElementFromIndex(size_t index)
-	{
+	std::pair<std::wstring, std::wstring> & getElementFromIndex(size_t index) {
 		assert(index < _themeList.size());
 		return _themeList[index];
 	}
@@ -1402,8 +1399,7 @@ public:
 		return _nppGUI;
 	}
 
-	const char* getWordList(LangType langID, int typeIndex) const
-	{
+	const char* getWordList(LangType langID, int typeIndex) const {
 		const Lang* pLang = getLangFromID(langID);
 		if (!pLang) return nullptr;
 
@@ -1411,8 +1407,7 @@ public:
 	}
 
 
-	Lang* getLangFromID(LangType langID) const
-	{
+	Lang* getLangFromID(LangType langID) const {
 		for (int i = 0 ; i < _nbLang ; ++i)
 		{
 			if ( _langList[i] && _langList[i]->_langID == langID )
@@ -1429,8 +1424,7 @@ public:
 
 	LangType getLangFromExt(const wchar_t *ext);
 
-	const wchar_t* getLangExtFromName(const wchar_t* langName) const
-	{
+	const wchar_t* getLangExtFromName(const wchar_t* langName) const {
 		for (int i = 0 ; i < _nbLang ; ++i)
 		{
 			if (_langList[i]->_langName == langName)
@@ -1439,8 +1433,7 @@ public:
 		return nullptr;
 	}
 
-	const wchar_t* getLangExtFromLangType(LangType langType) const
-	{
+	const wchar_t* getLangExtFromLangType(LangType langType) const {
 		for (int i = 0 ; i < _nbLang ; ++i)
 		{
 			if (_langList[i]->_langID == langType)
@@ -1473,9 +1466,7 @@ public:
 
 	int getRecentFileCustomLength() const { return _recentFileCustomLength; }
 
-	const ScintillaViewParams& getSVP() const {
-		return _svp;
-	}
+	const ScintillaViewParams& getSVP() const {	return _svp; }
 
 	bool writeRecentFileHistorySettings(int nbMaxFile = -1);
 	bool writeHistory(const wchar_t *fullpath);
@@ -1526,8 +1517,7 @@ public:
 	void writeSession(const Session& session, const wchar_t* fileName = nullptr) const;
 	bool writeFindHistory();
 
-	bool isExistingUserLangName(const wchar_t* newName) const
-	{
+	bool isExistingUserLangName(const wchar_t* newName) const {
 		if ((!newName) || (!newName[0]))
 			return true;
 
@@ -1562,8 +1552,7 @@ public:
 
 	static void removeTransparent(HWND hwnd);
 
-	void setCmdlineParam(const CmdLineParamsDTO & cmdLineParams)
-	{
+	void setCmdlineParam(const CmdLineParamsDTO & cmdLineParams) {
 		_cmdLineParams = cmdLineParams;
 	}
 
@@ -1630,16 +1619,12 @@ public:
 	void setFunctionListExportBoolean(bool doIt) {
 		_doFunctionListExport = doIt;
 	}
-	bool doFunctionListExport() const {
-		return _doFunctionListExport;
-	}
+	bool doFunctionListExport() const {	return _doFunctionListExport; }
 
 	void setPrintAndExitBoolean(bool doIt) {
 		_doPrintAndExit = doIt;
 	}
-	bool doPrintAndExit() const {
-		return _doPrintAndExit;
-	}
+	bool doPrintAndExit() const { return _doPrintAndExit; }
 
 	bool loadSession(Session& session, const wchar_t* sessionFileName, const bool bSuppressErrorMsg = false);
 
@@ -1647,9 +1632,7 @@ public:
 		_loadedSessionFullFilePath = loadedSessionFilePath;
 	}
 
-	const std::wstring& getLoadedSessionFilePath() const {
-		return _loadedSessionFullFilePath;
-	}
+	const std::wstring& getLoadedSessionFilePath() const {	return _loadedSessionFullFilePath; }
 
 	int langTypeToCommandID(LangType lt) const;
 
@@ -1694,53 +1677,34 @@ public:
 	void safeWow64EnableWow64FsRedirection(BOOL Wow64FsEnableRedirection);
 #endif
 
-	LocalizationSwitcher & getLocalizationSwitcher() {
-		return _localizationSwitcher;
-	}
+	LocalizationSwitcher & getLocalizationSwitcher() { return _localizationSwitcher; }
 
-	ThemeSwitcher & getThemeSwitcher() {
-		return _themeSwitcher;
-	}
+	ThemeSwitcher & getThemeSwitcher() { return _themeSwitcher; }
 
 	std::pair<unsigned char, unsigned char> importUDLFromFile(const std::wstring& sourceFile); // return the pair of (udlNumberBeforeImporting, udlNumberAfterImporting)
 	bool exportUDLToFile(size_t langIndex2export, const std::wstring& fileName2save);
-	NativeLangSpeaker* getNativeLangSpeaker() {
-		return _pNativeLangSpeaker;
-	}
-	void setNativeLangSpeaker(NativeLangSpeaker *nls) {
-		_pNativeLangSpeaker = nls;
-	}
 
-	bool isLocal() const {
-		return _isLocal;
-	}
+	NativeLangSpeaker* getNativeLangSpeaker() {	return _pNativeLangSpeaker; }
+	void setNativeLangSpeaker(NativeLangSpeaker *nls) {	_pNativeLangSpeaker = nls; }
 
-	bool isCloud() const {
-		return _isCloud;
-	}
+	bool isLocal() const { return _isLocal; }
+
+	bool isCloud() const { return _isCloud; }
 
 	void saveConfig_xml() const;
 
-	const std::wstring& getUserPath() const {
-		return _userPath;
-	}
+	const std::wstring& getUserPath() const { return _userPath; }
 
-	const std::wstring& getUserDefineLangFolderPath() const {
-		return _userDefineLangsFolderPath;
-	}
+	const std::wstring& getUserDefineLangFolderPath() const { return _userDefineLangsFolderPath; }
 
 	bool writeSettingsFilesOnCloudForThe1stTime(const std::wstring& cloudSettingsPath) const;
 	void setCloudChoice(const wchar_t* pathChoice) const;
 	void removeCloudChoice() const;
 	bool isCloudPathChanged() const;
 	static constexpr int archType() { return ARCH_TYPE; }
-	COLORREF getCurrentDefaultBgColor() const {
-		return _currentDefaultBgColor;
-	}
+	COLORREF getCurrentDefaultBgColor() const {	return _currentDefaultBgColor; }
 
-	COLORREF getCurrentDefaultFgColor() const {
-		return _currentDefaultFgColor;
-	}
+	COLORREF getCurrentDefaultFgColor() const { return _currentDefaultFgColor; }
 
 	void setCurrentDefaultBgColor(COLORREF c) {
 		_currentDefaultBgColor = c;
@@ -1758,9 +1722,7 @@ public:
 		_titleBarAdditional = titleAdd;
 	}
 
-	const std::wstring& getTitleBarAdd() const {
-		return _titleBarAdditional;
-	}
+	const std::wstring& getTitleBarAdd() const { return _titleBarAdditional; }
 
 	std::wstring static getSpecialFolderLocation(int folderKind);
 
@@ -1865,6 +1827,7 @@ public:
 	bool isAdmin() const { return _isAdminMode; }
 	bool regexBackward4PowerUser() const { return _findHistory._regexBackward4PowerUser; }
 	bool isRegForOSAppRestartDisabled() const { return _isRegForOSAppRestartDisabled; }
+	std::wstring getShortcutsPath() const { return _shortcutsPath; }
 
 private:
 	bool _isAnyShortcutModified = false;

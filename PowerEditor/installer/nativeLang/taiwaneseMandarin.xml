@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <NotepadPlus>
-	<Native-Langue name="台灣繁體" filename="taiwaneseMandarin.xml" version="8.9.3">
+	<Native-Langue name="台灣繁體" filename="taiwaneseMandarin.xml" version="8.9.6.2">
 		<Menu>
 			<Main>
 				<!-- Main Menu Entries -->
@@ -81,6 +81,7 @@
 					<Item id="41002" name="開啟舊檔(&amp;O)..."/>
 					<Item id="41019" name="在檔案總管"/>
 					<Item id="41020" name="在 CMD 內"/>
+					<Item id="41027" name="在 PowerShell 內"/>
 					<Item id="41025" name="資料夾工作區"/>
 					<Item id="41003" name="關閉(&amp;C)"/>
 					<Item id="41004" name="全部關閉(&amp;E)"/>
@@ -365,6 +366,7 @@
 					<Item id="48511" name="從檔案產生..."/>
 					<Item id="48512" name="從選取區產生至剪貼簿"/>
 					<Item id="49000" name="執行(&amp;R)..."/>
+					<Item id="49001" name="驗證 shortcuts.xml 檔案"/>
 
 					<Item id="50000" name="函式自動完成"/>
 					<Item id="50001" name="字詞自動完成"/>
@@ -405,6 +407,7 @@
 				<Item CMDID="1" name="開啟至"/>
 				<Item CMDID="41019" name="在檔案總管開啟資料夾路徑"/>
 				<Item CMDID="41020" name="在 CMD 開啟資料夾路徑"/>
+				<Item CMDID="41027" name="在 PowerShell 開啟資料夾路徑"/>
 				<Item CMDID="41025" name="在工作區開啟此檔資料夾"/>
 				<Item CMDID="41023" name="在預設檢視中開啟"/>
 				<Item CMDID="41017" name="重新命名..."/>
@@ -605,6 +608,11 @@
 					<Item id="2235" name="什麼是「Global override」？"/>
 				</SubDialog>
 			</StyleConfig>
+
+			<ColorPopup>
+				<Item id="1" name="更多顏色..."/>
+			</ColorPopup>
+
 			<ShortcutMapper title="管理快捷鍵">
 				<Item id="2602" name="修改"/>
 				<Item id="2603" name="刪除"/>
@@ -626,6 +634,8 @@
 				<MainCommandNames>
 					<Item id="41019" name="在檔案總管內開啟檔案位置"/>
 					<Item id="41020" name="在 CMD 內開啟檔案位置"/>
+					<Item id="41027" name="在 PowerShell 內開啟檔案位置"/>
+					<Item id="41025" name="在資料夾工作區內開啟檔案位置"/>
 					<Item id="41021" name="重新開啟最近關閉的檔案"/>
 					<Item id="45001" name="轉換成 Windows 換行格式(CR LF)"/>
 					<Item id="45002" name="轉換成 UNIX 換行格式 (LF)"/>
@@ -1478,6 +1488,18 @@
 			<FileMemoryAllocationFailed title="例外狀況：檔案記憶體分配失敗" message="可能沒有足夠的連續可用記憶體供 Notepad++ 載入檔案。"/>
 			<Need2Restart2ShowMenuShortcuts title="重新啟動 Notepad++" message="Notepad++ 需要重新啟動才能顯示選單右邊捷徑。"/>
 			<NoAdminRight2ChangeReadOnlyFileAttribute title="更改檔案維讀屬性失敗" message="請在系統管理員模式下重新啟動 Notepad++ 以使用此功能。"/>
+			<ReadOnlyFileCannotBeSaved title="儲存檔案失敗 - 該文件為唯讀" message="&quot;$STR_REPLACE$&quot;
+該文件為唯讀，無法儲存。
+請取消唯讀設定後再儲存檔案。"/>
+			<ShortcutsXmlHMACMissing title="安全警告" message="在 config.xml 中找不到 shortcuts.xml 的安全資訊。
+
+基於安全考量，系統將檢查 shortcuts.xml 的完整性。
+若要執行您的自訂指令，請先檢視已開啟的 shortcuts.xml。
+如果內容正確，請從選單中使用「驗證 shortcuts.xml 檔案」來確認。"/>
+			<ShortcutsXmlTampered title="安全警告" message="檔案 shortcuts.xml 似乎曾被手動修改。
+
+基於安全考量，請檢視已開啟的 shortcuts.xml。
+如果內容正確，請從選單中使用「驗證 shortcuts.xml 檔案」來確認。"/>
 		</MessageBox>
 		<ClipboardHistory>
 			<PanelTitle name="剪貼簿記錄"/>
@@ -1528,6 +1550,7 @@
 				<Item id="3517" name="在檔案中尋找..."/>
 				<Item id="3518" name="在此開啟檔案總管"/>
 				<Item id="3519" name="在此開啟 CMD"/>
+				<Item id="3521" name="在此開啟 Powershell"/>
 			</Menu>
 		</FolderAsWorkspace>
 		<ProjectManager>

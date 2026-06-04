@@ -28,12 +28,6 @@
 #include <unordered_set>
 #include <vector>
 
-#if defined(_MSC_VER)
-#pragma deprecated(PathFileExists)  // Use doesFileExist, doesDirectoryExist or doesPathExist (for file or directory) instead.
-#pragma deprecated(PathIsDirectory) // Use doesDirectoryExist instead.
-#endif
-
-
 
 std::wstring folderBrowser(HWND parent, const std::wstring & title = L"", int outputCtrlID = 0, const wchar_t *defaultStr = NULL);
 std::wstring getFolderName(HWND parent, const wchar_t *defaultDir = NULL);
@@ -62,6 +56,7 @@ void writeFileContent(const wchar_t *file2write, const char *content2write);
 bool matchInList(const wchar_t *fileName, const std::vector<std::wstring> & patterns);
 bool matchInExcludeDirList(const wchar_t* dirName, const std::vector<std::wstring>& patterns, size_t level);
 bool allPatternsAreExclusion(const std::vector<std::wstring>& patterns);
+HRESULT openInExplorerAndSelect(const wchar_t* path);
 
 class WcharMbcsConvertor final
 {

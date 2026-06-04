@@ -780,8 +780,6 @@ bool Notepad_plus::doSave(BufferID id, const wchar_t * filename, bool isCopy)
 						wchar_t nppFullPath[MAX_PATH]{};
 						::GetModuleFileName(NULL, nppFullPath, MAX_PATH);
 
-						Buffer* buf = MainFileManager.getBufferByID(id);
-
 						//process the fileNamePath into LRF
 						wstring fileNamePath = buf->getFullPathName();
 
@@ -1741,8 +1739,21 @@ bool Notepad_plus::fileSave(BufferID bufferID)
 
 	Buffer * buf = MainFileManager.getBufferByID(bufferID);
 
-	if (!buf->getFileReadOnly() && buf->isDirty())	//cannot save if readonly
+	if (buf->isDirty())
 	{
+		if (buf->isReadOnly()) //cannot save if readonly in Notepad++ or in Windows
+		{
+			_nativeLangSpeaker.messageBox("ReadOnlyFileCannotBeSaved",
+				_pPublicInterface->getHSelf(),
+				L"\"$STR_REPLACE$\"\rThe file is read-only and cannot be saved.\rPlease remove read-only then save your file.",
+				L"Save Failed - File is Read-Only",
+				MB_OK | MB_ICONWARNING,
+				0,
+				buf->getFullPathName());
+			
+			return false;
+		}
+
 		if (buf->isUntitled())
 		{
 			return fileSaveAs(bufferID);
@@ -1835,6 +1846,7 @@ bool Notepad_plus::fileSave(BufferID bufferID)
 
 		return doSave(bufferID, buf->getFullPathName(), false);
 	}
+
 	return false;
 }
 
