@@ -60,6 +60,7 @@
 #include "resource.h"
 #include "shortcut.h"
 #include "verifySignedfile.h"
+#include "hmac.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4996) // for GetVersionEx()
@@ -215,8 +216,8 @@ static constexpr WinMenuKeyDefinition winKeyDefs[]
 	{ VK_NULL,    IDM_EDIT_COPY_BINARY,                         false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_CUT_BINARY,                          false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_PASTE_BINARY,                        false, false, false, nullptr },
-	{ VK_NULL,    IDM_EDIT_OPENASFILE,                          false, false, false, nullptr },
-	{ VK_NULL,    IDM_EDIT_OPENINFOLDER,                        false, false, false, nullptr },
+	{ VK_NULL,    IDM_EDIT_OPENSELECTEDFILETOEDIT,              false, false, false, nullptr },
+	{ VK_NULL,    IDM_EDIT_OPENSELECTEDFILEFOLDERINEXPLORER,    false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_SEARCHONINTERNET,                    false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_CHANGESEARCHENGINE,                  false, false, false, nullptr },
 	{ VK_NULL,    IDM_EDIT_MULTISELECTALL,                      false, false, false, L"Multi-select All: Ignore Case and Whole Word" },
@@ -478,6 +479,7 @@ static constexpr WinMenuKeyDefinition winKeyDefs[]
 	{ VK_NULL,    IDM_MACRO_RUNMULTIMACRODLG,                   false, false, false, nullptr },
 
 	{ VK_F5,      IDM_EXECUTE,                                  false, false, false, nullptr },
+	{ VK_NULL,    IDM_EXECUTE_VALIDATE_SHORTCUTSXML,            false, false, false, nullptr },
 
 	{ VK_NULL,    IDM_WINDOW_WINDOWS,                           false, false, false, nullptr },
 	{ VK_NULL,    IDM_WINDOW_SORT_FN_ASC,                       false, false, false, L"Sort by Name A to Z" },
@@ -1671,6 +1673,27 @@ bool NppParameters::load()
 			::CopyFile(srcShortcutsPath.c_str(), _shortcutsPath.c_str(), TRUE);
 		else
 			generateXmlFromScratch(_shortcutsPath.c_str(), SHORTCUT_XML_CONTENT);
+
+		// Calculate the shortcuts.xml file HMAC to write it in config.xml for later integrity check
+
+		std::string fileContent = getFileContent(_shortcutsPath.c_str());
+
+		// Compute HMAC
+		std::string machineGUID = getMachineGUID();
+		_nppGUI._shortcutsOnDiskHmac = computeHMAC(machineGUID, fileContent);
+
+		// For the HMAC of new copied or generated shortcuts.xml, store it in config.xml without any condition
+		_nppGUI._shortcutsXmlHmacInConfig = _nppGUI._shortcutsOnDiskHmac;
+	}
+	else // shortcuts.xml already exists, keep tracking its HMAC for checking the integrity later
+	{
+		// Calculate the HMAC of shortcuts.xml on disk
+
+		std::string fileContent = getFileContent(_shortcutsPath.c_str());
+
+		// Compute HMAC
+		std::string machineGUID = getMachineGUID();
+		_nppGUI._shortcutsOnDiskHmac = computeHMAC(machineGUID, fileContent);
 	}
 
 	_pXmlShortcutDoc = new NppXml::NewDocument();
@@ -4547,7 +4570,22 @@ void NppParameters::writeShortcuts()
 	{
 		insertScintKey(scitillaKeyRoot, _scintillaKeyCommands[_scintillaModifiedKeyIndices[i]]);
 	}
-	static_cast<void>(NppXml::saveFileShortcut(_pXmlShortcutDoc, _shortcutsPath.c_str()));
+
+	bool isSaveShortcutOK = NppXml::saveFileShortcut(_pXmlShortcutDoc, _shortcutsPath.c_str());
+
+	// Recalculate the hash of shortcuts file after saving it successfully, and write it into config.xml, to be used for next time shortcut file integrity check
+	if (isSaveShortcutOK)
+	{
+		// Read back the file content as bytes
+		std::string fileContent = getFileContent(_shortcutsPath.c_str());
+
+		// Compute HMAC
+		std::string machineGUID = getMachineGUID();
+		std::string hmac = computeHMAC(machineGUID, fileContent);
+
+		// Store in config.xml
+		_nppGUI._shortcutsXmlHmacInConfig = hmac;
+	}
 }
 
 
@@ -6342,6 +6380,17 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 			_nppGUI._largeFileRestriction._deactivateWordWrap = getBoolAttribute(childNode, "deactivateWordWrap", _nppGUI._largeFileRestriction._deactivateWordWrap);
 			_nppGUI._largeFileRestriction._suppress2GBWarning = getBoolAttribute(childNode, "suppress2GBWarning");
 		}
+
+
+		else if (std::strcmp(nm, "shortcutsXmlHMAC") == 0)
+		{
+			const char* shortcutsXmlHmacValue = NppXml::attribute(childNode, "value");
+			if (shortcutsXmlHmacValue && shortcutsXmlHmacValue[0])
+			{
+				_nppGUI._shortcutsXmlHmacInConfig = shortcutsXmlHmacValue;
+			}
+		}
+
 		// <GUIConfig name="multiInst" setting="0" clipboardHistory="no" documentList="no" characterPanel="no" folderAsWorkspace="no" projectPanels="no"
 		// documentMap="no" fuctionList="no" pluginPanels="no" />
 		else if (std::strcmp(nm, "multiInst") == 0)
@@ -7566,6 +7615,15 @@ void NppParameters::createXmlTreeFromGUIParams()
 		NppXml::setAttribute(GUIConfigElement, "name", "searchEngine");
 		NppXml::setAttribute(GUIConfigElement, "searchEngineChoice", _nppGUI._searchEngineChoice);
 		NppXml::setAttribute(GUIConfigElement, "searchEngineCustom", wstring2string(_nppGUI._searchEngineCustom));
+	}
+
+	{
+		if (!_nppGUI._shortcutsXmlHmacInConfig.empty())
+		{
+			NppXml::Element GUIConfigElement = NppXml::createChildElement(newGUIRoot, "GUIConfig");
+			NppXml::setAttribute(GUIConfigElement, "name", "shortcutsXmlHMAC");
+			NppXml::setAttribute(GUIConfigElement, "value", _nppGUI._shortcutsXmlHmacInConfig);
+		}
 	}
 
 	// <GUIConfig name="MarkAll" matchCase="no" wholeWordOnly="yes" />

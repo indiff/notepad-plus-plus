@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <NotepadPlus>
-	<Native-Langue name="台灣繁體" filename="taiwaneseMandarin.xml" version="8.9.6">
+	<Native-Langue name="台灣繁體" filename="taiwaneseMandarin.xml" version="8.9.6.2">
 		<Menu>
 			<Main>
 				<!-- Main Menu Entries -->
@@ -366,6 +366,7 @@
 					<Item id="48511" name="從檔案產生..."/>
 					<Item id="48512" name="從選取區產生至剪貼簿"/>
 					<Item id="49000" name="執行(&amp;R)..."/>
+					<Item id="49001" name="驗證 shortcuts.xml 檔案"/>
 
 					<Item id="50000" name="函式自動完成"/>
 					<Item id="50001" name="字詞自動完成"/>
@@ -1490,22 +1491,15 @@
 			<ReadOnlyFileCannotBeSaved title="儲存檔案失敗 - 該文件為唯讀" message="&quot;$STR_REPLACE$&quot;
 該文件為唯讀，無法儲存。
 請取消唯讀設定後再儲存檔案。"/>
-			<RunSecurityNotSafeURL title="執行 - 安全警告" message="此命令指向的 URL 使用了不安全的協定 (http)：
-&quot;$STR_REPLACE$&quot;
-這可能配置錯誤或系統被篡改。
+			<ShortcutsXmlHMACMissing title="安全警告" message="在 config.xml 中找不到 shortcuts.xml 的安全資訊。
 
-是否繼續？"/>
-			<RunSecurityCmdNotFound title="執行 - 安全錯誤" message="命令未找到或路徑過長：
-&quot;$STR_REPLACE$&quot;" />
-			<RunSecurityOnlyAbsolutePathAllowed title="執行 - 安全錯誤" message="只允許使用絕對路徑：
-&quot;$STR_REPLACE$&quot; 是無效命令。"/>
-			<RunSecurityFileNoExist title="執行 - 安全錯誤" message="文件不存在：
-&quot;$STR_REPLACE$&quot;"/>
-			<RunSecurityNoTrustedLocation title="執行 - 安全警告" message="此命令將從不受信任的位置運行可執行檔：
-&quot;$STR_REPLACE$&quot;
-這可能配置錯誤或系統被篡改。
+基於安全考量，系統將檢查 shortcuts.xml 的完整性。
+若要執行您的自訂指令，請先檢視已開啟的 shortcuts.xml。
+如果內容正確，請從選單中使用「驗證 shortcuts.xml 檔案」來確認。"/>
+			<ShortcutsXmlTampered title="安全警告" message="檔案 shortcuts.xml 似乎曾被手動修改。
 
-是否繼續？"/>
+基於安全考量，請檢視已開啟的 shortcuts.xml。
+如果內容正確，請從選單中使用「驗證 shortcuts.xml 檔案」來確認。"/>
 		</MessageBox>
 		<ClipboardHistory>
 			<PanelTitle name="剪貼簿記錄"/>
