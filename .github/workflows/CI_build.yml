@@ -223,7 +223,7 @@ jobs:
            sleep 5
            # ls x64\Release
            echo "Restart Explorer for TimeZone"
-           msbuild notepadPlus.sln /m /p:UseSharedCompilation=true /p:RunCodeAnalysis=false /p:BuildInParallel=true /p:DebugType=None /p:Optimize=true /p:configuration="${{ matrix.build_configuration }}" /p:platform="${{ matrix.build_platform }}" /p:PlatformToolset="v143"
+           msbuild notepadPlus.sln /m /p:UseSharedCompilation=true /p:RunCodeAnalysis=false /p:BuildInParallel=true /p:DebugType=None /p:Optimize=true /p:configuration="${{ matrix.build_configuration }}" /p:platform="${{ matrix.build_platform }}" /p:PlatformToolset="v145"
 
     - name: Cache MSBuild Release
       id: msbuild-cache
@@ -451,7 +451,7 @@ jobs:
       run: |
            mkdir _build
            cd _build
-           cmake -G "Visual Studio 17 2022" -A ${{ matrix.build_platform }} -T "v143" ..
+           cmake -G "Visual Studio 18 2026" -A ${{ matrix.build_platform }} -T "v145" ..
 
     - name: build cmake
       working-directory: PowerEditor/src
