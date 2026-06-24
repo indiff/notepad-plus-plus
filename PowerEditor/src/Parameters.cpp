@@ -769,7 +769,7 @@ static void setBoolAttribute(NppXml::Element& elem, const char* name, bool isTru
 	NppXml::Node n = NppXml::firstChild(elemParent);
 	if (n)
 	{
-		const char* val = NppXml::value(n);
+		const char* val = NppXml::getValue(n);
 		if (val)
 		{
 			if (std::strcmp(val, strs2cmp[0]) == 0)
@@ -786,7 +786,7 @@ static void setBoolAttribute(NppXml::Element& elem, const char* name, bool isTru
 	NppXml::Node n = NppXml::firstChild(elemParent);
 	if (n)
 	{
-		const char* val = NppXml::value(n);
+		const char* val = NppXml::getValue(n);
 		if (val)
 		{
 			if (std::strcmp(val, strs2cmp[0]) == 0)
@@ -2305,7 +2305,7 @@ void NppParameters::updateLangXml(NppXml::Element& mainElemUser, const NppXml::E
 
 					// start by extracting the list of words in the user version of this Keywords element
 					NppXml::Node pKwsValue = NppXml::firstChild(mapUserKeywords[modelKeywordsName]);
-					std::string sText = pKwsValue ? NppXml::value(pKwsValue) : "";
+					std::string sText = pKwsValue ? NppXml::getValue(pKwsValue) : "";
 					std::vector<std::string> vsUserWords{};
 					std::map<std::string, bool> mapUserWords{};
 					if (!sText.empty())
@@ -2322,7 +2322,7 @@ void NppParameters::updateLangXml(NppXml::Element& mainElemUser, const NppXml::E
 					// then go through each word in the model, and add it to the list if it's not already there
 					int nWordsAdded = 0;
 					NppXml::Node pKwsValueModel = NppXml::firstChild(keywordsFromModel);
-					std::string sTextModel = pKwsValueModel ? NppXml::value(pKwsValueModel) : "";
+					std::string sTextModel = pKwsValueModel ? NppXml::getValue(pKwsValueModel) : "";
 					if (!pKwsValue)
 					{
 						if (pKwsValueModel)
@@ -2399,14 +2399,14 @@ void NppParameters::updateLangXml(NppXml::Element& mainElemUser, const NppXml::E
 				attrModel = NppXml::next(attrModel))
 			{
 				// if attribute not in user, need to add it (but leave it alone if the user-langs has it, but is just an empty string, because that's intentionally blank)
-				const char* attrName = NppXml::name(attrModel);
+				const char* attrName = NppXml::getName(attrModel);
 				const char* pcUserValue = NppXml::attribute(thisLanguageFromUser, attrName);
 				if (!pcUserValue)
-					NppXml::setAttribute(thisLanguageFromUser, attrName, NppXml::value(attrModel));
+					NppXml::setAttribute(thisLanguageFromUser, attrName, NppXml::getValue(attrModel));
 				else if (std::strcmp(attrName, "ext"))
 				{
 					// Get both user and model values for the ext attribute
-					std::string sExtValues = std::string(pcUserValue) + " " + NppXml::value(attrModel);
+					std::string sExtValues = std::string(pcUserValue) + " " + NppXml::getValue(attrModel);
 					std::string sExtUpdated;
 					std::map<std::string, bool> isExtDone{};
 					std::string sToken;
@@ -2513,11 +2513,11 @@ void NppParameters::updateStylesXml(const NppXml::Element& rootUser, const std::
 				attrModel = NppXml::next(attrModel))
 			{
 				// if attribute not in user, need to add it (but leave it alone if it's there but an empty string, because then it's intentionally set blank)
-				const char* attrName = NppXml::name(attrModel);
+				const char* attrName = NppXml::getName(attrModel);
 				const char* pcUserValue = NppXml::attribute(mapUserWidgets[widgetKey], attrName);
 				if (!pcUserValue)
 				{
-					NppXml::setAttribute(mapUserWidgets[widgetKey], attrName, NppXml::value(attrModel));
+					NppXml::setAttribute(mapUserWidgets[widgetKey], attrName, NppXml::getValue(attrModel));
 
 					if (useDefaultColors)
 					{
@@ -2661,11 +2661,11 @@ void NppParameters::updateStylesXml(const NppXml::Element& rootUser, const std::
 						attrModel = NppXml::next(attrModel))
 					{
 						// if attribute not in user, need to add it (but leave it alone if it's there but an empty string, because then it's intentionally set blank)
-						const char* attrName = NppXml::name(attrModel);
+						const char* attrName = NppXml::getName(attrModel);
 						const char* pcUserValue = NppXml::attribute(elementFromUser, attrName);
 						if (!pcUserValue)
 						{
-							NppXml::setAttribute(elementFromUser, attrName, NppXml::value(attrModel));
+							NppXml::setAttribute(elementFromUser, attrName, NppXml::getValue(attrModel));
 
 							if (useDefaultColors)
 							{
@@ -3688,7 +3688,7 @@ void NppParameters::feedUserCmds(const NppXml::Element& element)
 			NppXml::Node aNode = NppXml::firstChild(childNode); // text node
 			if (aNode)
 			{
-				const char* cmdStr = NppXml::value(aNode);
+				const char* cmdStr = NppXml::getValue(aNode);
 				if (cmdStr)
 				{
 					const auto cmdID = ID_USER_CMD + static_cast<int>(_userCommands.size());
@@ -4370,8 +4370,8 @@ void NppParameters::writeSession(const Session& session, const wchar_t* fileName
 
 		struct ViewElem {
 			NppXml::Element viewNode;
-			const std::vector<sessionFileInfo>* viewFiles;
-			size_t activeIndex;
+			const std::vector<sessionFileInfo>* viewFiles = nullptr;
+			size_t activeIndex = 0;
 		};
 
 		static constexpr int nbElem = 2;
@@ -4684,7 +4684,7 @@ void NppParameters::feedUserKeywordList(const NppXml::Element& element)
 			if (!udlVersion[0] && std::strcmp(keywordsName, "Delimiters") == 0) // support for old style (pre 2.0)
 			{
 				std::string temp;
-				kwl = NppXml::value(valueNode);
+				kwl = NppXml::getValue(valueNode);
 
 				temp += "00";  if (kwl[0] != '0') temp += kwl[0]; temp += " 01";
 				temp += " 02"; if (kwl[3] != '0') temp += kwl[3];
@@ -4698,7 +4698,7 @@ void NppParameters::feedUserKeywordList(const NppXml::Element& element)
 			}
 			else if (std::strcmp(keywordsName, "Comment") == 0)
 			{
-				kwl = NppXml::value(valueNode);
+				kwl = NppXml::getValue(valueNode);
 				std::string temp{" "};
 
 				temp += kwl;
@@ -4730,7 +4730,7 @@ void NppParameters::feedUserKeywordList(const NppXml::Element& element)
 			}
 			else
 			{
-				kwl = NppXml::value(valueNode);
+				kwl = NppXml::getValue(valueNode);
 				if (globalMappper().keywordIdMapper.find(keywordsName) != globalMappper().keywordIdMapper.end())
 				{
 					int id = globalMappper().keywordIdMapper[keywordsName];
@@ -5017,7 +5017,7 @@ void StyleArray::addStyler(int styleID, const NppXml::Element& styleNode)
 		NppXml::Node v = NppXml::firstChild(styleNode);
 		if (v)
 		{
-			s._keywords = NppXml::value(v);
+			s._keywords = NppXml::getValue(v);
 		}
 	}
 }
@@ -5492,7 +5492,7 @@ void NppParameters::feedKeyWordsParameters(const NppXml::Element& element)
 					NppXml::Node kwVal = NppXml::firstChild(kwNode);
 					std::string keyWords;
 					if (indexName && kwVal)
-						keyWords = NppXml::value(kwVal);
+						keyWords = NppXml::getValue(kwVal);
 
 					const int i = getKwClassFromName(indexName);
 
@@ -5521,8 +5521,18 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 		if (!nm)
 			continue;
 
+		// <GUIConfig name="ColorPickerCustomColors" color0="..." ... color15="..." />
+		if (std::strcmp(nm, "ColorPickerCustomColors") == 0)
+		{
+			size_t i = 0;
+			for (auto &cc : _nppGUI._colorPickerCustomColors)
+			{
+				const std::string attrName = "color" + std::to_string(i++);
+				cc = static_cast<COLORREF>(NppXml::intAttribute(childNode, attrName.c_str(), static_cast<int>(cc)));
+			}
+		}
 		// <GUIConfig name="ToolBar" visible="yes" fluentColor="0" fluentCustomColor="0" fluentMono="no">standard</GUIConfig>
-		if (std::strcmp(nm, "ToolBar") == 0)
+		else if (std::strcmp(nm, "ToolBar") == 0)
 		{
 			_nppGUI._toolbarShow = getBoolAttribute(childNode, "visible", _nppGUI._toolbarShow);
 
@@ -5538,7 +5548,7 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 			NppXml::Node n = NppXml::firstChild(childNode);
 			if (n)
 			{
-				const char* val = NppXml::value(n);
+				const char* val = NppXml::getValue(n);
 				if (val)
 				{
 					using enum toolBarStatusType;
@@ -5630,7 +5640,7 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 			NppXml::Node n = NppXml::firstChild(childNode);
 			if (n)
 			{
-				const char* val = NppXml::value(n);
+				const char* val = NppXml::getValue(n);
 				if (val)
 				{
 					if (std::strcmp(val, "yesOld") == 0)
@@ -5660,7 +5670,7 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 			NppXml::Node n = NppXml::firstChild(childNode);
 			if (n)
 			{
-				const char* val = NppXml::value(n);
+				const char* val = NppXml::getValue(n);
 				if (val)
 				{
 					if (std::strcmp(val, "no") == 0 || std::strcmp(val, "0") == 0)
@@ -5703,7 +5713,7 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 			NppXml::Node n = NppXml::firstChild(childNode);
 			if (n)
 			{
-				const char* val = NppXml::value(n);
+				const char* val = NppXml::getValue(n);
 				if (val)
 				{
 					// the retro-compatibility with the old values
@@ -5771,7 +5781,7 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 			NppXml::Node n = NppXml::firstChild(childNode);
 			if (n)
 			{
-				const char* val = NppXml::value(n);
+				const char* val = NppXml::getValue(n);
 				if (val)
 				{
 					using enum urlMode;
@@ -5799,7 +5809,7 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 			NppXml::Node n = NppXml::firstChild(childNode);
 			if (n)
 			{
-				const char* val = NppXml::value(n);
+				const char* val = NppXml::getValue(n);
 				if (val)
 					_nppGUI._uriSchemes = string2wstring(val);
 			}
@@ -5815,7 +5825,7 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 			NppXml::Node n = NppXml::firstChild(childNode);
 			if (n)
 			{
-				const char* val = NppXml::value(n);
+				const char* val = NppXml::getValue(n);
 				if (val)
 				{
 					if (std::strcmp(val, "vertical") == 0)
@@ -6283,7 +6293,7 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 			NppXml::Node n = NppXml::firstChild(childNode);
 			if (n)
 			{
-				const char* val = NppXml::value(n);
+				const char* val = NppXml::getValue(n);
 				if (val)
 					_nppGUI._definedSessionExt = string2wstring(val);
 			}
@@ -6294,7 +6304,7 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 			NppXml::Node n = NppXml::firstChild(childNode);
 			if (n)
 			{
-				const char* val = NppXml::value(n);
+				const char* val = NppXml::getValue(n);
 				if (val)
 					_nppGUI._definedWorkspaceExt = string2wstring(val);
 			}
@@ -6306,7 +6316,7 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 			if (n)
 			{
 				using enum NppGUI::AutoUpdateMode;
-				const char* val = NppXml::value(n);
+				const char* val = NppXml::getValue(n);
 				if (val)
 				{
 					// for backward compatibility with older configs
@@ -7706,6 +7716,19 @@ void NppParameters::createXmlTreeFromGUIParams()
 		setBoolAttribute(GUIConfigElement, "lightTbFluentMono", lightTbInfo._tbUseMono);
 		NppXml::setAttribute(GUIConfigElement, "lightTabIconSet", lightDefaults._tabIconSet);
 		setBoolAttribute(GUIConfigElement, "lightTabUseTheme", lightDefaults._tabUseTheme);
+	}
+
+	// <GUIConfig name="ColorPickerCustomColors" color0="..." ... color15="..." />
+	{
+		NppXml::Element GUIConfigElement = NppXml::createChildElement(newGUIRoot, "GUIConfig");
+		NppXml::setAttribute(GUIConfigElement, "name", "ColorPickerCustomColors");
+
+		size_t i = 0;
+		for (auto & cc : _nppGUI._colorPickerCustomColors)
+		{
+			const std::string attrName = "color" + std::to_string(i++);
+			NppXml::setAttribute(GUIConfigElement, attrName.c_str(), static_cast<int>(cc));
+		}
 	}
 
 	// <GUIConfig name="ScintillaPrimaryView" lineNumberMargin="show" lineNumberDynamicWidth="yes" bookMarkMargin="show" indentGuideLine="show"
