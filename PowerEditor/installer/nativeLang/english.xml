@@ -5,7 +5,7 @@ Translation note:
 2. All the comments are for explanation, they are not for translation.
 -->
 <NotepadPlus>
-	<Native-Langue name="English" filename="english.xml" version="8.9.6.2">
+	<Native-Langue name="English" filename="english.xml" version="8.9.6.4">
 		<Menu>
 			<Main>
 				<!-- Main Menu Entries -->
@@ -534,6 +534,7 @@ Translation note:
 				<Item id="1681" name="Find:"/>
 				<Item id="1685" name="Match &amp;case"/>
 				<Item id="1690" name="&amp;Highlight all"/>
+				<Item id="1691" name="C&amp;ount"/>
 			</IncrementalFind>
 
 			<FindCharsInRange title="Find Characters in Range...">
@@ -1835,6 +1836,7 @@ The text pasted into this field includes invisible (maybe line-ending) character
 			<progress-hits-title value="Hits:"/>
 			<progress-cancel-info value="Cancelling operation, please wait..."/>
 			<find-in-files-progress-title value="Find In Files progress..."/>
+			<discover-file-candidates-title value="Discovering file candidates..."/>
 			<replace-in-files-confirm-title value="Are you sure?"/>
 			<replace-in-files-confirm-directory value="Are you sure you want to replace all occurrences in:"/>
 			<replace-in-files-confirm-filetype value="For file type:"/>

@@ -40,6 +40,7 @@
 #include <SciLexer.h>
 #include <Scintilla.h>
 
+#include "Common.h"
 #include "ContextMenu.h"
 #include "DockingCont.h"
 #include "Notepad_plus_msgs.h"
@@ -709,6 +710,12 @@ struct NppGUI final
 	bool _statusBarShow = true;
 	bool _menuBarShow = true;
 
+	// The 16 custom color slots of the Windows color picker (ChooseColor), persisted
+	// across restarts (issue #4782). ChooseColorW reads/writes this array in place.
+	std::array<COLORREF, 16> _colorPickerCustomColors{ {
+		white, white, white, white, white, white, white, white,
+		white, white, white, white, white, white, white, white } };
+
 	int _tabStatus = (TAB_DRAWTOPBAR | TAB_DRAWINACTIVETAB | TAB_DRAGNDROP | TAB_REDUCE | TAB_CLOSEBUTTON | TAB_PINBUTTON);
 	bool _forceTabbarVisible = false;
 	UINT _tabCompactLabelLen = 0; // 0 ... no compacting
@@ -1377,7 +1384,7 @@ private:
 	// XML Document with its path
 	struct XmlDocPath final
 	{
-		NppXml::Document _doc;
+		NppXml::Document _doc{};
 		std::wstring _path;
 	};
 
@@ -1830,7 +1837,7 @@ public:
 	bool isAdmin() const { return _isAdminMode; }
 	bool regexBackward4PowerUser() const { return _findHistory._regexBackward4PowerUser; }
 	bool isRegForOSAppRestartDisabled() const { return _isRegForOSAppRestartDisabled; }
-	std::wstring getShortcutsPath() const { return _shortcutsPath; }
+	const std::wstring& getShortcutsPath() const { return _shortcutsPath; }
 
 private:
 	bool _isAnyShortcutModified = false;
