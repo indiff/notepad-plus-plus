@@ -31,7 +31,7 @@ jobs:
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
         # Number of commits to fetch. 0 indicates all history for all branches and tags
         fetch-depth: 0
@@ -123,7 +123,7 @@ jobs:
 
     - name: (cache) Lookup Python modules
       if: env.PYTHON_ALLOW_CACHE == 'true'
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       id: cache-lookup
       with:
         path: ${{ env.PYTHON_DIR_CACHE }}
@@ -132,7 +132,7 @@ jobs:
 
     - name: (cache) Restore Python modules
       if: env.PYTHON_ALLOW_CACHE == 'true' && steps.filter.outputs.result == 'XML' && steps.cache-lookup.outputs.cache-hit == 'true'
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: ${{ env.PYTHON_DIR_CACHE }}
         key: ${{ steps.filter.outputs.python }}
@@ -144,7 +144,7 @@ jobs:
 
     - name: (cache) Save Python modules
       if: env.PYTHON_ALLOW_CACHE == 'true' && steps.cache-lookup.outputs.cache-hit != 'true' && github.event_name == 'push'
-      uses: actions/cache/save@v5
+      uses: actions/cache/save@v6
       with:
         path: ${{ env.PYTHON_DIR_CACHE }}
         key: ${{ steps.filter.outputs.python }}
@@ -179,7 +179,7 @@ jobs:
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
         # Number of commits to fetch. 0 indicates all history for all branches and tags
         fetch-depth: 0
@@ -334,7 +334,7 @@ jobs:
 
     - name: (cache) Restore Python modules for Win32 / Debug
       if: matrix.build_platform == 'Win32' && matrix.build_configuration == 'Debug' && env.PYTHON_ALLOW_CACHE == 'true' && contains(needs.before_build.outputs.title, '[force nopythoncache]') != true
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: ${{ env.PYTHON_DIR_CACHE }}
         key: ${{ needs.before_build.outputs.python }}
@@ -384,7 +384,7 @@ jobs:
 
     # steps:
     # - name: Checkout repo
-      # uses: actions/checkout@v6
+      # uses: actions/checkout@v7
 
     # - name: Add msbuild to PATH
       # uses: microsoft/setup-msbuild@v3
@@ -415,7 +415,7 @@ jobs:
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
         # Number of commits to fetch. 0 indicates all history for all branches and tags
         fetch-depth: 0
@@ -498,7 +498,7 @@ jobs:
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with: # #fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
         # Number of commits to fetch. 0 indicates all history for all branches and tags
         fetch-depth: 0
