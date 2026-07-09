@@ -450,7 +450,7 @@ LRESULT Notepad_plus::init(HWND hwnd)
 	_statusBar.setPartWidth(STATUSBAR_CUR_POS, DPIManagerV2::scale(260, dpi));
 	_statusBar.setPartWidth(STATUSBAR_EOF_FORMAT, DPIManagerV2::scale(110, dpi));
 	_statusBar.setPartWidth(STATUSBAR_UNICODE_TYPE, DPIManagerV2::scale(120, dpi));
-	_statusBar.setPartWidth(STATUSBAR_TYPING_MODE, DPIManagerV2::scale(40, dpi)); // 40 (not 30): "INS"/"OVR" was clipped to "IN"
+	_statusBar.setPartWidth(STATUSBAR_TYPING_MODE, DPIManagerV2::scale(45, dpi));
 	_statusBar.display(willBeShown);
 
 	_pMainWindow = &_mainDocTab;
@@ -6721,11 +6721,15 @@ void Notepad_plus::notifyBufferChanged(Buffer * buffer, int mask)
 				{
 					performPostReload(mainActive?MAIN_VIEW:SUB_VIEW);
 				}
+
 				break;
 			}
 
 			case DOC_NEEDRELOAD: // by log monitoring
 			{
+				if (_incrementFindDlg.isCreated())
+					_incrementFindDlg.reInitCount();
+
 				doReload(buffer->getID(), false);
 
 				// not only test main view
