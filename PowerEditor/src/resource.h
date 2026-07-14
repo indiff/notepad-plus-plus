@@ -19,14 +19,14 @@
 
 //************ Notepad++ version **************************
 
-#define NOTEPAD_PLUS_VERSION L"Notepad++ v8.9.6.4"
+#define NOTEPAD_PLUS_VERSION L"Notepad++ v8.9.7"
 
 // should be X.Y : ie. if VERSION_DIGITALVALUE == 4, 7, 1, 0 , then X = 4, Y = 71
 // ex : #define VERSION_VALUE L"5.63\0"
-#define VERSION_INTERNAL_VALUE L"8.964\0"
+#define VERSION_INTERNAL_VALUE L"8.97\0"
 
-#define VERSION_PRODUCT_VALUE L"8.9.6.4\0"
-#define VERSION_DIGITALVALUE 8, 9, 6, 4
+#define VERSION_PRODUCT_VALUE L"8.9.7.0\0"
+#define VERSION_DIGITALVALUE 8, 9, 7, 0
 
 //**********************************************************
 
@@ -759,7 +759,6 @@
 	#define NPPM_INTERNAL_SETTING_TABCOMPACTLABELLEN    (NOTEPADPLUS_USER_INTERNAL + 111)
 	#define NPPM_INTERNAL_INVISIBLECHARSINFINDWHAT      (NOTEPADPLUS_USER_INTERNAL + 112)
 	#define NPPM_INTERNAL_DISABLESELECTEDTEXTDRAGDROP   (NOTEPADPLUS_USER_INTERNAL + 113)
-	#define NPPM_INTERNAL_REINITINCSEARCHCOUNT          (NOTEPADPLUS_USER_INTERNAL + 114)
 
 // See Notepad_plus_msgs.h
 //#define NPPMSG   (WM_USER + 1000)

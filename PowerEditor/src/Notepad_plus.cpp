@@ -6685,6 +6685,13 @@ void Notepad_plus::notifyBufferChanged(Buffer * buffer, int mask)
 
 			case DOC_MODIFIED:	//ask for reloading
 			{
+				// check if possible IncrementalSearch does not need reset
+				if (_incrementFindDlg.isCreated() && _incrementFindDlg.isVisible())
+				{
+					if (_pEditView->getCurrentBuffer() == buffer)
+						_incrementFindDlg.reInitCount();
+				}
+				
 				// Since it is being monitored DOC_NEEDRELOAD is going to handle the change.
 				if (buffer->isMonitoringOn())
 					break;
@@ -6727,7 +6734,8 @@ void Notepad_plus::notifyBufferChanged(Buffer * buffer, int mask)
 
 			case DOC_NEEDRELOAD: // by log monitoring
 			{
-				if (_incrementFindDlg.isCreated())
+				// check if possible IncrementalSearch does not need reset
+				if (_incrementFindDlg.isCreated() && _incrementFindDlg.isVisible())
 					_incrementFindDlg.reInitCount();
 
 				doReload(buffer->getID(), false);
@@ -6934,6 +6942,10 @@ void Notepad_plus::notifyBufferActivated(BufferID bufid, int view)
 	}
 
 	_linkTriggered = true;
+
+	// check if possible IncrementalSearch does not need reset
+	if (_incrementFindDlg.isCreated() && _incrementFindDlg.isVisible())
+		_incrementFindDlg.reInitCount();
 }
 
 std::vector<wstring> Notepad_plus::loadCommandlineParams(const wchar_t * commandLine, const CmdLineParamsDTO * pCmdParams)
