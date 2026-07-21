@@ -162,8 +162,7 @@ LRESULT Notepad_plus_Window::runProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 	{
 		case WM_CREATE:
 		{
-			try
-			{
+			try {
 				NppDarkMode::setDarkTitleBar(hwnd);
 				NppDarkMode::autoSubclassWindowMenuBar(hwnd);
 				NppDarkMode::autoSubclassCtlColor(hwnd);
@@ -726,69 +725,66 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
 		case WM_COPYDATA:
 		{
-			COPYDATASTRUCT *pCopyData = reinterpret_cast<COPYDATASTRUCT *>(lParam);
+			if (lParam == 0)
+				return TRUE; // invalid
 
-			switch (pCopyData->dwData)
-			{
-				case COPYDATA_FULL_CMDLINE:
+			COPYDATASTRUCT* pCopyData = reinterpret_cast<COPYDATASTRUCT*>(lParam);
+			if (pCopyData->lpData == nullptr)
+				return TRUE; // invalid
+
+			try {
+				switch (pCopyData->dwData)
 				{
-					try {
+					case COPYDATA_FULL_CMDLINE:
+					{
 						wchar_t* str2set = static_cast<wchar_t*>(pCopyData->lpData);
 						nppParam.setCmdLineString(str2set);
+						break;
 					}
-					catch (...)
-					{
-#if !defined(NDEBUG)
-						printStr(L"COPYDATA_FULL_CMDLINE: invalid string pointer.");
-#endif
-					}
-					break;
-				}
 
-				case COPYDATA_PARAMS:
-				{
-					const CmdLineParamsDTO *cmdLineParam = static_cast<const CmdLineParamsDTO *>(pCopyData->lpData); // CmdLineParams object from another instance
-					const DWORD cmdLineParamsSize = pCopyData->cbData;  // CmdLineParams size from another instance
-					if (sizeof(CmdLineParamsDTO) == cmdLineParamsSize) // make sure the structure is the same
+					case COPYDATA_PARAMS:
 					{
-						nppParam.setCmdlineParam(*cmdLineParam);
-						wstring pluginMessage { nppParam.getCmdLineParams()._pluginMessage };
-						if (!pluginMessage.empty())
+						const CmdLineParamsDTO* cmdLineParam = static_cast<const CmdLineParamsDTO*>(pCopyData->lpData); // CmdLineParams object from another instance
+						const DWORD cmdLineParamsSize = pCopyData->cbData; // CmdLineParams size from another instance
+						if (sizeof(CmdLineParamsDTO) == cmdLineParamsSize) // make sure the structure is the same
 						{
-							SCNotification scnN{};
-							scnN.nmhdr.code = NPPN_CMDLINEPLUGINMSG;
-							scnN.nmhdr.hwndFrom = hwnd;
-							scnN.nmhdr.idFrom = reinterpret_cast<uptr_t>(pluginMessage.c_str());
-							_pluginsManager.notify(&scnN);
+							nppParam.setCmdlineParam(*cmdLineParam); // need to be guarded for possible invalid ptr passed
+							wstring pluginMessage{ nppParam.getCmdLineParams()._pluginMessage };
+							if (!pluginMessage.empty())
+							{
+								SCNotification scnN{};
+								scnN.nmhdr.code = NPPN_CMDLINEPLUGINMSG;
+								scnN.nmhdr.hwndFrom = hwnd;
+								scnN.nmhdr.idFrom = reinterpret_cast<uptr_t>(pluginMessage.c_str());
+								_pluginsManager.notify(&scnN);
+							}
+
+							NppGUI& nppGui = nppParam.getNppGUI();
+							nppGui._isCmdlineNosessionActivated = cmdLineParam->_isNoSession; // need to be guarded for possible invalid ptr passed
 						}
-					}
-					else
-					{
+						else
+						{
 #if !defined(NDEBUG)  
-						printStr(L"COPYDATA_PARAMS: sizeof(CmdLineParams) != cmdLineParamsSize\rCmdLineParams is formed by an instance of another version,\rwhereas your CmdLineParams has been modified in this instance.");
+							printStr(L"COPYDATA_PARAMS: sizeof(CmdLineParams) != cmdLineParamsSize\rCmdLineParams is formed by an instance of another version,\rwhereas your CmdLineParams has been modified in this instance.");
 #endif
+						}
+						break;
 					}
 
-					NppGUI nppGui = (NppGUI)nppParam.getNppGUI();
-					nppGui._isCmdlineNosessionActivated = cmdLineParam->_isNoSession;
-					break;
-				}
-
-				case COPYDATA_FILENAMESW:
-				{
-					try {
+					case COPYDATA_FILENAMESW:
+					{
 						wchar_t* fileNamesW = static_cast<wchar_t*>(pCopyData->lpData);
 						const CmdLineParamsDTO& cmdLineParams = nppParam.getCmdLineParams();
 						loadCommandlineParams(fileNamesW, &cmdLineParams);
+						break;
 					}
-					catch (...)
-					{
-#if !defined(NDEBUG)
-						printStr(L"COPYDATA_FILENAMESW: invalid string pointer.");
-#endif
-					}
-					break;
 				}
+			}
+			catch (...)
+			{
+#if !defined(NDEBUG)
+				printStr(L"WM_COPYDATA exception: probably an invalid pointer.");
+#endif
 			}
 
 			return TRUE;
@@ -1505,6 +1501,55 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 		{
 			if (!_recordingMacro) // if we're not currently recording, then playback the recorded keystrokes
 			{
+				//-- shortcuts.xml security validation --//
+
+				NppParameters& nppParams = NppParameters::getInstance();
+				NppGUI& nppGUI = nppParams.getNppGUI();
+
+				// If HMAC is absent from config.xml, force user enable security validation, and generate and save HMAC in config.xml
+				if (nppGUI._shortcutsXmlHmacInConfig.empty())
+				{
+					// Open shortcuts.xml in read-only for user to review
+					BufferID shortcutsBufId = doOpen(nppParams.getShortcutsPath(), false, true);
+					if (shortcutsBufId != BUFFER_INVALID)
+					{
+						switchToFile(shortcutsBufId);
+
+						nppParams.getNativeLangSpeaker()->messageBox("ShortcutsXmlHMACMissing",
+							NULL,
+							L"The security information for shortcuts.xml is missing in config.xml.\r\rFor security reasons, the integrity of shortcuts.xml will be checked. To run your customized command, please review the opened shortcuts.xml. If the file content is OK, use \"Validate shortcuts.xml\" from the menu to confirm it.",
+							L"Security Warning",
+							MB_OK);
+					}
+					return FALSE;
+				}
+
+				// If HMAC is present, calculate shortcuts.xml HMAC and compare with the one from config.xml
+				else
+				{
+					if (nppGUI._shortcutsOnDiskHmac != nppGUI._shortcutsXmlHmacInConfig)
+					{
+						// if they don't match, it means shortcuts.xml could be tampered with, so show warning message and calculate shortcuts.xml HMAC
+
+						// Open shortcuts.xml in read-only for user to review
+						BufferID shortcutsBufId = doOpen(nppParams.getShortcutsPath(), false, true);
+						if (shortcutsBufId != BUFFER_INVALID)
+						{
+							switchToFile(shortcutsBufId);
+
+							nppParams.getNativeLangSpeaker()->messageBox("ShortcutsXmlTampered",
+								NULL,
+								L"The shortcuts.xml file appears to have been modified manually.\r\rFor security reasons, please review the opened shortcuts.xml. If the file content is OK, use \"Validate shortcuts.xml\" from the menu to confirm it.",
+								L"Security Warning",
+								MB_OK);
+						}
+						return FALSE;
+					}
+					// else if they match, it means shortcuts.xml is safe
+				}
+
+				//-- End shortcuts.xml security validation --//
+
 				int times = _runMacroDlg.isMulti() ? _runMacroDlg.getTimes() : -1;
 
 				int counter = 0;
@@ -1691,6 +1736,7 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
 		case NPPM_SAVESESSION:
 		{
+			if (!lParam) return FALSE;
 			sessionInfo *pSi = reinterpret_cast<sessionInfo *>(lParam);
 			return (LRESULT)fileSaveSession(pSi->nbFile, pSi->files, pSi->sessionFilePathName);
 		}
@@ -3152,16 +3198,19 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
 		case NPPM_ALLOCATECMDID:
 		{
+			if (!lParam) return FALSE;
 			return _pluginsManager.allocateCmdID(static_cast<int32_t>(wParam), reinterpret_cast<int *>(lParam));
 		}
 
 		case NPPM_ALLOCATEMARKER:
 		{
+			if (!lParam) return FALSE;
 			return _pluginsManager.allocateMarker(static_cast<int32_t>(wParam), reinterpret_cast<int *>(lParam));
 		}
 
 		case NPPM_ALLOCATEINDICATOR:
 		{
+			if (!lParam) return FALSE;
 			return _pluginsManager.allocateIndicator(static_cast<int32_t>(wParam), reinterpret_cast<int *>(lParam));
 		}
 

@@ -1495,8 +1495,7 @@ intptr_t CALLBACK TabbarSubDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM 
 							// not using the GetDlgItemInt for obtaining the edit-ctrl value as it fails for negative numbers inside
 							// (it can be inserted even into such a ES_NUMBER edit-ctrl via paste-cmd)
 							int iSize = 0;
-							try
-							{
+							try {
 								iSize = stoi(str);
 							}
 							catch ([[maybe_unused]] invalid_argument const& ex)
