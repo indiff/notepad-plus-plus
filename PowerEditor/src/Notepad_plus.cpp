@@ -585,8 +585,24 @@ LRESULT Notepad_plus::init(HWND hwnd)
 			nppGUI._excludedLangList[i]._cmdID = cmdID;
 			nppGUI._excludedLangList[i]._langName = itemName;
 			::DeleteMenu(hLangMenu, cmdID, MF_BYCOMMAND);
-			DrawMenuBar(hwnd);
 		}
+
+		// If compact language menu is enabled, remove any submenus that became empty after exclusion
+		if (nppGUI._isLangMenuCompact)
+		{
+			int nbLangItems = ::GetMenuItemCount(hLangMenu);
+			for (int i = nbLangItems - 1; i >= 0; --i)
+			{
+				HMENU hSubMenu = ::GetSubMenu(hLangMenu, i);
+				if (hSubMenu && ::GetMenuItemCount(hSubMenu) == 0)
+				{
+					::RemoveMenu(hLangMenu, i, MF_BYPOSITION);
+					::DestroyMenu(hSubMenu);
+				}
+			}
+		}
+
+		::DrawMenuBar(hwnd);
 	}
 
 	// Add User Defined Languages Entry
