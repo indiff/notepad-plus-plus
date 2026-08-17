@@ -139,10 +139,11 @@ intptr_t CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPar
             //_pageLink.create(::GetDlgItem(_hSelf, IDC_HOME_ADDR), L"https://notepad-plus-plus.org/news/v86-20thyearanniversary";
             //_pageLink.create(::GetDlgItem(_hSelf, IDC_AUTHOR_NAME), L"https://notepad-plus-plus.org/news/v87-about-taiwan/");
 			//_pageLink.create(::GetDlgItem(_hSelf, IDC_AUTHOR_NAME), L"https://notepad-plus-plus.org/news/v8964-released/");
+			//_pageLink.create(::GetDlgItem(_hSelf, IDC_AUTHOR_NAME), L"https://notepad-plus-plus.org/news/v897-slava-ukraini/");
             
 			_pageLink.init(_hInst, _hSelf);
-            //_pageLink.create(::GetDlgItem(_hSelf, IDC_HOME_ADDR), L"https://notepad-plus-plus.org/");
 			_pageLink.create(::GetDlgItem(_hSelf, IDC_AUTHOR_NAME), L"https://github.com/indiff/notepad-plus-plus/wiki");
+
 
 			return TRUE;
 		}
@@ -1060,7 +1061,12 @@ void NetworkPathWarningBox::changeLang()
 			}
 			else
 			{
-				::SetWindowText(_hSelf, L"Clickable file:// link");
+				if (_titleTag == "title2")
+					::SetWindowText(_hSelf, L"Clickable file:// link");
+				else if (_titleTag == "title3")
+					::SetWindowText(_hSelf, L"Loading toolbarButtonsConf.xml");
+				else if (_titleTag == "title4")
+					::SetWindowText(_hSelf, L"Loading Project Panel XML file");
 			}
 		}
 		else

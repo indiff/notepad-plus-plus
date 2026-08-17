@@ -72,7 +72,7 @@ bool SecurityGuard::checkModule([[maybe_unused]] const std::wstring& filePath, [
 #endif
 }
 
-bool SecurityGuard::checkSha256(const std::wstring& filePath, NppModule module2check)
+bool SecurityGuard::checkSha256(const std::wstring& filePath, NppModule module2check) const
 {
 	// Uncomment the following code if the components are rebuilt for testing
 	// It should be stay in commenting out
@@ -127,7 +127,7 @@ static void writeCertVerifLog(const wchar_t* logFileName, const wchar_t* log2wri
 	writeLog(expandedLogFileName.c_str(), log2write);
 }
 
-bool SecurityGuard::verifySignedBinary(const std::wstring& filepath)
+bool SecurityGuard::verifySignedBinary(const std::wstring& filepath) const
 {
 	wstring display_name;
 	wstring key_id_hex;
@@ -157,6 +157,7 @@ bool SecurityGuard::verifySignedBinary(const std::wstring& filepath)
 	winTEXTrust_data.dwUnionChoice = WTD_CHOICE_FILE;        // we are not checking catalog signed files
 	winTEXTrust_data.dwStateAction = WTD_STATEACTION_VERIFY; // only checking
 	winTEXTrust_data.fdwRevocationChecks = WTD_REVOKE_WHOLECHAIN;  // verify the whole certificate chain
+	winTEXTrust_data.dwProvFlags = WTD_CACHE_ONLY_URL_RETRIEVAL; // look only in the cached CRL when verifying embedded signature
 	winTEXTrust_data.pFile = &file_data;
 
 	if (!_doCheckRevocation)
