@@ -1,4 +1,4 @@
 pipreqs==0.5.0
-requests==2.32.4
+requests==2.33.0
 pytz==2024.2
 oss2
