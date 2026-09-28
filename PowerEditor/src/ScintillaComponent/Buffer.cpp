@@ -163,6 +163,10 @@ void Buffer::setUnicodeMode(UniMode mode)
 
 void Buffer::setLangType(LangType lang, const wchar_t* userLangName)
 {
+	auto langVal = static_cast<int>(lang);
+	if (langVal < L_TEXT)
+		return;
+
 	if (lang == _lang && lang != L_USER)
 		return;
 
@@ -498,10 +502,15 @@ bool Buffer::checkFileState() // returns true if the status has been changed (it
 	else if (_currentStatus != DOC_DELETED && !fileExists)	//document has been deleted
 	{
 		_currentStatus = DOC_DELETED;
-		_isFileReadOnly = false;
+		int mask = BufferChangeStatus | BufferChangeTimestamp;
+		if (_isFileReadOnly)	//readonly status only actually changes if it was readonly before
+		{
+			_isFileReadOnly = false;
+			mask |= BufferChangeReadonly;
+		}
 		_isDirty = true;	//dirty since no match with filesystem
 		_timeStamp = {};
-		doNotify(BufferChangeStatus | BufferChangeReadonly | BufferChangeTimestamp);
+		doNotify(mask);
 		isOK = true;
 	}
 	else if (_currentStatus == DOC_DELETED && fileExists) //document has returned from its grave
@@ -1580,6 +1589,7 @@ SavingStatus FileManager::saveBuffer(BufferID id, const wchar_t* filename, bool 
 		DWORD dwNppUacOpError = invokeNppUacOp(strCmdLineParams);
 		if (dwNppUacOpError != NO_ERROR)
 		{
+			_pscratchTilla->execute(SCI_SETDOCPOINTER, 0, _scratchDocDefault);
 			::DeleteFileW(strTempFile.c_str()); // ensure no failed op remnant
 			::SetLastError(dwNppUacOpError); // set that as our current thread one for reporting later
 			return SavingStatus::SaveWritingFailed;
@@ -1588,10 +1598,7 @@ SavingStatus FileManager::saveBuffer(BufferID id, const wchar_t* filename, bool 
 
 	if (isCopy) // "Save a Copy As..." command
 	{
-		unsigned long MODEVENTMASK_ON = NppParameters::getInstance().getScintillaModEventMask();
-		_pscratchTilla->execute(SCI_SETMODEVENTMASK, MODEVENTMASK_OFF);
 		_pscratchTilla->execute(SCI_SETDOCPOINTER, 0, _scratchDocDefault);
-		_pscratchTilla->execute(SCI_SETMODEVENTMASK, MODEVENTMASK_ON);
 		return SavingStatus::SaveOK;	//all done - we don't change the current buffer's path to "fullpath", since it's "Save a Copy As..." action.
 	}
 

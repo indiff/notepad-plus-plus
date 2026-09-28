@@ -4210,6 +4210,8 @@ LangType Notepad_plus::menuID2LangType(int cmdID)
             return L_ERRORLIST;
         case IDM_LANG_ESCSEQ:
             return L_ESCSEQ;
+        case IDM_LANG_STTXT:
+            return L_STTXT;
         case IDM_LANG_USER:
             return L_USER;
 		default:
