@@ -4380,6 +4380,7 @@ std::pair<unsigned char, unsigned char> NppParameters::feedUserLang(const NppXml
 				if (!pStyle)
 					_userLangArray[_nbUserLang - 1]->_styles.addStyler(i, string2wstring(globalMappper().styleNameMapper[i]).c_str());
 			}
+			_userLangArray[_nbUserLang - 1]->_isUnset = false;
 
 		}
 		catch (const std::exception&)
@@ -6080,6 +6081,11 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 		else if (std::strcmp(nm, "MenuBar") == 0)
 		{
 			_nppGUI._menuBarShow = getBoolChildTextNode(childNode, _nppGUI._menuBarShow, STR_BOOL_SHOWHIDE);
+		}
+		// <GUIConfig name="DialogFont" size="8"/>
+		else if (std::strcmp(nm, "DialogFont") == 0)
+		{
+			_nppGUI._fontDlgSize = static_cast<WORD>(NppXml::uintAttribute(childNode, "size", _nppGUI._fontDlgSize));
 		}
 		// <GUIConfig name="TabBar" dragAndDrop="yes" drawTopBar="yes" drawInactiveTab="yes" reduce="yes" closeButton="yes"
 		// pinButton="yes" showOnlyPinnedButton="no" buttonsOninactiveTabs="no" doubleClick2Close="no"
@@ -8015,6 +8021,13 @@ void NppParameters::createXmlTreeFromGUIParams()
 		NppXml::createChildText(GUIConfigElement, _nppGUI._menuBarShow ? "show" : "hide");
 	}
 
+	// <GUIConfig name="DialogFont" size="8"/>
+	{
+		NppXml::Element GUIConfigElement = NppXml::createChildElement(newGUIRoot, "GUIConfig");
+		NppXml::setAttribute(GUIConfigElement, "name", "DialogFont");
+		NppXml::setAttribute(GUIConfigElement, "size", _nppGUI._fontDlgSize);
+	}
+
 	// <GUIConfig name="Caret" width="1" blinkRate="600" />
 	{
 		NppXml::Element GUIConfigElement = NppXml::createChildElement(newGUIRoot, "GUIConfig");
@@ -9516,4 +9529,28 @@ void NppParameters::buildGupParams(std::wstring& params)
 
 	params += L" -errLogPath=";
 	params += L"\"%LOCALAPPDATA%\\Notepad++\\log\\securityError.log\"";
+}
+
+void UserLangContainer::startAtTheme()
+{
+	// don't reset to the theme colors if it's already been set
+	if (!_isUnset)
+		return;
+
+	NppParameters& nppParams = NppParameters::getInstance();
+	COLORREF fg = nppParams.getCurrentDefaultFgColor();
+	COLORREF bg = nppParams.getCurrentDefaultBgColor();
+
+	for (Style& st : _styles)
+	{
+		st._bgColor = bg;
+		st._fgColor = fg;
+
+		// make BG "transparent" by default, to discourage changing background accidentally;
+		//	but keep the _bgColor set, so that if they do un-transparent it, it starts at a reasonable default
+		st._colorStyle = COLORSTYLE_FOREGROUND;
+	}
+
+	// now that it's started at theme values, not "unset" anymore
+	_isUnset = false;
 }

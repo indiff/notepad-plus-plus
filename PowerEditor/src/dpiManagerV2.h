@@ -134,6 +134,8 @@ public:
 	static LOGFONT getDefaultGUIFontForDpi(HWND hWnd, FontType type = FontType::message) {
 		return getDefaultGUIFontForDpi(getDpiForWindow(hWnd), type);
 	}
+	static LOGFONT getDefaultGUIFontForDpi(HWND hWnd, WORD fontSize, FontType type = FontType::message);
+
 	LOGFONT getDefaultGUIFontForDpi(FontType type = FontType::message) const {
 		return getDefaultGUIFontForDpi(_dpi, type);
 	}
@@ -151,6 +153,10 @@ public:
 		static const int scaleFactor = DPIManagerV2::getTextScaleFactor();
 		return scaleFontForFactor(pt, scaleFactor);
 	}
+
+	[[nodiscard]] static int getFontAdjustedHeight(HWND hWnd, HFONT hFont) noexcept;
+	[[nodiscard]] static int getFontAvgAlphaWidth(HWND hWnd, HFONT hFont) noexcept;
+	[[nodiscard]] static int getFontDigitWidth(HWND hWnd, HFONT hFont) noexcept;
 
 private:
 	UINT _dpi = USER_DEFAULT_SCREEN_DPI;

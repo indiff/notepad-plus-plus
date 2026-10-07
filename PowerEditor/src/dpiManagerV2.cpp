@@ -21,6 +21,8 @@
 
 #include <commctrl.h>
 
+#include <string_view>
+
 namespace NppDarkMode
 {
 	bool isWindows10();
@@ -224,6 +226,14 @@ LOGFONT DPIManagerV2::getDefaultGUIFontForDpi(UINT dpi, FontType type)
 	return lf;
 }
 
+LOGFONT DPIManagerV2::getDefaultGUIFontForDpi(HWND hWnd, WORD fontSize, FontType type)
+{
+	const UINT dpi = getDpiForWindow(hWnd);
+	auto lf = getDefaultGUIFontForDpi(dpi, type);
+	lf.lfHeight = scaleFont(fontSize, dpi);
+	return lf;
+}
+
 void DPIManagerV2::loadIcon(HINSTANCE hinst, const wchar_t* pszName, int cx, int cy, HICON* phico, UINT fuLoad)
 {
 	if (::LoadIconWithScaleDown(hinst, pszName, cx, cy, phico) != S_OK)
@@ -246,3 +256,46 @@ DWORD DPIManagerV2::getTextScaleFactor()
 	}
 	return defaultVal;
 }
+
+int DPIManagerV2::getFontAdjustedHeight(HWND hWnd, HFONT hFont) noexcept
+{
+	HDC hdc = ::GetDC(hWnd);
+	auto hOldFont = ::SelectObject(hdc, hFont);
+
+	TEXTMETRIC tm{};
+	::GetTextMetricsW(hdc, &tm);
+
+	::SelectObject(hdc, hOldFont);
+	::ReleaseDC(hWnd, hdc);
+
+	return tm.tmHeight + tm.tmExternalLeading + 4;
+}
+
+static int getFontAvgWidth(HWND hWnd, HFONT hFont, std::wstring_view str)
+{
+	HDC hdc = ::GetDC(hWnd);
+	auto hOldFont = ::SelectObject(hdc, hFont);
+
+	SIZE sz{};
+
+	const auto len = static_cast<int>(str.length());
+	::GetTextExtentPoint32W(hdc, str.data(), len, &sz);
+
+	::SelectObject(hdc, hOldFont);
+	::ReleaseDC(hWnd, hdc);
+
+	return (sz.cx / (len / 2) + 1) / 2;
+}
+
+int DPIManagerV2::getFontAvgAlphaWidth(HWND hWnd, HFONT hFont) noexcept
+{
+	static constexpr std::wstring_view alpha = L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	return getFontAvgWidth(hWnd, hFont, alpha);
+}
+
+int DPIManagerV2::getFontDigitWidth(HWND hWnd, HFONT hFont) noexcept
+{
+	static constexpr std::wstring_view digit = L"1234567890";
+	return getFontAvgWidth(hWnd, hFont, digit);
+}
+
