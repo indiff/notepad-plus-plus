@@ -68,6 +68,7 @@ FindOption FindReplaceDlg::_options;
 #define SHIFTED 0x8000
 
 const wstring noFoundPotentialReason = L"The given occurrence cannot be found. You may have forgotten to check \"Wrap around\" (to ON), \"Match case\" (to OFF), or \"Match whole word only\" (to OFF).";
+const wstring regexEmptyFoundReason = L"The given regular expression matches empty strings.";
 
 static void addText2Combo(const wchar_t* txt2add, HWND hCombo)
 {
@@ -1897,53 +1898,6 @@ intptr_t CALLBACK FindReplaceDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 		case NPPM_MODELESSDIALOG :
 			return ::SendMessage(_hParent, NPPM_MODELESSDIALOG, wParam, lParam);
 
-		case WM_GETDPISCALEDSIZE:
-		{
-			auto newSize = reinterpret_cast<SIZE*>(lParam);
-
-			RECT rcClient{};
-			getClientRect(rcClient);
-
-			const UINT newDpi = static_cast<UINT>(wParam);
-			const UINT prevDpi = _dpiManager.getDpi();
-
-			const bool isLessModeOn = NppParameters::getInstance().getNppGUI()._findWindowLessMode;
-
-			const LONG cyFrame = DPIManagerV2::getSystemMetricsForDpi(SM_CYFRAME, newDpi);
-
-			auto lf = DPIManagerV2::getDefaultGUIFontForDpi(newDpi, NppParameters::getInstance().getDlgFontSize(), DPIManagerV2::FontType::status);
-			HFONT hFont = ::CreateFontIndirectW(&lf);
-			const LONG sbHeight = DPIManagerV2::getFontAdjustedHeight(_statusBar.getHSelf(), hFont) + cyFrame * 2;
-			::DeleteObject(hFont);
-
-			rcClient.right = DPIManagerV2::scale(rcClient.right - rcClient.left, newDpi, prevDpi);
-			rcClient.bottom = DPIManagerV2::scale((isLessModeOn ? _lesssModeHeight : _szMinDialog.cy), newDpi, prevDpi) + sbHeight;
-
-			LONG xBorder = 0;
-			LONG yBorder = 0;
-
-			const auto padding = static_cast<LONG>(DPIManagerV2::getSystemMetricsForDpi(SM_CXPADDEDBORDER, newDpi));
-
-			const auto style = static_cast<DWORD>(::GetWindowLongPtr(_hSelf, GWL_STYLE));
-			const auto exStyle = static_cast<DWORD>(::GetWindowLongPtr(_hSelf, GWL_EXSTYLE));
-			if (!DPIManagerV2::adjustWindowRectExForDpi(&rcClient, style, FALSE, exStyle, newDpi))
-			{
-				xBorder = (DPIManagerV2::getSystemMetricsForDpi(SM_CXFRAME, newDpi) + padding) * 2;
-				yBorder = (cyFrame + padding) * 2 + DPIManagerV2::getSystemMetricsForDpi(SM_CYCAPTION, newDpi);
-			}
-
-			newSize->cx = (rcClient.right - rcClient.left) + xBorder;
-			newSize->cy = (rcClient.bottom - rcClient.top) + yBorder;
-
-			if (prevDpi > newDpi)
-			{
-				newSize->cx += padding;
-				newSize->cy += padding;
-			}
-
-			return TRUE;
-		}
-
 		case WM_DPICHANGED:
 		{
 			::SendMessage(_statusBar.getHSelf(), WM_DPICHANGED, wParam, lParam);
@@ -2643,6 +2597,11 @@ intptr_t CALLBACK FindReplaceDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 							{
 								reasonMsg = pNativeSpeaker->getLocalizedStrFromID("find-status-cannot-find-pebkac-maybe", noFoundPotentialReason);
 							}
+							else if (_options._regexEmptyStringFound)
+							{
+								reasonMsg = pNativeSpeaker->getLocalizedStrFromID("find-status-regex-find-empty-string", regexEmptyFoundReason);
+							}
+
 
 							setStatusbarMessage(result, FSMessage, reasonMsg);
 						}
@@ -2695,6 +2654,10 @@ intptr_t CALLBACK FindReplaceDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 							if (nbMarked == 0 && !isTheMostLaxMode)
 							{
 								reasonMsg = pNativeSpeaker->getLocalizedStrFromID("find-status-cannot-find-pebkac-maybe", noFoundPotentialReason);
+							}
+							else if (_options._regexEmptyStringFound)
+							{
+								reasonMsg = pNativeSpeaker->getLocalizedStrFromID("find-status-regex-find-empty-string", regexEmptyFoundReason);
 							}
 
 							setStatusbarMessage(result, FSMessage, reasonMsg);
@@ -3327,13 +3290,13 @@ int FindReplaceDlg::markAll(const wchar_t *txt2find, int styleID)
 }
 
 
-int FindReplaceDlg::markAllInc(const FindOption *opt)
+int FindReplaceDlg::markAllInc(FindOption *opt)
 {
 	int nbFound = processAll(ProcessMarkAll_IncSearch, opt,  true);
 	return nbFound;
 }
 
-int FindReplaceDlg::processAll(ProcessOperation op, const FindOption* opt,
+int FindReplaceDlg::processAll(ProcessOperation op, FindOption* opt,
 	bool isEntire, const FindersInfo* pFindersInfo, int colourStyleID, std::vector<MatchPosition>* pMatches)
 {
 	NativeLangSpeaker* pNativeSpeaker = (NppParameters::getInstance()).getNativeLangSpeaker();
@@ -3344,7 +3307,7 @@ int FindReplaceDlg::processAll(ProcessOperation op, const FindOption* opt,
 		return 0;
 	}
 
-	const FindOption* pOptions = opt ? opt : _env;
+	FindOption* pOptions = opt ? opt : _env;
 	const wchar_t* txt2find = pOptions->_str2Search.c_str();
 	const wchar_t* txt2replace = pOptions->_str4Replace.c_str();
 
@@ -3457,7 +3420,7 @@ int FindReplaceDlg::processAll(ProcessOperation op, const FindOption* opt,
 }
 
 int FindReplaceDlg::processRange(ProcessOperation op, FindReplaceInfo& findReplaceInfo, const FindersInfo* pFindersInfo,
-	const FindOption* opt, int colourStyleID, ScintillaEditView* view2Process, std::vector<MatchPosition>* pMatches)
+	FindOption* opt, int colourStyleID, ScintillaEditView* view2Process, std::vector<MatchPosition>* pMatches)
 {
 	int nbProcessed = 0;
 
@@ -3534,9 +3497,9 @@ int FindReplaceDlg::processRange(ProcessOperation op, FindReplaceInfo& findRepla
 	bool isRegExp = pOptions->_searchType == FindRegex;
 	int flags = Searching::buildSearchFlags(pOptions) | SCFIND_REGEXP_SKIPCRLFASONE;
 
-	// Allow empty matches, but not immediately after previous match for replace all or find all.
-	// Other search types should ignore empty matches completely.
-	if (op == ProcessReplaceAll || op == ProcessFindAll)
+	// Allow empty matches, but not immediately after previous match, so Count and Mark All
+	// (like Replace All and Find All already do) don't silently skip zero-length matches.
+	if (op == ProcessReplaceAll || op == ProcessFindAll || op == ProcessCountAll || op == ProcessMarkAll)
 		flags |= SCFIND_REGEXP_EMPTYMATCH_NOTAFTERMATCH;
 
 
@@ -3711,8 +3674,8 @@ int FindReplaceDlg::processRange(ProcessOperation op, FindReplaceInfo& findRepla
 
 			case ProcessMarkAll:
 			{
-				// In theory, we can't have empty matches for a ProcessMarkAll, but because scintilla
-				// gets upset if we call INDICATORFILLRANGE with a length of 0, we protect against it here.
+				// Zero-length matches are possible (e.g. "^$"), but scintilla gets upset if we call
+				// INDICATORFILLRANGE with a length of 0, so we protect against it here.
 				// At least in version 2.27, after calling INDICATORFILLRANGE with length 0, further indicators
 				// on the same line would simply not be shown.  This may have been fixed in later version of Scintilla.
 				if (foundTextLen > 0)
@@ -3720,11 +3683,17 @@ int FindReplaceDlg::processRange(ProcessOperation op, FindReplaceInfo& findRepla
 					pEditView->execute(SCI_SETINDICATORCURRENT, SCE_UNIVERSAL_FOUND_STYLE);
 					pEditView->execute(SCI_INDICATORFILLRANGE,  targetStart, foundTextLen);
 				}
+				else if (foundTextLen == 0 && opt->_searchType == FindRegex)
+				{
+					opt->_regexEmptyStringFound = true;
+				}
 
 				if (_env->_doMarkLine)
 				{
 					auto lineNumber = pEditView->execute(SCI_LINEFROMPOSITION, targetStart);
-					auto lineNumberEnd = pEditView->execute(SCI_LINEFROMPOSITION, targetEnd - 1);
+					// For a zero-length match, "targetEnd - 1" would be the line *before* targetStart
+					// (or even underflow at document start), so fall back to lineNumber in that case.
+					auto lineNumberEnd = (foundTextLen > 0) ? pEditView->execute(SCI_LINEFROMPOSITION, targetEnd - 1) : lineNumber;
 
 					for (auto i = lineNumber; i <= lineNumberEnd; ++i)
 					{
@@ -3734,6 +3703,7 @@ int FindReplaceDlg::processRange(ProcessOperation op, FindReplaceInfo& findRepla
 							pEditView->execute(SCI_MARKERADD, i, MARK_BOOKMARK);
 					}
 				}
+
 				break;
 			}
 
@@ -3748,7 +3718,7 @@ int FindReplaceDlg::processRange(ProcessOperation op, FindReplaceInfo& findRepla
 				break;
 			}
 
-			case ProcessMarkAll_2:
+			case ProcessHighLightAll:
 			{
 				// See comment by ProcessMarkAll
 				if (foundTextLen > 0)
@@ -3772,7 +3742,9 @@ int FindReplaceDlg::processRange(ProcessOperation op, FindReplaceInfo& findRepla
 
 			case ProcessCountAll:
 			{
-				//Nothing to do
+				if (foundTextLen == 0 && opt->_searchType == FindRegex)
+					opt->_regexEmptyStringFound = true;
+
 				break;
 			}
 
@@ -4856,13 +4828,13 @@ void FindReplaceDlg::setFindInFilesDirFilter(const wchar_t *dir, const wchar_t *
 {
 	if (dir)
 	{
-		_options._directory = dir;
+		_env->_directory = dir;
 		::SetDlgItemText(_hSelf, IDD_FINDINFILES_DIR_COMBO, dir);
 	}
 
 	if (filters)
 	{
-		_options._filters = filters;
+		_env->_filters = filters;
 		::SetDlgItemText(_hSelf, IDD_FINDINFILES_FILTERS_COMBO, filters);
 	}
 }
@@ -4965,9 +4937,9 @@ void FindReplaceDlg::doDialog(DIALOG_TYPE whichType, bool isRTL, bool toShow)
 	if (!isCreated())
 	{
 		_isRTL = isRTL;
-		const auto dpiContext = DPIManagerV2::setThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+		//const auto dpiContext = DPIManagerV2::setThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 		create(IDD_FIND_REPLACE_DLG, isRTL, true, toShow);
-		DPIManagerV2::setThreadDpiAwarenessContext(dpiContext);
+		//DPIManagerV2::setThreadDpiAwarenessContext(dpiContext);
 
 		::EnableMenuItem(::GetMenu(_hParent), IDM_SEARCH_FINDNEXT, MF_BYCOMMAND | MF_ENABLED);
 		::EnableMenuItem(::GetMenu(_hParent), IDM_SEARCH_FINDPREV, MF_BYCOMMAND | MF_ENABLED);
@@ -5515,6 +5487,11 @@ void FindReplaceDlg::drawStatusBarItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 	SetTextColor(lpDrawItemStruct->hDC, fgColor);
 	::SetBkMode(lpDrawItemStruct->hDC, TRANSPARENT);
+
+	if (NppDarkMode::isEnabled())
+	{
+		::FillRect(lpDrawItemStruct->hDC, &lpDrawItemStruct->rcItem, NppDarkMode::getBackgroundBrush());
+	}
 
 	RECT rect{};
 	_statusBar.getClientRect(rect);
