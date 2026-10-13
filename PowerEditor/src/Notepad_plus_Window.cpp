@@ -267,12 +267,7 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 					}
 				}
 
-				// 默认开启 自动换行
-				ScintillaViewParams& svp1 = (ScintillaViewParams&)(NppParameters::getInstance()).getSVP();
-				svp1._doWrap = true;
-				_notepad_plus_plus_core.command(IDM_VIEW_WRAP);
-				_notepad_plus_plus_core.checkMenuItem(IDM_VIEW_WRAP, true);
-				// (&FileManager::getInstance()) -> wrap; 
+				
 
 				// 这里强制默认加载暗色模式, 这里加载的不全
 				/*
@@ -331,6 +326,13 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 	}
 
 	fileNames.clear();
+
+	// 默认开启 自动换行
+	ScintillaViewParams& svp1 = (ScintillaViewParams&)(NppParameters::getInstance()).getSVP();
+	svp1._doWrap = true;
+	_notepad_plus_plus_core.command(IDM_VIEW_WRAP);
+	_notepad_plus_plus_core.checkMenuItem(IDM_VIEW_WRAP, true);
+	// (&FileManager::getInstance()) -> wrap; 
 	ThemeSwitcher & themeSwitcher = nppParams.getThemeSwitcher();
 
 	//  Get themes from both npp install themes dir and user data themes dir (AppData, settingsDir, or cloud) with the per user
