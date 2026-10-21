@@ -80,10 +80,11 @@ struct TargetRange {
 
 enum SearchIncrementalType { NotIncremental, FirstIncremental, NextIncremental };
 enum SearchType { FindNormal, FindExtended, FindRegex };
-enum ProcessOperation { ProcessFindAll, ProcessReplaceAll, ProcessCountAll, ProcessMarkAll, ProcessMarkAll_2, ProcessMarkAll_IncSearch, ProcessMarkAllExt, ProcessFindInFinder };
+enum ProcessOperation { ProcessFindAll, ProcessReplaceAll, ProcessCountAll, ProcessMarkAll, ProcessHighLightAll, ProcessMarkAll_IncSearch, ProcessMarkAllExt, ProcessFindInFinder };
 
 struct FindOption
 {
+	// In
 	bool _isWholeWord = true;
 	bool _isMatchCase = true;
 	bool _isWrapAround = true;
@@ -104,6 +105,9 @@ struct FindOption
 	bool _isProjectPanel_3 = false;
 	bool _dotMatchesNewline = false;
 	bool _isMatchLineNumber = false; // always false for main search
+
+	// Out
+	bool _regexEmptyStringFound = false; // used only for status bar tooltip display on countAll & markAll operations
 };
 
 struct MatchPosition
@@ -304,12 +308,12 @@ public :
 	bool processReplace(const wchar_t* txt2find, const wchar_t* txt2replace, const FindOption* options = nullptr);
 
 	int markAll(const wchar_t* txt2find, int styleID);
-	int markAllInc(const FindOption* opt);
+	int markAllInc(FindOption* opt);
 
-	int processAll(ProcessOperation op, const FindOption* opt,
+	int processAll(ProcessOperation op, FindOption* opt,
 		bool isEntire = false, const FindersInfo *pFindersInfo = nullptr, int colourStyleID = -1, std::vector<MatchPosition>* pMatches = nullptr);
 	int processRange(ProcessOperation op, FindReplaceInfo& findReplaceInfo, const FindersInfo* pFindersInfo,
-		const FindOption* opt = nullptr, int colourStyleID = -1, ScintillaEditView* view2Process = nullptr, std::vector<MatchPosition>* pMatches = nullptr);
+		FindOption* opt = nullptr, int colourStyleID = -1, ScintillaEditView* view2Process = nullptr, std::vector<MatchPosition>* pMatches = nullptr);
 
 	void replaceAllInOpenedDocs();
 	void findAllIn(InWhat op);
@@ -476,6 +480,8 @@ private:
 
 	HWND _shiftTrickUpTip = nullptr;
 	HWND _2ButtonsTip = nullptr;
+	HWND _confirmDlgTip = nullptr;
+	HWND _replaceAndStopTip = nullptr;
 	HWND _filterTip = nullptr;
 	HWND _dirFromActiveDocTip = nullptr;
 
@@ -503,11 +509,19 @@ private:
 
 	std::map<int, bool> _controlEnableMap;
 
-	std::vector<int> _reduce2hide_find = { IDC_IN_SELECTION_CHECK, IDC_REPLACEINSELECTION, IDC_FINDALL_CURRENTFILE, IDCANCEL };
-	std::vector<int> _reduce2hide_findReplace = { IDC_IN_SELECTION_CHECK, IDC_REPLACEINSELECTION, IDREPLACEALL, IDCANCEL };
-	std::vector<int> _reduce2hide_fif = { IDD_FINDINFILES_FILTERS_STATIC, IDD_FINDINFILES_FILTERS_COMBO, IDCANCEL };
-	std::vector<int> _reduce2hide_fip = { IDD_FINDINFILES_FILTERS_STATIC, IDD_FINDINFILES_FILTERS_COMBO, IDCANCEL };
-	std::vector<int> _reduce2hide_mark = { IDC_MARKLINE_CHECK, IDC_PURGE_CHECK, IDC_IN_SELECTION_CHECK, IDC_REPLACEINSELECTION, IDC_COPY_MARKED_TEXT, IDCANCEL };
+	static constexpr std::array _reduce2hide_match{ IDWHOLEWORD, IDMATCHCASE };
+	static constexpr std::array _reduce2hide_mode{ IDC_MODE_STATIC, IDNORMAL, IDEXTENDED, IDREGEXP, IDREDOTMATCHNL };
+	static constexpr std::array _reduce2hide_transparency{ IDC_TRANSPARENT_CHECK, IDC_TRANSPARENT_GRPBOX, IDC_TRANSPARENT_LOSSFOCUS_RADIO, IDC_TRANSPARENT_ALWAYS_RADIO, IDC_PERCENTAGE_SLIDER };
+	static constexpr std::array _reduce2hide_regex{ IDREDOTMATCHNL, IDC_BACKWARDDIRECTION, IDWHOLEWORD };
+
+	static constexpr std::array _reduce2hide_find{ IDC_BACKWARDDIRECTION, IDWRAP, IDC_IN_SELECTION_CHECK, IDC_REPLACEINSELECTION, IDC_FINDALL_CURRENTFILE, IDC_FINDALL_OPENEDFILES, IDCANCEL };
+	static constexpr std::array _reduce2hide_findReplace{ IDC_BACKWARDDIRECTION, IDWRAP, IDC_IN_SELECTION_CHECK, IDC_REPLACEINSELECTION,
+		IDC_REPLACEANDSTOP, IDREPLACEALL, IDC_REPLACE_OPENEDFILES, IDC_CONFIRMREPLACEOPENDOCS, IDCANCEL };
+	static constexpr std::array _reduce2hide_fif{ IDD_FINDINFILES_FILTERS_STATIC, IDD_FINDINFILES_FILTERS_COMBO, IDC_FIF_FILTER_TIP_STATIC,
+		IDD_FINDINFILES_DIR_STATIC, IDD_FINDINFILES_DIR_COMBO, IDD_FINDINFILES_BROWSE_BUTTON, IDD_FINDINFILES_SETDIRFROMDOC_BUTTON, IDD_FINDINFILES_RECURSIVE_CHECK, IDD_FINDINFILES_INHIDDENDIR_CHECK, IDCANCEL };
+	static constexpr std::array _reduce2hide_fip{ IDD_FINDINFILES_FILTERS_STATIC, IDD_FINDINFILES_FILTERS_COMBO, IDC_FIF_FILTER_TIP_STATIC,
+		IDD_FINDINFILES_PROJECT1_CHECK, IDD_FINDINFILES_PROJECT2_CHECK, IDD_FINDINFILES_PROJECT3_CHECK, IDCANCEL };
+	static constexpr std::array _reduce2hide_mark{ IDC_MARKLINE_CHECK, IDC_PURGE_CHECK, IDC_BACKWARDDIRECTION, IDWRAP, IDC_IN_SELECTION_CHECK, IDC_REPLACEINSELECTION, IDC_COPY_MARKED_TEXT, IDCANCEL };
 
 	ControlInfoTip _maxLenOnSearchTip;
 

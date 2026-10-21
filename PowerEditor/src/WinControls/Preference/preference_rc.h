@@ -470,8 +470,8 @@
 
 #define IDC_CHECK_MONOSPACEDFONT_FINDDLG               6902
 #define IDC_CHECK_FINDDLG_ALWAYS_VISIBLE               6903
-#define IDC_CHECK_CONFIRMREPLOPENDOCS                  6904
-#define IDC_CHECK_REPLACEANDSTOP                       6905
+//#define IDC_CHECK_CONFIRMREPLOPENDOCS                  6904
+//#define IDC_CHECK_REPLACEANDSTOP                       6905
 #define IDC_CHECK_SHOWONCEPERFOUNDLINE                 6906
 #define IDD_FILL_FIND_FIELD_GRP_STATIC                 6907
 #define IDC_CHECK_FILL_FIND_FIELD_WITH_SELECTED        6908
@@ -545,4 +545,7 @@
 #define IDC_RADIO_AUTOINDENT_ADVANCED                  7164
 
 #define IDC_DIALOG_FONT_GB_STATIC                      7165
-#define IDC_COMBO_DIALOG_FONT_SIZE                     7166
+#define IDC_STATIC_DIALOG_FONT_SIZE                    7166
+#define IDC_COMBO_DIALOG_FONT_SIZE                     7167
+#define IDC_STATIC_DIALOG_FONT_NAME                    7168
+#define IDC_COMBO_DIALOG_FONT_NAME                     7169

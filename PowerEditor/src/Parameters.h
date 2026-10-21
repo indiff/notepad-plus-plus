@@ -65,6 +65,8 @@
 
 #endif
 
+#define DEFAULT_DLG_FONT L"MS Shell Dlg"
+
 class NativeLangSpeaker;
 
 /*!
@@ -497,6 +499,7 @@ struct NewDocDefaultSettings final
 	UniMode _unicodeMode = uniUTF8_NoBOM;
 	bool _openAnsiAsUtf8 = true;
 	LangType _lang = L_TEXT;
+	std::wstring _udl;
 	int _codepage = -1; // -1 when not using
 	bool _addNewDocumentOnStartup = false;
 	bool _useContentAsTabName = false;
@@ -741,7 +744,7 @@ struct NppGUI final
 	bool _finderShowOnlyOneEntryPerFoundLine = true;
 	bool _fif_ignoreunsavedChangesInOpenedFiles = false;
 
-	int _fileAutoDetection = cdEnabledNew;
+	int _fileAutoDetection = cdEnabled4CurrentFile;
 
 	bool _checkHistoryFiles = false;
 
@@ -790,6 +793,7 @@ struct NppGUI final
 	int _inSelectionAutocheckThreshold = FINDREPLACE_INSELECTION_THRESHOLD_DEFAULT;
 	int _fillFindWhatThreshold = FILL_FINDWHAT_THRESHOLD_DEFAULT;
 	bool _fillDirFieldFromActiveDoc = false;
+	bool _incrementalSearchBarAtTop = false;
 	bool _muteSounds = false;
 	bool _enableFoldCmdToggable = false;
 	bool _hideMenuRightShortcuts = false;
@@ -892,6 +896,7 @@ struct NppGUI final
 	bool _isFawSymlinkAllowed = false; // allow to open symlink files in FaW (Folder as Workspace) panel.
 
 	WORD _fontDlgSize = 8;
+	std::wstring _fontDlgName = DEFAULT_DLG_FONT;
 };
 
 
@@ -1185,6 +1190,10 @@ struct FindHistory final
 	bool _isBookmarkLine = false;
 	bool _isPurge = false;
 
+	bool _isIncrementalMatchCase = false;
+	bool _isIncrementalHighlightAll = false;
+	bool _isIncrementalCount = true;
+
 	// Allow regExpr backward search: this option is not present in UI, only to modify in config.xml
 	bool _regexBackward4PowerUser = false;
 };
@@ -1425,8 +1434,12 @@ public:
 		return _nppGUI;
 	}
 
-	WORD getDlgFontSize() const noexcept {
+	[[nodiscard]] WORD getDlgFontSize() const noexcept {
 		return std::clamp<WORD>(_nppGUI._fontDlgSize, 8U, 24U);
+	}
+
+	[[nodiscard]] const std::wstring& getDlgFontName() const noexcept {
+		return _nppGUI._fontDlgName;
 	}
 
 	const char* getWordList(LangType langID, int typeIndex) const {
