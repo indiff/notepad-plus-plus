@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3
 import requests
 import os
+# 2026.10.21 sync
 # 上传文件到企业微信
 # https://developer.work.weixin.qq.com/document/path/91770#%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%8E%A5%E5%8F%A3
 def upload_file(key, file_path):
