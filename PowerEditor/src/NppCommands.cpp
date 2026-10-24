@@ -686,8 +686,11 @@ void Notepad_plus::command(int id)
 							unsigned long *lpLen = (unsigned long *)GlobalLock(hglbLen);
 							if (lpLen != NULL)
 							{
+								SIZE_T actualSize = GlobalSize(hglb);
+								unsigned long safeLen = (*lpLen <= actualSize) ? *lpLen : static_cast<unsigned long>(actualSize);
+
 								_pEditView->execute(SCI_REPLACESEL, 0, reinterpret_cast<LPARAM>(""));
-								_pEditView->execute(SCI_ADDTEXT, *lpLen, reinterpret_cast<LPARAM>(lpchar));
+								_pEditView->execute(SCI_ADDTEXT, safeLen, reinterpret_cast<LPARAM>(lpchar));
 
 								GlobalUnlock(hglbLen);
 							}
@@ -4377,14 +4380,16 @@ void Notepad_plus::command(int id)
 
 				if ((id >= ID_MACRO) && (id < ID_MACRO_LIMIT))
 				{
-					int i = id - ID_MACRO;
+					size_t i = id - ID_MACRO;
 					vector<MacroShortcut>& theMacros = nppParams.getMacroList();
+					if (i >= theMacros.size()) return;
 					macroPlayback(theMacros[i].getMacro());
 				}
 				else if ((id >= ID_USER_CMD) && (id < ID_USER_CMD_LIMIT))
 				{
-					int i = id - ID_USER_CMD;
+					size_t i = id - ID_USER_CMD;
 					const vector<UserCommand>& theUserCommands = nppParams.getUserCommandList();
+					if (i >= theUserCommands.size()) return;
 					UserCommand ucmd = theUserCommands[i];
 
 					Command cmd(string2wstring(ucmd.getCmd(), CP_UTF8));
