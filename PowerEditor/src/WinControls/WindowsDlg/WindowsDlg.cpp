@@ -718,7 +718,7 @@ void WindowsDlg::doColumnSort()
 	for (i = 0; i < n; ++i)
 		ListView_SetItemState(_hList, i, sortMap[_idxMap[i]] ? LVIS_SELECTED : 0, LVIS_SELECTED);
 
-	::InvalidateRect(_hList, &_rc, FALSE);
+	::InvalidateRect(_hList, nullptr, FALSE);
 	updateButtonState();
 }
 
@@ -766,7 +766,6 @@ BOOL WindowsDlg::onInitDialog()
 
 	_winMgr.CalcLayout(_hSelf);
 	_winMgr.SetWindowPositions(_hSelf);
-	getClientRect(_rc);
 
 	_hList = ::GetDlgItem(_hSelf, IDC_WINDOWS_LIST);
 	DWORD exStyle = ListView_GetExtendedListViewStyle(_hList);
@@ -829,7 +828,7 @@ BOOL WindowsDlg::onInitDialog()
 		goToCenter();
 	}
 
-	doRefresh(true);
+	doRefresh();
 	return TRUE;
 }
 
@@ -967,7 +966,7 @@ LRESULT WindowsDlg::onWinMgr(WPARAM wp, LPARAM lp)
 	return MyBaseClass::onWinMgr(wp, lp);
 }
 
-void WindowsDlg::doRefresh(bool invalidate /*= false*/)
+void WindowsDlg::doRefresh()
 {
 	if (_hSelf != NULL && isVisible())
 	{
@@ -975,7 +974,7 @@ void WindowsDlg::doRefresh(bool invalidate /*= false*/)
 		{
 			size_t count = (_pTab != NULL) ? _pTab->nbItem() : 0;
 			size_t oldSize = _idxMap.size();
-			if (!invalidate && count == oldSize)
+			if (count == oldSize)
 				return;
 
 			if (count != oldSize)
@@ -987,9 +986,8 @@ void WindowsDlg::doRefresh(bool invalidate /*= false*/)
 				for (size_t i = lo; i < count; ++i)
 					_idxMap[i] = int(i);
 			}
-			LPARAM lp = invalidate ? LVSICF_NOSCROLL|LVSICF_NOINVALIDATEALL : LVSICF_NOSCROLL;
-			::SendMessage(_hList, LVM_SETITEMCOUNT, count, lp);
-			::InvalidateRect(_hList, &_rc, FALSE);
+			::SendMessage(_hList, LVM_SETITEMCOUNT, count, LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
+			::InvalidateRect(_hList, nullptr, FALSE);
 
 			resetSelection();
 			updateButtonState();
@@ -1027,6 +1025,7 @@ void WindowsDlg::resetSelection()
 		if (*itr == curSel)
 		{
 			ListView_SetItemState(_hList, pos, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+			ListView_EnsureVisible(_hList, pos, FALSE);
 		}
 		else
 		{
@@ -1054,7 +1053,7 @@ void WindowsDlg::doSave()
 	}
 	SendMessage(_hParent, WDN_NOTIFY, 0, LPARAM(&nmdlg));
 	delete[] nmdlg.Items;
-	::InvalidateRect(_hList, &_rc, FALSE);
+	::InvalidateRect(_hList, nullptr, FALSE);
 	ListView_RedrawItems(_hList, 0, ListView_GetSelectedCount(_hList));
 }
 
@@ -1130,7 +1129,7 @@ void WindowsDlg::doClose()
 	if (_idxMap.size() < 1)
 		::SendMessage(_hSelf, WM_CLOSE, 0, 0);
 	else if (_pTab->nbItem() != _idxMap.size())
-		doRefresh(true);
+		doRefresh();
 	else
 	{
 		// select first previously selected item (or last one if only the last one was removed)
@@ -1306,7 +1305,7 @@ void WindowsDlg::doSortToTabs()
 	if (nmdlg.processed)
 	{
 		_idxMap.clear();
-		doRefresh(true);
+		doRefresh();
 	}
 	delete[] nmdlg.Items;
 }
