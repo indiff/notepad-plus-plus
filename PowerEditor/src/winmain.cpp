@@ -608,7 +608,33 @@ HANDLE getParentProcessOfThisNotepadPlusPlus()
 
 std::chrono::steady_clock::time_point g_nppStartTimePoint{};
 
-// 这里是 Windows应用程序的标准入口点
+static std::vector<NppDigest> g_pendingIpcDigests;
+static LRESULT CALLBACK IpcSenderProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+	if (msg == WM_COPYDATA)
+	{
+		const auto* c = reinterpret_cast<const COPYDATASTRUCT*>(lp);
+
+		// Check if the message is a confirmation of a previously sent IPC message
+		if (c && c->lpData && c->dwData == NPP_COPYDATA_CONFIRM && c->cbData == sizeof(NppDigest))
+		{
+			// Find the digest matches any of the pending IPC digests
+			for (auto it = g_pendingIpcDigests.begin(); it != g_pendingIpcDigests.end(); ++it)
+			{
+				// If the digest matches, remove it from the pending list and return a confirmation code
+				if (memcmp(it->data(), c->lpData, sizeof(NppDigest)) == 0)
+				{
+					g_pendingIpcDigests.erase(it);     // one-shot: a confirmation can't be replayed
+					return NPP_CONFIRM_MAGIC;
+				}
+			}
+		}
+
+		return 0;
+	}
+	return ::DefWindowProcW(hwnd, msg, wp, lp);
+}
+
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE /*hPrevInstance*/, _In_ PWSTR pCmdLine, _In_ int /*nShowCmd*/)
 {
 	g_nppStartTimePoint = std::chrono::steady_clock::now();
@@ -822,7 +848,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE /*hPrevInstance
 			cmdLineParams._isNoSession = true;
 	}
 
-	std::wstring quotFileName = L"";
+	std::wstring quotFileNames = L"";
     // tell the running instance the FULL path to the new files to load
 	size_t nbFilesToOpen = params.size();
 
@@ -833,9 +859,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE /*hPrevInstance
 		{
 			//check if relative or full path. Relative paths don't have a colon for driveletter
 
-			quotFileName += L"\"";
-			quotFileName += relativeFilePathToFullFilePath(currentFile);
-			quotFileName += L"\" ";
+			quotFileNames += L"\"";
+			quotFileNames += relativeFilePathToFullFilePath(currentFile);
+			quotFileNames += L"\" ";
 		}
 	}
 
@@ -878,13 +904,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE /*hPrevInstance
 			{
 				static const wchar_t* className = L"NppIpcSenderWnd";
 				WNDCLASSW wc{};
-				wc.lpfnWndProc = DefWindowProcW;
+				wc.lpfnWndProc = IpcSenderProc;
 				wc.hInstance = hInstance;
 				wc.lpszClassName = className;
 				RegisterClassW(&wc);
 
 				// HWND_MESSAGE: message-only window, never visible, no taskbar entry
 				HWND hIpcSender = CreateWindowExW(0, className, L"", 0, 0, 0, 0, 0,	HWND_MESSAGE, NULL, hInstance, NULL);
+				::ChangeWindowMessageFilterEx(hIpcSender, WM_COPYDATA, MSGFLT_ALLOW, nullptr);
 
 				CmdLineParamsDTO dto = CmdLineParamsDTO::FromCmdLineParams(cmdLineParams);
 
@@ -892,20 +919,31 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE /*hPrevInstance
 				paramData.dwData = COPYDATA_PARAMS;
 				paramData.lpData = &dto;
 				paramData.cbData = sizeof(dto);
-				::SendMessage(hNotepad_plus, WM_COPYDATA, reinterpret_cast<WPARAM>(hIpcSender), reinterpret_cast<LPARAM>(&paramData));
 
 				COPYDATASTRUCT cmdLineData{};
 				cmdLineData.dwData = COPYDATA_FULL_CMDLINE;
 				cmdLineData.lpData = (void*)cmdLineString.c_str();
 				cmdLineData.cbData = static_cast<DWORD>((cmdLineString.length() + 1) * sizeof(wchar_t));
-				::SendMessage(hNotepad_plus, WM_COPYDATA, reinterpret_cast<WPARAM>(hIpcSender), reinterpret_cast<LPARAM>(&cmdLineData));
 
 				COPYDATASTRUCT fileNamesData{};
 				fileNamesData.dwData = COPYDATA_FILENAMESW;
-				fileNamesData.lpData = (void *)quotFileName.c_str();
-				fileNamesData.cbData = static_cast<DWORD>((quotFileName.length() + 1) * sizeof(wchar_t));
+				fileNamesData.lpData = (void *)quotFileNames.c_str();
+				fileNamesData.cbData = static_cast<DWORD>((quotFileNames.length() + 1) * sizeof(wchar_t));
+
+				// store the digests of the data to be sent, so that we can verify the confirmation messages
+				g_pendingIpcDigests.clear();
+				for (const COPYDATASTRUCT* c : { &paramData, &cmdLineData, &fileNamesData })
+				{
+					NppDigest d;
+					if (nppCopyDataDigest(c->dwData, c->lpData, c->cbData, d))
+						g_pendingIpcDigests.push_back(d);
+				}
+
+				::SendMessage(hNotepad_plus, WM_COPYDATA, reinterpret_cast<WPARAM>(hIpcSender), reinterpret_cast<LPARAM>(&paramData));
+				::SendMessage(hNotepad_plus, WM_COPYDATA, reinterpret_cast<WPARAM>(hIpcSender), reinterpret_cast<LPARAM>(&cmdLineData));
 				::SendMessage(hNotepad_plus, WM_COPYDATA, reinterpret_cast<WPARAM>(hIpcSender), reinterpret_cast<LPARAM>(&fileNamesData));
 
+				g_pendingIpcDigests.clear();
 				::DestroyWindow(hIpcSender);
 			}
 			return 0;
@@ -940,7 +978,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE /*hPrevInstance
 	MiniDumper mdump;	//for debugging purposes.
 	bool isException = false;
 	try {
-		notepad_plus_plus.init(hInstance, NULL, quotFileName.c_str(), &cmdLineParams);
+		notepad_plus_plus.init(hInstance, NULL, quotFileNames.c_str(), &cmdLineParams);
 		allowForbidPrivilegeMessages(notepad_plus_plus, ver);
 		bool going = true;
 		while (going)
