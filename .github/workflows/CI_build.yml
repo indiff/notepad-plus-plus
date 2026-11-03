@@ -365,8 +365,7 @@ jobs:
             !PowerEditor\bin*\**\*.pdb
             !PowerEditor\bin*\**\*.lib
             !PowerEditor\bin*\**\*.exp
-    - name: Archive artifacts for Win32 / Release
-      if: matrix.build_platform == 'Win32' && matrix.build_configuration == 'Release'
+
     - name: Archive artifacts for ${{ matrix.build_platform}} / Debug
       if: matrix.build_configuration == 'Debug'
       uses: actions/upload-artifact@v7
