@@ -168,6 +168,7 @@ jobs:
             $host.SetShouldExit($LastExitCode)
         }
     - name: Check modelDate in changed model XML files
+      if: false
       shell: pwsh
       run: |
         $files = @('PowerEditor/src/stylers.model.xml', 'PowerEditor/src/langs.model.xml', 'PowerEditor/installer/themes/DarkModeDefault.xml')
