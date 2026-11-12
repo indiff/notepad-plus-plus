@@ -48,6 +48,7 @@ public:
 	void reSizeToWH(int width, int height);
 
 private:
+	using ListViewBase::init;
 	using Window::reSizeToWH;
 };
 
@@ -101,4 +102,8 @@ private:
 	using DockingDlgInterface::init;
 
 	void onDoubleClick(HWND hList);
+
+	void onDpiChanged() override {
+		setFontForChild(_listView.getHSelf());
+	}
 };

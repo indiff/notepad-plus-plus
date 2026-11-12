@@ -15,31 +15,69 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-#include <algorithm>
+#include <windows.h>
+
 #include <shlwapi.h>
 #include <uxtheme.h> // for EnableThemeDialogTexture
-#include <format>
 #include <windowsx.h> // for GET_X_LPARAM, GET_Y_LPARAM
+
+#include <algorithm>
 #include <atomic>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <cwchar>
+#include <exception>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include <ILexer.h>
+#include <Lexilla.h>
+#include <SciLexer.h>
+#include <Scintilla.h>
+#include <Utf8_16.h>
+
+#include "AutoCompletion.h"
+#include "Buffer.h"
+#include "Common.h"
+#include "ContextMenu.h"
+#include "DocTabView.h"
+#include "Docking.h"
+#include "DockingCont.h"
+#include "FindReplaceDlg.h"
+#include "Notepad_plus.h"
 #include "Notepad_plus_Window.h"
-#include "TaskListDlg.h"
+#include "Notepad_plus_msgs.h"
+#include "NppConstants.h"
+#include "NppDarkMode.h"
+#include "Parameters.h"
+#include "PluginInterface.h"
+#include "Processus.h"
+#include "ProjectPanel.h"
+#include "RunDlg.h"
+#include "ScintillaEditView.h"
 #include "ShortcutMapper.h"
+#include "TabBar.h"
+#include "TaskListDlg.h"
+#include "ToolBar.h"
+#include "VerticalFileSwitcher.h"
+#include "WindowsDlg.h"
+#include "WordStyleDlg.h"
 #include "ansiCharPanel.h"
 #include "clipboardHistoryPanel.h"
-#include "VerticalFileSwitcher.h"
-#include "ProjectPanel.h"
+#include "colors.h"
 #include "documentMap.h"
-#include "functionListPanel.h"
+#include "dpiManagerV2.h"
 #include "fileBrowser.h"
-#include "NppDarkMode.h"
-#include "NppConstants.h"
-#include "Processus.h"
+#include "functionListPanel.h"
+#include "menuCmdID.h"
+#include "preference_rc.h"
+#include "resource.h"
+#include "shortcut.h"
+#include "trayIconControler.h"
 
 using namespace std;
-
-#ifndef WM_DPICHANGED
-#define WM_DPICHANGED 0x02E0
-#endif
 
 std::atomic<bool> g_bNppExitFlag{ false };
 const UINT WM_TASKBARCREATED = ::RegisterWindowMessage(L"TaskbarCreated");
@@ -65,7 +103,7 @@ struct SortTaskListPred final
 };
 
 // app-restart feature needs Win10 20H1+ (builds 18963+), but it was quietly introduced earlier in the Fall Creators Update (b1709+)
-bool SetOSAppRestart()
+static bool SetOSAppRestart()
 {
 	NppParameters& nppParam = NppParameters::getInstance();
 	if (nppParam.getWinVersion() < WV_WIN10)
@@ -265,7 +303,7 @@ LRESULT Notepad_plus_Window::runProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 }
 
 // Used by NPPM_GETFILENAMEATCURSOR
-int CharacterIs(wchar_t c, const wchar_t *any)
+static int CharacterIs(wchar_t c, const wchar_t *any)
 {
 	int i;
 	for (i = 0; any[i] != 0; i++)
@@ -2729,9 +2767,10 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 			return TRUE;
 		}
 
+
 		case NPPM_INTERNAL_INCSEARCHBARPOSITION:
 		{
-			ReBar& rebar = nppParam.getNppGUI()._incrementalSearchBarAtTop ? _rebarTop : _rebarBottom;
+			ReBar& rebar = nppParam.getFindHistory()._incrementalSearchBarAtTop ? _rebarTop : _rebarBottom;
 			if (::GetParent(_incrementFindDlg.getHSelf()) == rebar.getHSelf()) // already there: a rebar is the parent of its band windows
 				return TRUE;
 
@@ -2747,6 +2786,14 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 				rebar.setIDVisible(REBAR_BAR_SEARCH, true);
 
 			::SendMessage(hwnd, WM_SIZE, 0, 0);
+			return TRUE;
+		}
+
+		case NPPM_INTERNAL_FINDDLGHIGHLIGHT:
+		{
+			if (_findReplaceDlg.isCreated())
+				_findReplaceDlg.updateMatchHighlighting();
+
 			return TRUE;
 		}
 
@@ -3968,6 +4015,9 @@ LRESULT Notepad_plus::process(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 		{
 			const UINT dpi = LOWORD(wParam);
 			_toolBar.resizeIconsDpi(dpi);
+
+			_mainEditView.setWhitespaceSize();
+			_subEditView.setWhitespaceSize();
 
 			_mainDocTab.dpiManager().setDpi(dpi);
 			_subDocTab.dpiManager().setDpi(dpi);
