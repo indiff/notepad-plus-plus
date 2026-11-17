@@ -327,16 +327,6 @@ jobs:
         del PowerEditor\bin64\*.exp
         ls PowerEditor\bin64\
         
-        # ====================== 新增：自动下载提取7zSD.sfx ======================
-        Write-Host "==== Download and extract 7zSD.sfx ===="
-        $sfxDlUrl = "https://www.7-zip.org/a/7z2605-x64.exe"
-        $sfx7zTemp = "7z2605-x64.exe"
-        Invoke-WebRequest -Uri $sfxDlUrl -OutFile $sfx7zTemp
-        7z x $sfx7zTemp "7zSD.sfx" -y
-        Remove-Item $sfx7zTemp
-        Write-Host "7zSD.sfx exists ? $(Test-Path '7zSD.sfx')"
-        # =======================================================================
-        
         # 定义源目录和目标压缩包路径
         $sourceDirectory = "PowerEditor\bin64"
         $destinationZip = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
@@ -377,7 +367,6 @@ jobs:
         [System.IO.File]::WriteAllText($cfgFile, $cfgText, [System.Text.Encoding]::UTF8)
         # 二进制合并（当前是仓库根目录，7zSD.sfx在这里）
         cmd /c copy /b "$sfxPath"+"$cfgFile"+"$destination7Z" "$destination7Z_EXE"
-        
         
         if ($Env:PYTHON_ALLOW_CACHE -eq "true" -and (Test-Path -Path ${{ env.PYTHON_DIR_CACHE }})) {
          $Env:PYTHONPATH = "${{ env.PYTHON_DIR_CACHE }}"
