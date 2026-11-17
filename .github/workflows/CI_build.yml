@@ -367,14 +367,14 @@ jobs:
            # 二进制合并（当前是仓库根目录，7zSD.sfx在这里）
            cmd /c copy /b "$sfxPath"+"$cfgFile"+"$destination7Z" "$destination7Z_EXE"
            
-           cd ..\..\
+           
            if ($Env:PYTHON_ALLOW_CACHE -eq "true" -and (Test-Path -Path ${{ env.PYTHON_DIR_CACHE }})) {
              $Env:PYTHONPATH = "${{ env.PYTHON_DIR_CACHE }}"
            }
            else {
              python -m pip install requests rfc3987 pywin32 lxml
            }
-           python send.py "$Env:MY_KEY" "PowerEditor\bin64\$destination7Z_EXE"
+           python send.py "$Env:MY_KEY" "$destination7Z_EXE"
 #Compress-Archive -Path "PowerEditor\bin64\" -DestinationPath ".\Notepad++.MSVC.${{ env.matrix.build_platform }}.${{ env.matrix.build_configuration }}.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
       env:
         MY_KEY: ${{ secrets.MY_KEY }}
