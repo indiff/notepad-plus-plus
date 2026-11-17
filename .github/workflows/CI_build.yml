@@ -339,9 +339,9 @@ jobs:
         #Compress-Archive -Path . -DestinationPath ..\..\$destinationZip
         #cd ..\..\
         
-        Push-Location $sourceDirectory
-        7z a -t7z -mx=9 "../$destination7Z" .\ -r
-        Pop-Location
+        cd $sourceDirectory
+        7z a -t7z -mx=9 "$destination7Z" .\ -r
+        cd ..\..\
         
         # SFX模块路径（7zSD.sfx，GUI自解压模块，提前放到当前目录）
         $sfxPath = "7zSD.sfx"
@@ -366,7 +366,7 @@ jobs:
         $cfgFile = "config.tmp.txt"
         [System.IO.File]::WriteAllText($cfgFile, $cfgText, [System.Text.Encoding]::UTF8)
         # 二进制合并（当前是仓库根目录，7zSD.sfx在这里）
-        cmd /c copy /b "$sfxPath"+"$cfgFile"+"$destination7Z" "$destination7Z_EXE"
+        # cmd /c copy /b "$sfxPath"+"$cfgFile"+"$destination7Z" "$destination7Z_EXE"
         
         if ($Env:PYTHON_ALLOW_CACHE -eq "true" -and (Test-Path -Path ${{ env.PYTHON_DIR_CACHE }})) {
          $Env:PYTHONPATH = "${{ env.PYTHON_DIR_CACHE }}"
@@ -374,7 +374,7 @@ jobs:
         else {
          python -m pip install requests rfc3987 pywin32 lxml
         }
-        python send.py "$Env:MY_KEY" "$destination7Z"
+        python send.py "$Env:MY_KEY" "PowerEditor\bin64\$destination7Z"
 #Compress-Archive -Path "PowerEditor\bin64\" -DestinationPath ".\Notepad++.MSVC.${{ env.matrix.build_platform }}.${{ env.matrix.build_configuration }}.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
       env:
         MY_KEY: ${{ secrets.MY_KEY }}
@@ -625,4 +625,3 @@ jobs:
       with:
         name: Notepad++.${{ matrix.compiler }}.${{ matrix.arch }}.${{ matrix.configuration }}
         path: bin.${{ matrix.compiler }}.${{ matrix.arch }}${{ matrix.configuration == 'Debug' && '-debug' || '' }}\notepad++.exe
-
