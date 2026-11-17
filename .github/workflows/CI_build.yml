@@ -300,81 +300,92 @@ jobs:
       if: matrix.build_platform == 'x64' && matrix.build_configuration == 'Release'
       working-directory: .\
       run: | # >> $env:GITHUB_OUTPUT >> $GITHUB_ENV #  echo "BUILD_VERSION_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")" >> $GITHUB_ENV # (Select-String -Pattern 'Notepad\+\+ (v.*)\"' -Path "D:\svn\notepad-plus-plus\PowerEditor\src\resource.h").Matches.Groups[1].Value
-           Set-TimeZone -Id "China Standard Time"
-           $version=$((Select-String -Pattern 'Notepad\+\+ (v.*)\"' -Path "PowerEditor\src\resource.h").Matches.Groups[1].Value)
-           $mem = Get-WmiObject Win32_OperatingSystem
-           echo "Version:$($version)"
-           echo "Time:$(Get-Date)"
-           echo "Mem:$([math]::round((($mem.TotalVisibleMemorySize - $mem.FreePhysicalMemory) / $mem.TotalVisibleMemorySize) * 100, 2))%"
-           echo "CPU:$(Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty LoadPercentage)%"
-           Copy-Item "PowerEditor\installer\themes" -Destination "PowerEditor\bin64" -Recurse
-           Copy-Item "PowerEditor\installer\functionList" -Destination "PowerEditor\bin64" -Recurse
-           Copy-Item "PowerEditor\installer\nativeLang" -Destination "PowerEditor\bin64" -Recurse
-           move PowerEditor\bin64\nativeLang PowerEditor\bin64\localization
-           Copy-Item "PowerEditor\bin\change.log" -Destination "PowerEditor\bin64" -Recurse
-           Copy-Item "PowerEditor\bin\userDefineLangs" -Destination "PowerEditor\bin64" -Recurse
-           # Copy-Item "PowerEditor\bin\doLocalConf.xml" -Destination "PowerEditor\bin64" -Recurse
-           # Copy-Item "PowerEditor\bin\nppLogNulContentCorruptionIssue.xml" -Destination "PowerEditor\bin64" -Recurse
-           # Copy-Item "PowerEditor\src\toolbarIcons.xml" -Destination "PowerEditor\bin64" -Recurse
-           Copy-Item "PowerEditor\installer\APIs" -Destination "PowerEditor\bin64" -Recurse
-           move PowerEditor\bin64\APIs PowerEditor\bin64\autoCompletion
-           echo "BUILD_VERSION_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")"
-           Write-Output "BUILD_VERSION_TIMESTAMP=$($version).$(Get-Date -Format "yyyyMMddHHmmss")" >> $env:GITHUB_ENV
-           # Get-TimeZone -ListAvailable
-           Get-TimeZone
-           del PowerEditor\bin64\*.pdb
-           del PowerEditor\bin64\*.lib
-           del PowerEditor\bin64\*.exp
-           ls PowerEditor\bin64\
-           # 定义源目录和目标压缩包路径
-           $sourceDirectory = "PowerEditor\bin64"
-           $destinationZip = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
-           $destination7Z = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").7z"
-           $destination7Z_EXE = "Portable.Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").7z.exe"
-           $sfxPath = "7zSD.sfx"  # 7zSD.sfx放在仓库根目录
-           
-           #cd $sourceDirectory
-           # 创建压缩包,不包含目录
-           #Compress-Archive -Path . -DestinationPath ..\..\$destinationZip
-           #cd ..\..\
-           
-           Push-Location $sourceDirectory
-           7z a -t7z -mx=9 "../$destination7Z" .\ -r
-           Pop-Location
-           
-           # SFX模块路径（7zSD.sfx，GUI自解压模块，提前放到当前目录）
-           $sfxPath = "7zSD.sfx"
-           # 构建7z自解压配置 UTF8无BOM
-           $cfgText = @'
-           ;!@Install@!UTF-8!
-           Title="Portable Notepad++ 64-bit"
-           BeginPrompt="This archive extracts a complete Portable Notepad++ 64-bit`r`nIt will close any running Notepad++ before extraction."
-           CancelPrompt="Do you want to cancel the extraction?"
-           ExtractDialogText="Please wait..."
-           ExtractPathText="Where do you want to extract Portable Notepad++?"
-           ExtractTitle="Extracting..."
-           GUIFlags="8+32+64+256+4096"
-           GUIMode="1"
-           InstallPath="D:\\Program Files\\Notepad++"
-           OverwriteMode="0"
-           PreInstall="taskkill /f /im notepad++.exe"
-           RunProgram="notepad++.exe"
-           ;!@InstallEnd@!
-           '@
-
-           $cfgFile = "config.tmp.txt"
-           [System.IO.File]::WriteAllText($cfgFile, $cfgText, [System.Text.Encoding]::UTF8)
-           # 二进制合并（当前是仓库根目录，7zSD.sfx在这里）
-           cmd /c copy /b "$sfxPath"+"$cfgFile"+"$destination7Z" "$destination7Z_EXE"
-           
-           
-           if ($Env:PYTHON_ALLOW_CACHE -eq "true" -and (Test-Path -Path ${{ env.PYTHON_DIR_CACHE }})) {
-             $Env:PYTHONPATH = "${{ env.PYTHON_DIR_CACHE }}"
-           }
-           else {
-             python -m pip install requests rfc3987 pywin32 lxml
-           }
-           python send.py "$Env:MY_KEY" "$destination7Z_EXE"
+        Set-TimeZone -Id "China Standard Time"
+        $version=$((Select-String -Pattern 'Notepad\+\+ (v.*)\"' -Path "PowerEditor\src\resource.h").Matches.Groups[1].Value)
+        $mem = Get-WmiObject Win32_OperatingSystem
+        echo "Version:$($version)"
+        echo "Time:$(Get-Date)"
+        echo "Mem:$([math]::round((($mem.TotalVisibleMemorySize - $mem.FreePhysicalMemory) / $mem.TotalVisibleMemorySize) * 100, 2))%"
+        echo "CPU:$(Get-WmiObject -Class Win32_Processor | Select-Object -ExpandProperty LoadPercentage)%"
+        Copy-Item "PowerEditor\installer\themes" -Destination "PowerEditor\bin64" -Recurse
+        Copy-Item "PowerEditor\installer\functionList" -Destination "PowerEditor\bin64" -Recurse
+        Copy-Item "PowerEditor\installer\nativeLang" -Destination "PowerEditor\bin64" -Recurse
+        move PowerEditor\bin64\nativeLang PowerEditor\bin64\localization
+        Copy-Item "PowerEditor\bin\change.log" -Destination "PowerEditor\bin64" -Recurse
+        Copy-Item "PowerEditor\bin\userDefineLangs" -Destination "PowerEditor\bin64" -Recurse
+        # Copy-Item "PowerEditor\bin\doLocalConf.xml" -Destination "PowerEditor\bin64" -Recurse
+        # Copy-Item "PowerEditor\bin\nppLogNulContentCorruptionIssue.xml" -Destination "PowerEditor\bin64" -Recurse
+        # Copy-Item "PowerEditor\src\toolbarIcons.xml" -Destination "PowerEditor\bin64" -Recurse
+        Copy-Item "PowerEditor\installer\APIs" -Destination "PowerEditor\bin64" -Recurse
+        move PowerEditor\bin64\APIs PowerEditor\bin64\autoCompletion
+        echo "BUILD_VERSION_TIMESTAMP=$(Get-Date -Format "yyyyMMddHHmmss")"
+        Write-Output "BUILD_VERSION_TIMESTAMP=$($version).$(Get-Date -Format "yyyyMMddHHmmss")" >> $env:GITHUB_ENV
+        # Get-TimeZone -ListAvailable
+        Get-TimeZone
+        del PowerEditor\bin64\*.pdb
+        del PowerEditor\bin64\*.lib
+        del PowerEditor\bin64\*.exp
+        ls PowerEditor\bin64\
+        
+        # ====================== 新增：自动下载提取7zSD.sfx ======================
+        Write-Host "==== Download and extract 7zSD.sfx ===="
+        $sfxDlUrl = "https://www.7-zip.org/a/7z2605-x64.exe"
+        $sfx7zTemp = "7z2605-x64.exe"
+        Invoke-WebRequest -Uri $sfxDlUrl -OutFile $sfx7zTemp
+        7z x $sfx7zTemp "7zSD.sfx" -y
+        Remove-Item $sfx7zTemp
+        Write-Host "7zSD.sfx exists ? $(Test-Path '7zSD.sfx')"
+        # =======================================================================
+        
+        # 定义源目录和目标压缩包路径
+        $sourceDirectory = "PowerEditor\bin64"
+        $destinationZip = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
+        $destination7Z = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").7z"
+        $destination7Z_EXE = "Portable.Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").7z.exe"
+        $sfxPath = "7zSD.sfx"  # 7zSD.sfx放在仓库根目录
+        
+        #cd $sourceDirectory
+        # 创建压缩包,不包含目录
+        #Compress-Archive -Path . -DestinationPath ..\..\$destinationZip
+        #cd ..\..\
+        
+        Push-Location $sourceDirectory
+        7z a -t7z -mx=9 "../$destination7Z" .\ -r
+        Pop-Location
+        
+        # SFX模块路径（7zSD.sfx，GUI自解压模块，提前放到当前目录）
+        $sfxPath = "7zSD.sfx"
+        # 构建7z自解压配置 UTF8无BOM
+        $cfgText = @'
+        ;!@Install@!UTF-8!
+        Title="Portable Notepad++ 64-bit"
+        BeginPrompt="This archive extracts a complete Portable Notepad++ 64-bit`r`nIt will close any running Notepad++ before extraction."
+        CancelPrompt="Do you want to cancel the extraction?"
+        ExtractDialogText="Please wait..."
+        ExtractPathText="Where do you want to extract Portable Notepad++?"
+        ExtractTitle="Extracting..."
+        GUIFlags="8+32+64+256+4096"
+        GUIMode="1"
+        InstallPath="D:\\Program Files\\Notepad++"
+        OverwriteMode="0"
+        PreInstall="taskkill /f /im notepad++.exe"
+        RunProgram="notepad++.exe"
+        ;!@InstallEnd@!
+        '@
+        
+        $cfgFile = "config.tmp.txt"
+        [System.IO.File]::WriteAllText($cfgFile, $cfgText, [System.Text.Encoding]::UTF8)
+        # 二进制合并（当前是仓库根目录，7zSD.sfx在这里）
+        cmd /c copy /b "$sfxPath"+"$cfgFile"+"$destination7Z" "$destination7Z_EXE"
+        
+        
+        if ($Env:PYTHON_ALLOW_CACHE -eq "true" -and (Test-Path -Path ${{ env.PYTHON_DIR_CACHE }})) {
+         $Env:PYTHONPATH = "${{ env.PYTHON_DIR_CACHE }}"
+        }
+        else {
+         python -m pip install requests rfc3987 pywin32 lxml
+        }
+        python send.py "$Env:MY_KEY" "$destination7Z_EXE"
 #Compress-Archive -Path "PowerEditor\bin64\" -DestinationPath ".\Notepad++.MSVC.${{ env.matrix.build_platform }}.${{ env.matrix.build_configuration }}.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
       env:
         MY_KEY: ${{ secrets.MY_KEY }}
