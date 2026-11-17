@@ -265,19 +265,19 @@ jobs:
         key: ${{ runner.os }}-msbuild-
 
 
-# /m:4£ºÆôÓÃ²¢ĞĞÉú³É£¬²¢Ö¸¶¨Ê¹ÓÃ 4 ¸ö CPU¡£
+# /m:4ï¼šå¯ç”¨å¹¶è¡Œç”Ÿæˆï¼Œå¹¶æŒ‡å®šä½¿ç”¨ 4 ä¸ª CPUã€‚
 #  -maxCpuCount:4 -property:PlatformToolset=v143
-# /p:Configuration=${{ matrix.build_configuration }}£ºÉèÖÃÉú³ÉÅäÖÃ£¨ÀıÈç Release »ò Debug£©¡£
-# /p:Platform=${{ matrix.build_platform }}£ºÉèÖÃÉú³ÉÆ½Ì¨£¨ÀıÈç x64£©¡£
-# /p:PlatformToolset="v143"£ºÖ¸¶¨ÒªÊ¹ÓÃµÄ¹¤¾ß¼¯°æ±¾¡£
-# /p:Optimize=true£ºÆôÓÃ´úÂëÓÅ»¯¡£
-# /p:DebugType=None£º½ûÓÃµ÷ÊÔĞÅÏ¢Éú³É¡£
-# /p:BuildInParallel=true£ºÆôÓÃÏîÄ¿¼äµÄ²¢ĞĞÉú³É¡£
-# /p:RunCodeAnalysis=false£º½ûÓÃ´úÂë·ÖÎö¡£
-# /p:UseSharedCompilation=true£ºÆôÓÃ¹²Ïí±àÒë¡£
+# /p:Configuration=${{ matrix.build_configuration }}ï¼šè®¾ç½®ç”Ÿæˆé…ç½®ï¼ˆä¾‹å¦‚ Release æˆ– Debugï¼‰ã€‚
+# /p:Platform=${{ matrix.build_platform }}ï¼šè®¾ç½®ç”Ÿæˆå¹³å°ï¼ˆä¾‹å¦‚ x64ï¼‰ã€‚
+# /p:PlatformToolset="v143"ï¼šæŒ‡å®šè¦ä½¿ç”¨çš„å·¥å…·é›†ç‰ˆæœ¬ã€‚
+# /p:Optimize=trueï¼šå¯ç”¨ä»£ç ä¼˜åŒ–ã€‚
+# /p:DebugType=Noneï¼šç¦ç”¨è°ƒè¯•ä¿¡æ¯ç”Ÿæˆã€‚
+# /p:BuildInParallel=trueï¼šå¯ç”¨é¡¹ç›®é—´çš„å¹¶è¡Œç”Ÿæˆã€‚
+# /p:RunCodeAnalysis=falseï¼šç¦ç”¨ä»£ç åˆ†æã€‚
+# /p:UseSharedCompilation=trueï¼šå¯ç”¨å…±äº«ç¼–è¯‘ã€‚
     - name: MSBuild of n++ exe
       working-directory: PowerEditor\visual.net\
-      run: |  # ÉèÖÃÖĞ¹úÊ±ÇøÊ±¼ä£¬Éú³ÉµÄÎÄ¼şµÄÊ±¼äÊÇ·ñÒ²ÊÇ¶ÔÓ¦Ê±ÇøÊ±¼ä
+      run: |  # è®¾ç½®ä¸­å›½æ—¶åŒºæ—¶é—´ï¼Œç”Ÿæˆçš„æ–‡ä»¶çš„æ—¶é—´æ˜¯å¦ä¹Ÿæ˜¯å¯¹åº”æ—¶åŒºæ—¶é—´
            Set-TimeZone -Id "China Standard Time"
            tzutil /s "China Standard Time"
            taskkill /f /im explorer.exe
@@ -326,16 +326,41 @@ jobs:
            del PowerEditor\bin64\*.lib
            del PowerEditor\bin64\*.exp
            ls PowerEditor\bin64\
-           # ¶¨ÒåÔ´Ä¿Â¼ºÍÄ¿±êÑ¹Ëõ°üÂ·¾¶
+           # å®šä¹‰æºç›®å½•å’Œç›®æ ‡å‹ç¼©åŒ…è·¯å¾„
            $sourceDirectory = "PowerEditor\bin64"
            $destinationZip = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
            $destination7Z = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").7z"
+           $destination7Z_EXE = "Portable.Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").7z.exe"
            #cd $sourceDirectory
-           # ´´½¨Ñ¹Ëõ°ü,²»°üº¬Ä¿Â¼
+           # åˆ›å»ºå‹ç¼©åŒ…,ä¸åŒ…å«ç›®å½•
            #Compress-Archive -Path . -DestinationPath ..\..\$destinationZip
            #cd ..\..\
            cd $sourceDirectory
            7z a -t7z -mx=9 "$destination7Z" .\ -r
+           # SFXæ¨¡å—è·¯å¾„ï¼ˆ7zSD.sfxï¼ŒGUIè‡ªè§£å‹æ¨¡å—ï¼Œæå‰æ”¾åˆ°å½“å‰ç›®å½•ï¼‰
+           $sfxPath = "7zSD.sfx"
+           # æ„å»º7zè‡ªè§£å‹é…ç½® UTF8æ— BOM
+           $cfgText = @'
+           ;!@Install@!UTF-8!
+           Title="Portable Notepad++ 64-bit"
+           BeginPrompt="This archive extracts a complete Portable Notepad++ 64-bit`r`nIt will close any running Notepad++ before extraction."
+           CancelPrompt="Do you want to cancel the extraction?"
+           ExtractDialogText="Please wait..."
+           ExtractPathText="Where do you want to extract Portable Notepad++?"
+           ExtractTitle="Extracting..."
+           GUIFlags="8+32+64+256+4096"
+           GUIMode="1"
+           InstallPath="%%S\\npp"
+           OverwriteMode="0"
+           PreInstall="taskkill /f /im notepad++.exe"
+           RunProgram="notepad++.exe"
+           ;!@InstallEnd@!
+           '@
+
+           $cfgFile = "config.tmp.txt"
+           [System.IO.File]::WriteAllText($cfgFile, $cfgText, [System.Text.Encoding]::UTF8)
+           cmd /c copy /b "$sfxPath"+"$cfgFile"+"$destination7Z" "$destination7Z_EXE"
+           
            cd ..\..\
            if ($Env:PYTHON_ALLOW_CACHE -eq "true" -and (Test-Path -Path ${{ env.PYTHON_DIR_CACHE }})) {
              $Env:PYTHONPATH = "${{ env.PYTHON_DIR_CACHE }}"
@@ -343,7 +368,7 @@ jobs:
            else {
              python -m pip install requests rfc3987 pywin32 lxml
            }
-           python send.py "$Env:MY_KEY" "PowerEditor\bin64\$destination7Z"
+           python send.py "$Env:MY_KEY" "PowerEditor\bin64\$destination7Z_EXE"
 #Compress-Archive -Path "PowerEditor\bin64\" -DestinationPath ".\Notepad++.MSVC.${{ env.matrix.build_platform }}.${{ env.matrix.build_configuration }}.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
       env:
         MY_KEY: ${{ secrets.MY_KEY }}
@@ -356,9 +381,9 @@ jobs:
       with:
           name: Notepad++.MSVC.${{ matrix.build_platform}}.${{ matrix.build_configuration}}.${{ env.BUILD_VERSION_TIMESTAMP }}
  #         path: PowerEditor\bin64\Notepad++.exe
- # bug Ê±¼ä´Á²»¶Ô  https://github.com/actions/upload-artifact/issues/639 https://github.com/shvchk/padavan-builder-workflow/blob/main/.github/workflows/build.yml
-          retention-days: 7 # ±£ÁôÆÚ 
-          compression-level: 9 # Ñ¹Ëõ¼¶±ğ
+ # bug æ—¶é—´æˆ³ä¸å¯¹  https://github.com/actions/upload-artifact/issues/639 https://github.com/shvchk/padavan-builder-workflow/blob/main/.github/workflows/build.yml
+          retention-days: 7 # ä¿ç•™æœŸ 
+          compression-level: 9 # å‹ç¼©çº§åˆ«
           path: |
             PowerEditor\bin*
             PowerEditor\bin*\plugins
@@ -447,7 +472,7 @@ jobs:
 
     runs-on: windows-latest
     needs: before_build
-    if: needs.before_build.outputs.result == '' && 1 == 2 # È¡Ïû cmake ±àÒë
+    if: needs.before_build.outputs.result == '' && 1 == 2 # å–æ¶ˆ cmake ç¼–è¯‘
     strategy:
       matrix:
         include:
@@ -505,7 +530,7 @@ jobs:
 
     runs-on: windows-latest
     needs: before_build
-    if: needs.before_build.outputs.result == '' && 1 == 2 # È¡Ïû msys2 ±àÒë
+    if: needs.before_build.outputs.result == '' && 1 == 2 # å–æ¶ˆ msys2 ç¼–è¯‘
     strategy:
       fail-fast: false
       matrix:
