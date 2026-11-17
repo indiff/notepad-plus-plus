@@ -339,7 +339,7 @@ jobs:
            #cd ..\..\
            
            Push-Location $sourceDirectory
-           7z a -t7z -mx=9 "$destination7Z" .\ -r
+           7z a -t7z -mx=9 "../$destination7Z" .\ -r
            Pop-Location
            
            # SFX模块路径（7zSD.sfx，GUI自解压模块，提前放到当前目录）
