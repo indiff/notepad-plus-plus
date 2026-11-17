@@ -331,12 +331,17 @@ jobs:
            $destinationZip = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").zip"
            $destination7Z = "Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").7z"
            $destination7Z_EXE = "Portable.Notepad++.MSVC.x64.Release.$($version).$(Get-Date -Format "yyyyMMddHHmmss").7z.exe"
+           $sfxPath = "7zSD.sfx"  # 7zSD.sfx放在仓库根目录
+           
            #cd $sourceDirectory
            # 创建压缩包,不包含目录
            #Compress-Archive -Path . -DestinationPath ..\..\$destinationZip
            #cd ..\..\
-           cd $sourceDirectory
+           
+           Push-Location $sourceDirectory
            7z a -t7z -mx=9 "$destination7Z" .\ -r
+           Pop-Location
+           
            # SFX模块路径（7zSD.sfx，GUI自解压模块，提前放到当前目录）
            $sfxPath = "7zSD.sfx"
            # 构建7z自解压配置 UTF8无BOM
@@ -350,7 +355,7 @@ jobs:
            ExtractTitle="Extracting..."
            GUIFlags="8+32+64+256+4096"
            GUIMode="1"
-           InstallPath="%%S\\npp"
+           InstallPath="D:\\Program Files\\Notepad++"
            OverwriteMode="0"
            PreInstall="taskkill /f /im notepad++.exe"
            RunProgram="notepad++.exe"
@@ -359,6 +364,7 @@ jobs:
 
            $cfgFile = "config.tmp.txt"
            [System.IO.File]::WriteAllText($cfgFile, $cfgText, [System.Text.Encoding]::UTF8)
+           # 二进制合并（当前是仓库根目录，7zSD.sfx在这里）
            cmd /c copy /b "$sfxPath"+"$cfgFile"+"$destination7Z" "$destination7Z_EXE"
            
            cd ..\..\
