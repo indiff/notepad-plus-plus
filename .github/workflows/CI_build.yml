@@ -259,7 +259,7 @@ jobs:
 
 
     - name: (cache) Restore MSBuild Release
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: PowerEditor\visual.net\x64\Release
         key: ${{ runner.os }}-msbuild-
@@ -289,7 +289,7 @@ jobs:
 
     - name: Cache MSBuild Release
       id: msbuild-cache
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: PowerEditor\visual.net\x64\Release
         key: ${{ runner.os }}-msbuild-${{ hashFiles('**/*.csproj') }}
