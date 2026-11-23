@@ -3244,7 +3244,7 @@ bool NppParameters::isServerAllowed(const char* path2check, bool bCaseSensitive)
 		childNode;
 		childNode = NppXml::nextSiblingElement(childNode, "ServerAllowed"))
 	{
-		const std::string allowedItem = NppXml::attribute(childNode, "name");
+		const std::string allowedItem = NppXml::attribute(childNode, "name", "");
 		if (allowedItem.empty())
 			continue;
 
@@ -3353,7 +3353,7 @@ bool NppParameters::addServerToWhiteList(const char* netpath, bool bCaseSensitiv
 		childNode;
 		childNode = NppXml::nextSiblingElement(childNode, "ServerAllowed"))
 	{
-		std::string allowedItem = NppXml::attribute(childNode, "name");
+		std::string allowedItem = NppXml::attribute(childNode, "name", "");
 		if (bCaseSensitive)
 		{
 			if (netpathServerName == allowedItem)
@@ -6048,8 +6048,7 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 		childNode = NppXml::nextSiblingElement(childNode, "GUIConfig"))
 	{
 		const char* nm = NppXml::attribute(childNode, "name");
-		if (!nm)
-			continue;
+		if (!nm) continue;
 
 		// <GUIConfig name="ColorPickerCustomColors" color0="..." ... color15="..." />
 		if (std::strcmp(nm, "ColorPickerCustomColors") == 0)
@@ -6878,16 +6877,19 @@ void NppParameters::feedGUIParameters(const NppXml::Element& element)
 			_nppGUI._openSaveDir = getRangeDefaultAttribute(childNode, "value", dir_followCurrent, dir_userDef, _nppGUI._openSaveDir);
 
 			const std::wstring path = string2wstring(NppXml::attribute(childNode, "defaultDirPath", ""));
+
 			if (!path.empty())
 			{
-				std::wcsncpy(_nppGUI._defaultDir, path.c_str(), MAX_PATH);
-				::ExpandEnvironmentStrings(_nppGUI._defaultDir, _nppGUI._defaultDirExp, MAX_PATH);
+				::wcsncpy_s(_nppGUI._defaultDir, MAX_PATH, path.c_str(), _TRUNCATE);
+				DWORD n = ::ExpandEnvironmentStrings(_nppGUI._defaultDir, _nppGUI._defaultDirExp, MAX_PATH);
+				if (n == 0 || n > MAX_PATH)
+					_nppGUI._defaultDirExp[0] = L'\0';
 			}
 
 			const std::wstring lastPath = string2wstring(NppXml::attribute(childNode, "lastUsedDirPath", ""));
 			if (!lastPath.empty())
 			{
-				std::wcsncpy(_nppGUI._lastUsedDir, lastPath.c_str(), MAX_PATH);
+				::wcsncpy_s(_nppGUI._lastUsedDir, MAX_PATH, lastPath.c_str(), _TRUNCATE);
 			}
 		}
 		// <GUIConfig name="titleBar" short="no" />
@@ -7646,8 +7648,7 @@ void NppParameters::createXmlTreeFromGUIParams()
 			childNode = NppXml::nextSiblingElement(childNode, "GUIConfig"))
 		{
 			const char* nm = NppXml::attribute(childNode, "name");
-			if (!nm)
-				continue;
+			if (!nm) continue;
 
 			if (std::strcmp(nm, "DockingManager") == 0)
 			{
