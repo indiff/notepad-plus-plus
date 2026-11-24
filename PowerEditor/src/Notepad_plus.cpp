@@ -393,8 +393,8 @@ LRESULT Notepad_plus::init(HWND hwnd)
 	_mainEditView.execute(SCI_SETCARETLINEVISIBLEALWAYS, true);
 	_subEditView.execute(SCI_SETCARETLINEVISIBLEALWAYS, true);
 
-	_mainEditView.wrap(svp._doWrap);
-	_subEditView.wrap(svp._doWrap);
+	_mainEditView.wrap(svp._doWrapByDefault);
+	_subEditView.wrap(svp._doWrapByDefault);
 
 	::SendMessage(hwnd, NPPM_INTERNAL_EDGEMULTISETSIZE, 0, 0);
 
@@ -6646,6 +6646,7 @@ void Notepad_plus::getCurrentOpenedFiles(Session & session, bool includeUntitled
 			sfi._isMonitoring = buf->isMonitoringOn();
 			sfi._individualTabColour = docTab[k]->getIndividualTabColourId(static_cast<int>(i));
 			sfi._isRTL = buf->isRTL();
+			sfi._isWordWrap = buf->isWordWrap();
 
 			_invisibleEditView.execute(SCI_SETDOCPOINTER, 0, buf->getDocument());
 
@@ -7077,6 +7078,10 @@ void Notepad_plus::notifyBufferActivated(BufferID bufid, int view)
 		_pDocMap->reloadMap();
 		_pDocMap->setSyntaxHiliting();
 	}
+
+	// the menu and the toolbar follow the word wrap of the current document
+	checkMenuItem(IDM_VIEW_WRAP, _pEditView->isWrap());
+	_toolBar.setCheck(IDM_VIEW_WRAP, _pEditView->isWrap());
 
 	if (_pFuncList && (!_pFuncList->isClosed()) && _pFuncList->isVisible())
 	{
@@ -8723,6 +8728,24 @@ void Notepad_plus::refreshDarkMode(bool resetStyle)
 		NppParameters& nppParams = NppParameters::getInstance();
 
 		::SendMessage(_pPublicInterface->getHSelf(), NPPM_SETEDITORBORDEREDGE, 0, nppParams.getSVP()._showBorderEdge);
+
+		// Re-pick the UDL for already-open documents: a User Defined Language with
+		// separate dark/light mode variants is otherwise only re-selected when the
+		// file is closed and reopened, not when the mode is switched (issue #18388).
+		for (size_t i = 0; i < MainFileManager.getNbBuffers(); ++i)
+		{
+			Buffer* buf = MainFileManager.getBufferByIndex(i);
+			if (buf->getLangType() == L_USER)
+			{
+				const wchar_t* ext = PathFindExtension(buf->getFullPathName());
+				if (*ext == L'.')
+				{
+					const wchar_t* langName = nppParams.getUserDefinedLangNameFromExt(ext + 1, buf->getFileName());
+					if (langName && wcscmp(langName, buf->getUserDefineLangName()) != 0)
+						buf->setLangType(L_USER, langName);
+				}
+			}
+		}
 
 		::SendMessage(_subEditView.getHSelf(), NPPM_INTERNAL_REFRESHDARKMODE, 0, 0);
 		::SendMessage(_mainEditView.getHSelf(), NPPM_INTERNAL_REFRESHDARKMODE, 0, 0);
