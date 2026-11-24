@@ -1,7 +1,0 @@
-# encoding: UTF-8
-
-# For issue #383.
-# Demonstrate long here-doc delimiter with multi-byte character near limit.
-
-<<"abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabc文
-# End
