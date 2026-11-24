@@ -329,7 +329,7 @@ void Notepad_plus_Window::init(HINSTANCE hInst, HWND parent, const wchar_t *cmdL
 
 	// 默认开启 自动换行
 	ScintillaViewParams& svp1 = (ScintillaViewParams&)(NppParameters::getInstance()).getSVP();
-	svp1._doWrap = true;
+	svp1._doWrapByDefault = true;
 	_notepad_plus_plus_core.command(IDM_VIEW_WRAP);
 	_notepad_plus_plus_core.checkMenuItem(IDM_VIEW_WRAP, true);
 	// (&FileManager::getInstance()) -> wrap; 
